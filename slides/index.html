@@ -571,7 +571,7 @@
     .pc-plan .pc-verdict b { color: var(--orange); }
     .pc-design .pc-verdict b { color: var(--accent-hover); }
     .pc-verdict code { font-size: .82rem; }
-    .pc-loop { margin: .1rem 0 0 calc(9rem + .6rem); padding-left: .9rem; font-size: .85rem; color: var(--text-secondary); }
+    .pc-loop { box-sizing: border-box; width: auto; max-width: calc(100% - 9.6rem); margin: .1rem 0 0 9.6rem; padding-left: .9rem; font-size: .85rem; color: var(--text-secondary); }
     .pc-loop b { color: var(--accent-hover); font-weight: 600; }
     .content:has(.pc-takeaway.shown) .pc-row:not(.pc-head) .pc-cell:not(.pc-verdict) { opacity: .32; }
     .content:has(.pc-takeaway.shown) .pc-design .pc-verdict { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
@@ -970,7 +970,7 @@
 <g class="dependency-stream" aria-hidden="true"><path d="M225 150 H265 V65 H300" pathLength="100" style="--travel-delay:1.1s"/><path d="M265 150 V240 H300" pathLength="100" style="--travel-delay:1.1s"/><path d="M535 65 H570 V150 H620" pathLength="100" style="--travel-delay:2.15s"/><path d="M535 240 H570 V150" pathLength="100" style="--travel-delay:2.15s"/><path d="M835 150 H875" pathLength="100" style="--travel-delay:3.2s"/><path d="M1090 150 H1130" pathLength="100" style="--travel-delay:3.85s"/></g>
 <g class="hx-box"><rect x="10" y="100" width="215" height="100"/><rect x="300" y="15" width="235" height="100"/><rect x="300" y="190" width="235" height="100"/><rect x="620" y="100" width="215" height="100"/><rect x="875" y="100" width="215" height="100"/><rect x="1130" y="100" width="215" height="100"/></g>
 <g text-anchor="middle"><text x="117" y="137">대상 분석</text><text class="hx-sub" x="117" y="171">분석가 · 현재 JSON</text><text x="417" y="52">노드 공식 사양</text><text class="hx-sub" x="417" y="86">리서처 · 조사 A</text><text x="417" y="227">기존 구현 관례</text><text class="hx-sub" x="417" y="261">리서처 · 조사 B</text><text x="727" y="137">계획 · 사람 확인</text><text class="hx-sub" x="727" y="171">오케스트레이터</text><text x="982" y="137">변경 구성</text><text class="hx-sub" x="982" y="171">빌더 · 변경 도구</text><text x="1237" y="137">기대 결과와 비교</text><text class="hx-sub" x="1237" y="171">검증자 · 검사 도구</text></g></svg><div class="cards c3"><div class="card reveal"><div class="card-num">순차</div><h3>앞의 결과가 있어야 한다</h3><p>분석 → 계획 → 구현 → 검증</p></div><div class="card reveal"><div class="card-num">병렬</div><h3>서로 기다릴 필요가 없다</h3><p>독립 자료 조사만 동시에 수행</p></div><div class="card reveal"><div class="card-num">역할 분리</div><h3>서로 다른 관점이 필요하다</h3><p>만드는 역할과 판정하는 역할 분리</p></div></div><p class="lead hx-takeaway">에이전트 수는 <span class="hi">작업의 관계를 그린 뒤</span> 결정합니다.</p></div>
-      <p class="a foot hx-source"><a href="https://github.com/revfactory/harness/blob/cceac68ea1d0ad198ef4b7b906cd238375836387/skills/harness/references/agent-design-patterns.md" target="_blank" rel="noopener noreferrer">revfactory/harness · agent-design-patterns.md</a> · 11~19장은 이 기법을 배포 캘린더에 적용한 설계이며, 화면의 파일명·역할 정의는 예시입니다</p>
+      <p class="a foot hx-source">11~19장은 배포 캘린더에 적용한 설계이며, 화면의 파일명·역할 정의는 예시입니다</p>
     </div>
 
     <!-- 12 [재구성] Six morph scenes: context and intent -->
@@ -1006,7 +1006,6 @@
         <li><b>“IF 노드가 뭐야?”</b> · 일반 설명, 변경 파이프라인 호출 안 함</li>
         <li><b>“IF 분기를 추가해줘”</b> · 실제 변경, 분석·계획·검증 진행</li>
       </ol></div>
-      <p class="a foot hx-source"><a href="https://github.com/revfactory/harness/blob/cceac68ea1d0ad198ef4b7b906cd238375836387/skills/harness/references/skill-writing-guide.md" target="_blank" rel="noopener noreferrer">revfactory/harness · skill-writing-guide.md</a></p>
       <p class="chat-sr" data-context-announcement role="status" aria-live="polite"></p>
     </div>
 
@@ -1057,7 +1056,7 @@
 </div>
       </div>
       <div class="chat-meta">
-        <p class="foot"><a href="https://github.com/revfactory/harness/blob/cceac68ea1d0ad198ef4b7b906cd238375836387/skills/harness/references/orchestrator-template.md" target="_blank" rel="noopener noreferrer" style="color:var(--text-secondary);text-decoration:none;">revfactory/harness · orchestrator-template.md</a> · 파일명은 적용 예시</p>
+        <p class="foot">파일명은 적용 예시</p>
         <div class="chat-controls"><span data-chat-hint>→ 현재 장면 완성</span><button type="button" data-chat-prev aria-label="이전 단계">← 이전</button><button type="button" data-chat-next aria-label="현재 장면 완성 또는 다음 단계">다음 →</button><button class="chat-replay" type="button">↻ 처음부터</button></div>
       </div>
 <div class="work-print"><p>과정 시뮬레이션 · 후속 요청<br>“알림 문구만 짧게 바꿔줘.”</p><div class="work-print-grid"><div class="work-print-card"><b>1. 지난 요청의 맥락 읽기</b><p>n8n에는 현재 상태만 남음 → 요청·계획·변경안·검증 근거 파일을 먼저 읽음 (파일명은 적용 예시)</p></div><div class="work-print-card"><b>2. 변경 범위 정하기</b><p>수정: 알림 메시지 구성 노드 · 보존: 조회·변환·업로드 설정 · 지난 완료 조건 유지</p></div><div class="work-print-card"><b>3. 영향받는 곳 재검증</b><p>메시지가 쓰는 데이터 + 성공·실패 분기를 지난 검증 기준으로 확인</p></div><div class="work-print-card"><b>4. 기록 이어 쓰기</b><p>순정: 지금 상태만 보고 고침 · 킷: 왜 만들었고 무엇을 검증했는지까지 읽고 고침</p></div></div></div>
@@ -1084,7 +1083,7 @@
         <div class="reveal"><div class="pc-row pc-design"><div class="pc-label">이 설계</div><div class="pc-cell">요건 확인 → 계획</div><div class="pc-cell">사용자가 계획 승인</div><div class="pc-cell"><b>빌더</b> · 변경 도구로 구현</div><div class="pc-cell pc-verdict"><b>검증자</b> · 완료 조건 + 실제 산출물<small><code>통과</code> · <code>실패</code> · <code>미검증</code> 을 근거와 함께</small></div></div>
         <p class="pc-loop">↺ 실패 → <b>오류 보고서</b> → 빌더 수정 → <b>재검증</b> (최대 2회)</p></div>
       </div><p class="lead hx-takeaway pc-takeaway reveal">차이는 계획이 아니라, <span class="hi">승인 뒤 누가 무엇으로 완료를 판정하느냐</span>입니다.</p></div>
-      <p class="a foot hx-source"><a href="https://github.com/revfactory/harness/blob/cceac68ea1d0ad198ef4b7b906cd238375836387/skills/harness/references/agent-design-patterns.md" target="_blank" rel="noopener noreferrer">revfactory/harness · agent-design-patterns.md</a> · Plan 모드는 Claude Code 기본 흐름 기준 · 별도 검증자는 적용 설계(현재 킷은 빌더가 validate 도구로 검사)</p>
+      <p class="a foot hx-source">Plan 모드는 Claude Code 기본 흐름 기준 · 별도 검증자는 적용 설계(현재 킷은 빌더가 validate 도구로 검사)</p>
     </div>
 
     <!-- 15 [재구성] Harness design -->
@@ -1110,7 +1109,7 @@
 
 const approvalDateMissingCount =
   countOrNull(details.approvalDateMissingCount);</code></pre></div></div></div><div class="hx-band hx-danger"><b>필수 필드 누락</b> → <code>null</code> → 정상 주장 거부 → <code>calendarStatus: failed</code></div><p class="lead hx-takeaway">모르는 값을 <span class="hi">0건으로 채우지 않습니다.</span> “문제 없음”과 “확인 못 함”은 다릅니다.</p></div>
-      <p class="a foot hx-source"><a href="https://github.com/revfactory/harness/blob/cceac68ea1d0ad198ef4b7b906cd238375836387/skills/harness/references/qa-agent-guide.md" target="_blank" rel="noopener noreferrer">revfactory/harness · qa-agent-guide.md</a> · 실제 코드: pipeline.json / 01 XML 결과 정규화 · 비교는 같은 n8n-mcp 도구(validate · autofix · test) 기준</p>
+      <p class="a foot hx-source">실제 코드: pipeline.json / 01 XML 결과 정규화 · 비교는 같은 n8n-mcp 도구(validate · autofix · test) 기준</p>
     </div>
 
     <!-- 16 [재구성] Harness design -->
@@ -1125,7 +1124,6 @@ const approvalDateMissingCount =
       <h2 class="a">한 번의 검증으로 끝내지 않는다</h2>
       <div class="pm-contrast a"><div class="pm-row pm-plan"><span class="pm-label">Plan 모드 + n8n-mcp</span><span>무엇을 어디까지 검사할지 매번 Claude가 판단</span></div><div class="pm-row pm-design reveal"><span class="pm-label">이 설계</span><span>구조 → 연결 구간 → 전체 흐름, 3층을 순서대로</span></div></div>
       <div class="content reveal"><table><thead><tr><th>검증 층</th><th>무엇을 확인하나</th><th>실패를 찾는 예</th></tr></thead><tbody><tr><td>1 · 구조·설정</td><td>노드 설정 · 표현식 · 연결 참조</td><td>잘못된 파라미터 · 존재하지 않는 참조</td></tr><tr><td>2 · 연결 구간</td><td>샘플 입력 → 변환 → 뒤 노드 기대</td><td>종료 코드 0 + 필수 점검 건수 누락</td></tr><tr><td>3 · 전체 흐름</td><td>정상·실패 경로와 최종 메시지</td><td>실패했는데 성공 알림 경로가 선택됨</td></tr></tbody></table><div class="hx-flow"><div class="hx-node"><b>조회·변환</b><span>샘플로 데이터 계약 확인</span></div><span class="hx-arrow">→</span><div class="hx-node"><b>검사 통과</b><span>다음 구간 연결</span></div><span class="hx-arrow">→</span><div class="hx-node"><b>업로드·알림</b><span>테스트용 채널·저장소에서 확인</span></div></div><p class="lead hx-takeaway">구간마다 확인하고, 마지막에는 <span class="hi">전체 결과를 다시 확인</span>합니다.</p><p class="foot">설정 자동수정 도구가 모든 업무 오류를 고치지는 않습니다. 데이터 의미·데이터 계약 오류는 빌더가 수정합니다.</p></div>
-      <p class="a foot hx-source"><a href="https://github.com/revfactory/harness/blob/cceac68ea1d0ad198ef4b7b906cd238375836387/skills/harness/references/qa-agent-guide.md" target="_blank" rel="noopener noreferrer">revfactory/harness · qa-agent-guide.md</a></p>
     </div>
 
     <!-- 17 [재구성] Harness design -->
@@ -1145,7 +1143,6 @@ const approvalDateMissingCount =
 누락 값을 임의로 0으로 채우지 않는다.
 정상 / 누락 샘플을 모두 재검증한다.
 수정한 부분과 검사 근거를 제출한다.</code></pre></div></div></div><p class="lead hx-takeaway">오류 위치와 <span class="hi">기대값·실제값·근거</span>가 있어야 수정 범위가 좁아집니다.</p></div>
-      <p class="a foot hx-source"><a href="https://github.com/revfactory/harness/blob/cceac68ea1d0ad198ef4b7b906cd238375836387/skills/harness/references/qa-agent-guide.md" target="_blank" rel="noopener noreferrer">revfactory/harness · qa-agent-guide.md</a></p>
     </div>
 
     <!-- 18 [재구성] Harness design -->
@@ -1160,7 +1157,6 @@ const approvalDateMissingCount =
       <h2 class="a">재시도 횟수와 멈출 조건도 구현의 일부다</h2>
       <div class="pm-contrast a"><div class="pm-row pm-plan"><span class="pm-label">Plan 모드 + n8n-mcp</span><span>몇 번 고치고 멈출지 규칙 없음 · 재실행이 업로드를 중복할 수 있음</span></div><div class="pm-row pm-design reveal"><span class="pm-label">이 설계</span><span>최대 2회 수정 · 미검증은 성공 아님 · 외부 쓰기는 반영 여부부터 확인</span></div></div>
       <div class="content reveal"><div class="hx-flow"><div class="hx-node"><b>검증</b><span>기준과 실제 비교</span></div><span class="hx-arrow">→</span><div class="hx-node"><b>수정 가능</b><span>빌더에게 반환</span></div><span class="hx-arrow">→</span><div class="hx-node"><b>최대 2회 수정</b><span>매번 재검증</span></div><span class="hx-arrow">→</span><div class="hx-node"><b>종료 판정</b><span>통과 또는 실패 보고</span></div></div><table><thead><tr><th>상태</th><th>다음 행동</th></tr></thead><tbody><tr><td>통과</td><td>확인한 범위와 근거를 남기고 완료</td></tr><tr><td>2회 수정 후에도 필수 검증 실패</td><td>자동 수정 중단 → 실패 원인과 남은 작업 보고</td></tr><tr><td>미검증 · 실행 권한 없음</td><td>성공 처리하지 않음 → 필요한 확인 명시</td></tr><tr><td>업로드·전송 응답 불명확</td><td>이미 반영됐는지 확인 → 중복 실행 가능성 판단</td></tr></tbody></table><p class="lead hx-takeaway">AI의 <span class="hi">수정 재시도</span>와 외부 서비스의 <span class="hi">작업 재실행</span>은 따로 관리합니다.</p></div>
-      <p class="a foot hx-source"><a href="https://github.com/revfactory/harness/blob/cceac68ea1d0ad198ef4b7b906cd238375836387/skills/harness/references/orchestrator-template.md" target="_blank" rel="noopener noreferrer">revfactory/harness · orchestrator-template.md</a></p>
     </div>
 
     <!-- 19 [재구성] Harness design -->
@@ -1175,7 +1171,7 @@ const approvalDateMissingCount =
       <h2 class="a">결과물과 킷을 <br>서로 다른 루프로 개선한다</h2>
       <div class="pm-contrast a"><div class="pm-row pm-plan"><span class="pm-label">Plan 모드 + n8n-mcp</span><span>교훈을 다음에 쓰려면 CLAUDE.md 등에 따로 남기도록 챙겨야 함</span></div><div class="pm-row pm-design reveal"><span class="pm-label">이 설계</span><span>실패 패턴 → 스킬 · 검사 개선 → 같은 입력으로 전후 비교</span></div></div>
       <div class="content reveal"><div class="row r2 hx-top"><div><div class="panel"><h3>이번 요청의 결과물을 수정</h3><p class="lead">생성 → 검증 → 부분 수정</p><p>대상: 워크플로우와 연결 데이터<br>종료: 완료 조건 충족 또는 수정 상한</p></div></div><div><div class="panel after"><h3>다음 요청의 수행 방법을 개선</h3><p class="lead">실패 패턴 → 규칙·검사 개선 → 비교</p><p>대상: 스킬 · 역할 정의 · 검증 스크립트<br>반복 작성한 검사는 실행 가능한 코드로 묶기</p></div></div></div><table><thead><tr><th>같은 요청·입력으로 비교</th><th>기존 버전</th><th>개선 버전</th><th>측정할 것</th></tr></thead><tbody><tr><td>정상 점검 데이터</td><td>—</td><td>—</td><td>기대 결과 일치</td></tr><tr><td>필수 건수 누락</td><td>—</td><td>—</td><td>실패 감지 · 성공 오판 방지</td></tr><tr><td>IF 설명 / IF 분기 추가</td><td>—</td><td>—</td><td>일반 응답 / 변경 경로 구분</td></tr></tbody></table><p class="lead hx-takeaway">더 길어진 지시문보다 <span class="hi">더 잘 구별하는 검사와 줄어든 재작업</span>을 확인합니다.</p></div>
-      <p class="a foot hx-source"><a href="https://github.com/revfactory/harness/blob/cceac68ea1d0ad198ef4b7b906cd238375836387/skills/harness/references/skill-testing-guide.md" target="_blank" rel="noopener noreferrer">revfactory/harness · skill-testing-guide.md</a> · 비교 설계 예시 · —는 미측정 · 새 스킬은 스킬 없이, 개선 스킬은 수정 전 버전과 비교</p>
+      <p class="a foot hx-source">비교 설계 예시 · —는 미측정 · 새 스킬은 스킬 없이, 개선 스킬은 수정 전 버전과 비교</p>
     </div>
 
     <!-- ===== 5. 설치·업데이트와 데모 ===== -->
