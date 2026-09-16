@@ -558,6 +558,33 @@
     .hx .hx-takeaway { margin-top: 1.25rem; font-size: 1.25rem; }
     .hx .hx-source { margin-top: .9rem; font-size: .7rem; }
     .hx .hx-source a { color: var(--text-secondary); text-decoration: none; }
+    /* Slide 14: Plan mode vs this design, revealed lane by lane. */
+    .plan-compare { display: flex; flex-direction: column; gap: .7rem; width: 100%; }
+    .pc-row { display: grid; grid-template-columns: 9rem 1fr 1fr 1fr 1.7fr; gap: .6rem; align-items: stretch; }
+    .pc-head span { font-size: .78rem; letter-spacing: .06em; color: var(--text-secondary); padding: 0 .9rem; }
+    .pc-label { display: flex; align-items: center; font-size: 1.05rem; font-weight: 700; color: var(--text); }
+    .pc-cell { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: .8rem .9rem;
+      font-size: .95rem; line-height: 1.5; color: #cfd6df; transition: opacity .45s ease, border-color .45s ease, box-shadow .45s ease; }
+    .pc-cell b { color: var(--text); }
+    .pc-cell small { display: block; margin-top: .3rem; font-size: .8rem; color: var(--text-secondary); }
+    .pc-plan .pc-verdict { border-color: rgba(245,158,11,.45); }
+    .pc-plan .pc-verdict b { color: var(--orange); }
+    .pc-design .pc-verdict b { color: var(--accent-hover); }
+    .pc-verdict code { font-size: .82rem; }
+    .pc-loop { margin: .1rem 0 0 calc(9rem + .6rem); padding-left: .9rem; font-size: .85rem; color: var(--text-secondary); }
+    .pc-loop b { color: var(--accent-hover); font-weight: 600; }
+    .content:has(.pc-takeaway.shown) .pc-row:not(.pc-head) .pc-cell:not(.pc-verdict) { opacity: .32; }
+    .content:has(.pc-takeaway.shown) .pc-design .pc-verdict { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+    .content:has(.pc-takeaway.shown) .pc-head span:last-child { color: var(--accent-hover); font-weight: 700; }
+    /* Slides 15-19: one-line contrast with Plan mode + n8n-mcp; the design row reveals on the first key. */
+    .pm-contrast { display: flex; flex-direction: column; gap: .35rem; width: 100%; margin: -.55rem 0 .9rem; }
+    .pm-row { display: grid; grid-template-columns: 12rem 1fr; align-items: center; gap: .8rem; padding: .45rem .9rem;
+      border-left: 3px solid; border-radius: 0 8px 8px 0; background: var(--surface); font-size: 1rem; line-height: 1.45; color: #d7dde5; }
+    .pm-label { font-size: .82rem; font-weight: 700; letter-spacing: .02em; }
+    .pm-plan { border-color: var(--orange); }
+    .pm-plan .pm-label { color: var(--orange); }
+    .pm-design { border-color: var(--accent); background: var(--accent-soft); color: var(--text); }
+    .pm-design .pm-label { color: var(--accent-hover); }
     .hx-band { width: 100%; margin: 1.1rem 0; padding: .8rem 1rem; background: var(--accent-soft); border-left: 3px solid var(--accent); font-size: 1.05rem; line-height: 1.6; }
     .hx-danger { border-color: var(--orange); background: rgba(245,158,11,.08); }
     .hx-flow { width: 100%; display: flex; align-items: stretch; gap: 12px; margin: 1rem 0; }
@@ -628,6 +655,8 @@
     .simple-pipeline path { stroke: #6389b5; stroke-width: 3; stroke-dasharray: 225; stroke-dashoffset: 225; transition: stroke-dashoffset 1.1s ease; }
     .simple-pipeline .shown path { stroke-dashoffset: 0; }
     .simple-pipeline circle { fill: #93c5fd; }
+    .simple-muted { color: #7b8a9c; }
+    .simple-label { display: inline-block; min-width: 3.2em; margin-right: .4em; font-size: .62em; letter-spacing: .04em; vertical-align: .18em; color: #8fa3b8; }
     .work-tag { position: absolute; left: 48px; bottom: 25px; color: #8493a6; font-size: 13px; }
     .work-scene [data-at] { opacity: 0; transform: translateY(8px); transition: opacity .4s ease, transform .4s ease; }
     .work-scene [data-at].shown { opacity: 1; transform: none; }
@@ -981,53 +1010,94 @@
       <p class="chat-sr" data-context-announcement role="status" aria-live="polite"></p>
     </div>
 
-    <!-- 13 [재구성] Harness design -->
-    <div class="slide hx" data-notes="[재구성 · n8n 적용 설계] [60초] 각 역할의 출력이 다음 역할의 입력이 되도록 파일 경로와 내용을 정합니다. 여기서 다음 에이전트는 바로 다음 단계를 맡은 역할과, 나중에 새 대화에서 이어받는 에이전트를 모두 뜻합니다. 같은 기록은 사람도 읽고 추적할 수 있습니다. 이 화면의 파일명은 적용 예시이고, 핵심은 요청, 계획, 변경안, 검증 근거가 끊기지 않는 것입니다. 이렇게 남겨야 다음 대화에서도 이전 결과를 읽고 이어갈 수 있습니다.
+    <!-- 13 [재구성] Follow-up request resumes from saved artifacts -->
+    <div class="slide chat-flow" data-chat-flow data-chat-phase="request" data-chat-typing="후속 요청을 적어 주세요" data-chat-ready="요청 입력 완료 · 다음으로 처리 과정을 봅니다" data-notes="[재구성 · n8n 적용 설계] [60초] [조작] 진입하면 후속 요청이 자동으로 타이핑되고, 입력창이 접히며 1단계 화면이 재생됩니다. →/Space/PageDown은 진행 중인 장면을 완성하고, 다시 누르면 다음 단계입니다. 4단계 다음은 14장입니다. ←는 이전 단계, 1단계에서 누르면 요청 화면, 한 번 더 누르면 12장입니다. 14장에서 뒤로 들어오면 4단계 완성 화면이 보입니다.
 
-예를 들어 “알림 문구만 짧게”라는 요청이 왔다고 조회와 업로드까지 다시 만들 이유는 없습니다. 기존 워크플로우와 검증 결과를 읽고 메시지 구성 부분을 고칩니다. 다만 수정한 부분만 보는 것이 아니라, 메시지가 소비하는 데이터와 성공·실패 분기까지 영향을 확인합니다. 외부 업로드를 재실행하는 문제는 잠시 뒤 따로 다루겠습니다.
+[요청 입력] 각 역할의 출력을 파일로 남기면, 같은 워크플로우에 나중에 들어오는 다음 요청이 그 기록을 이어 씁니다. 며칠 뒤 “알림 문구만 짧게 바꿔줘”라는 요청이 왔다고 해 보겠습니다.
+
+[1 지난 요청의 맥락 읽기] 알림 노드만 고치는 일은 순정 Claude도 할 수 있습니다. 워크플로우는 n8n에 있으니까요. 하지만 n8n에는 현재 상태만 남고, 왜 이렇게 만들었는지, 무엇을 검증했는지는 남지 않습니다. 그래서 요청, 계획, 변경안, 검증 근거를 먼저 읽습니다. 파일명은 적용 예시입니다.
+
+[2 변경 범위 정하기] 알림 메시지 노드만 고치고 조회·변환·업로드는 보존합니다. 실패를 성공으로 알리지 않는다는 지난 완료 조건도 지킵니다.
+
+[3 영향받는 곳 재검증] 문구만 바꿔도 메시지가 쓰는 데이터와 성공·실패 분기를 지난 기준으로 다시 봅니다. 작은 요청일수록 건너뛰기 쉬워 절차로 둡니다.
+
+[4 기록 이어 쓰기 · 대조] 결과는 다시 기록에 더합니다. 순정은 지금 상태만 보고 고치고, 킷은 왜 만들었고 무엇을 검증했는지까지 읽고 고칩니다.
 
 [전환] 이제 이 설계를 실제 생성과 검증 역할로 조립해 보겠습니다. [근거] https://github.com/revfactory/harness/blob/cceac68ea1d0ad198ef4b7b906cd238375836387/skills/harness/references/orchestrator-template.md">
-      <p class="a kicker">03 · 어떻게 사고하나 · n8n 적용 설계</p>
-      <h2 class="a">다음 에이전트가 읽을 산출물까지 설계한다</h2>
-      <div class="content a"><div class="hx-flow"><div class="hx-node"><b>요청</b><span>01-request.md</span></div><span class="hx-arrow">→</span><div class="hx-node"><b>계획</b><span>02-plan.md</span></div><span class="hx-arrow">→</span><div class="hx-node"><b>변경안</b><span>03-workflow.json</span></div><span class="hx-arrow">→</span><div class="hx-node"><b>검증</b><span>04-review.json</span></div></div><div class="cmd" style="margin-top:1.2rem;">후속 요청 › “알림 문구만 짧게 바꿔줘”</div><div class="row r2 hx-top"><div><div class="code-container"><div class="code-header"><span class="code-dot red"></span><span class="code-dot yellow"></span><span class="code-dot green"></span><span class="code-filename">전달 계약 · 적용 예시</span></div><pre><code>입력: 기존 workflow + review + 피드백
-수정: 알림 메시지 구성 노드
-보존: 조회·변환·업로드 설정
-검증: 메시지 데이터 + 성공/실패 분기</code></pre></div></div><div><div class="panel after"><h3>이전 산출물에서 재개</h3><ul class="bul"><li>작업별 디렉터리에 결과 보존</li><li>이전 버전을 읽고 변경 범위 확인</li><li>수정 구간과 영향받는 연결부 재검증</li></ul></div></div></div><p class="lead hx-takeaway">부분 재작업은 <span class="hi">관련 없는 일을 다시 하지 않기</span> 위한 설계입니다.</p></div>
-      <p class="a foot hx-source"><a href="https://github.com/revfactory/harness/blob/cceac68ea1d0ad198ef4b7b906cd238375836387/skills/harness/references/orchestrator-template.md" target="_blank" rel="noopener noreferrer">revfactory/harness · orchestrator-template.md</a></p>
+      <p class="kicker">03 · 어떻게 사고하나 · n8n 적용 설계</p>
+      <h2>다음 요청에서 <span class="hi">이어 쓸 산출물</span>까지 설계한다</h2>
+      <div class="chat-stage">
+        <div class="chat-window">
+          <div class="chat-window-head"><span class="chat-mark" aria-hidden="true">✳</span><b>Claude Code</b><span>· n8n-automation</span><span class="chat-example">후속 요청 예시</span></div>
+          <div class="chat-message" role="group" aria-label="후속 요청 예시">
+            <p class="chat-sr">알림 문구만 짧게 바꿔줘.</p>
+            <div class="chat-request" aria-hidden="true"><span data-chat-request>알림 문구만 짧게 바꿔줘.</span><span class="chat-caret" data-request-caret></span></div>
+          </div>
+          <div class="chat-window-foot"><span data-chat-status>이전 산출물에서 이어 갑니다</span><span class="chat-send" aria-hidden="true">↑</span></div>
+        </div>
+<div class="chat-work" aria-hidden="true">
+<ol class="work-progress" aria-label="4단계 진행"><li aria-label="1단계 지난 요청의 맥락 읽기"></li><li aria-label="2단계 변경 범위 정하기"></li><li aria-label="3단계 영향받는 곳 재검증"></li><li aria-label="4단계 기록 이어 쓰기"></li></ol>
+<section class="work-scene" data-scene="0" aria-hidden="true" aria-label="1단계 지난 요청의 맥락 읽기">
+<div class="work-heading"><span class="work-number">01 / 04</span><h3>지난 요청의 맥락 읽기</h3></div>
+<div class="work-body"><div class="simple-moment" data-at="0" data-until="3000"><p class="simple-main">n8n에는 <span class="simple-answer">현재 상태</span>만 남습니다</p><p class="simple-sub">왜 이렇게 만들었는지 · 무엇을 검증했는지는 남지 않습니다</p></div><div class="simple-moment" data-at="3000"><div class="simple-scan" aria-hidden="true"><i></i><i></i><i></i></div><p class="simple-main">완료 조건과 검증 근거까지 읽습니다</p><div class="simple-rail"><span>요청</span><i>→</i><span>계획</span><i>→</i><span>변경안</span><i>→</i><span>검증</span></div><p class="simple-sub">01-request.md · 02-plan.md · 03-workflow.json · 04-review.json <span class="simple-muted">(적용 예시)</span></p></div></div>
+</section>
+<section class="work-scene" data-scene="1" aria-hidden="true" aria-label="2단계 변경 범위 정하기">
+<div class="work-heading"><span class="work-number">02 / 04</span><h3>변경 범위 정하기</h3></div>
+<div class="work-body"><div class="simple-moment" data-at="0"><p class="simple-main">수정 · <span class="simple-answer">알림 메시지 구성 노드</span></p><p class="simple-main" data-at="1600">보존 · 조회 · 변환 · 업로드 설정</p><p class="simple-sub" data-at="3200">지킬 약속 · <span class="simple-answer">실패를 성공으로 알리지 않는다</span> <span class="simple-muted">(지난 완료 조건)</span></p></div></div>
+</section>
+<section class="work-scene" data-scene="2" aria-hidden="true" aria-label="3단계 영향받는 곳 재검증">
+<div class="work-heading"><span class="work-number">03 / 04</span><h3>영향받는 곳 재검증</h3></div>
+<div class="work-body"><div class="simple-moment" data-at="0"><p class="simple-main" data-at="0"><span class="simple-success">✓</span> 메시지가 쓰는 데이터</p><p class="simple-main" data-at="1600"><span class="simple-success">✓</span> 성공 · 실패 분기</p><p class="simple-sub" data-at="3200">지난 검증 기준으로 다시 확인 · 문구만 바꿔도 건너뛰지 않습니다</p></div></div>
+</section>
+<section class="work-scene" data-scene="3" aria-hidden="true" aria-label="4단계 기록 이어 쓰기">
+<div class="work-heading"><span class="work-number">04 / 04</span><h3>기록 이어 쓰기</h3></div>
+<div class="work-body"><div class="simple-moment" data-at="0" data-until="3000"><p class="simple-main"><span class="simple-answer">_workspace_n8n/</span>에 이어서 기록합니다</p><p class="simple-sub">새 계획 · 변경안 · 검증 근거 → 다음 요청이 다시 읽습니다</p></div><div class="simple-moment" data-at="3000"><p class="simple-main simple-muted"><span class="simple-label">순정</span>지금 상태만 보고 고칩니다</p><p class="simple-main" data-at="1200"><span class="simple-label">킷</span><span class="simple-answer">왜 만들었고 무엇을 검증했는지</span>까지 읽고 고칩니다</p></div></div>
+</section>
+<span class="work-tag">적용 예시 · 과정 시뮬레이션</span>
+</div>
+      </div>
+      <div class="chat-meta">
+        <p class="foot"><a href="https://github.com/revfactory/harness/blob/cceac68ea1d0ad198ef4b7b906cd238375836387/skills/harness/references/orchestrator-template.md" target="_blank" rel="noopener noreferrer" style="color:var(--text-secondary);text-decoration:none;">revfactory/harness · orchestrator-template.md</a> · 파일명은 적용 예시</p>
+        <div class="chat-controls"><span data-chat-hint>→ 현재 장면 완성</span><button type="button" data-chat-prev aria-label="이전 단계">← 이전</button><button type="button" data-chat-next aria-label="현재 장면 완성 또는 다음 단계">다음 →</button><button class="chat-replay" type="button">↻ 처음부터</button></div>
+      </div>
+<div class="work-print"><p>과정 시뮬레이션 · 후속 요청<br>“알림 문구만 짧게 바꿔줘.”</p><div class="work-print-grid"><div class="work-print-card"><b>1. 지난 요청의 맥락 읽기</b><p>n8n에는 현재 상태만 남음 → 요청·계획·변경안·검증 근거 파일을 먼저 읽음 (파일명은 적용 예시)</p></div><div class="work-print-card"><b>2. 변경 범위 정하기</b><p>수정: 알림 메시지 구성 노드 · 보존: 조회·변환·업로드 설정 · 지난 완료 조건 유지</p></div><div class="work-print-card"><b>3. 영향받는 곳 재검증</b><p>메시지가 쓰는 데이터 + 성공·실패 분기를 지난 검증 기준으로 확인</p></div><div class="work-print-card"><b>4. 기록 이어 쓰기</b><p>순정: 지금 상태만 보고 고침 · 킷: 왜 만들었고 무엇을 검증했는지까지 읽고 고침</p></div></div></div>
+      <p class="chat-sr" data-chat-announcement role="status" aria-live="polite"></p>
     </div>
 
-    <!-- 14 [재구성] Harness design -->
-    <div class="slide hx" data-notes="[재구성 · n8n 적용 설계] [80초] 빌더가 자기 변경을 설명하는 것과, 기대 조건을 만족했다고 판정하는 것은 다른 일입니다. 이 설계에서는 빌더와 검증자를 별도 역할로 둡니다. 빌더는 승인 계획과 현재 워크플로우를 받아 변경안을 만들고, 검증자는 완료 조건과 실제 산출물을 읽어 비교합니다.
+    <!-- 14 [재구성] Plan mode vs builder/reviewer split -->
+    <div class="slide hx" data-notes="[재구성 · n8n 적용 설계] [80초] [조작] 진입하면 Plan 모드 행만 보입니다. →를 누를 때마다 ① 이 설계 행 ② 완료 판정 열 강조와 결론 문장이 차례로 나타납니다. 한 번 더 누르면 15장입니다. ←는 하나씩 되돌립니다.
 
-화면의 정의는 역할 계약 예시입니다. 빌더에게는 변경 도구를, 검증자에게는 읽기와 검사 실행 도구를 배정합니다. 검증자가 읽기만 할 수 있으면 실행 가능한 검사를 못 하므로 검사 실행 권한도 필요합니다. 실제 권한 제한은 사용하는 실행 환경에 별도로 설정해야 합니다. Markdown에 “금지”라고 적는 것 자체가 권한 차단 코드는 아닙니다.
+[Plan 모드] Claude Code의 Plan 모드도 먼저 조사하고 계획을 세운 뒤 승인을 받습니다. 이 킷의 계획 승인 게이트와 같은 역할입니다. 그런데 승인 뒤에는 같은 Claude가 구현하고, 끝났는지도 스스로 판단해 완료했다고 보고합니다.
 
-검증자는 통과·실패·미검증을 구분하고 근거를 반환합니다. 실패하면 빌더가 수정하지만, 수정했다는 답변만으로 닫지 않고 다시 검증합니다. 이것이 생성-검증 패턴을 적용한 루프입니다.
+[→ 이 설계] 승인 뒤가 다릅니다. 빌더는 변경 도구로 만들고, 검증자는 읽기와 검사 실행 도구로 완료 조건과 실제 산출물을 비교합니다. 권한 제한은 실행 환경에서 설정해야 합니다. Markdown에 금지라고 적는 것만으로는 차단되지 않습니다.
+
+검증자는 통과·실패·미검증을 근거와 함께 돌려주고, 실패하면 오류 보고서를 받은 빌더가 고친 뒤 다시 검증합니다.
+
+[→ 완료 판정 · 결론] 차이는 계획이 아니라, 승인 뒤 누가 무엇으로 완료를 판정하느냐입니다. 참고로 현재 킷은 빌더가 validate 도구로 검사하고, 검증자 분리는 적용 설계입니다.
 
 [전환] 그럼 검증자는 구체적으로 무엇을 비교할까요? [근거] https://github.com/revfactory/harness/blob/cceac68ea1d0ad198ef4b7b906cd238375836387/skills/harness/references/agent-design-patterns.md">
       <p class="a kicker">04 · 어떻게 검증하나 · n8n 적용 설계</p>
-      <h2 class="a">빌더에게 완료 판정까지 맡기지 않는다</h2>
-      <div class="content a"><div class="row r2 hx-top"><div><div class="code-container"><div class="code-header"><span class="code-dot red"></span><span class="code-dot yellow"></span><span class="code-dot green"></span><span class="code-filename">builder.md · 역할 정의 예시</span></div><pre><code>입력: 승인 계획 + 현재 workflow
-출력: 변경안 + 변경 요약
-도구: 워크플로우 변경 도구
-수정: 보고서가 가리킨 범위
-완료: 검증자에게 산출물 전달</code></pre></div></div><div><div class="code-container"><div class="code-header"><span class="code-dot red"></span><span class="code-dot yellow"></span><span class="code-dot green"></span><span class="code-filename">reviewer.md · 역할 정의 예시</span></div><pre><code>입력: 완료 조건 + 실제 산출물
-출력: 판정 + 근거 + 수정 대상
-도구: 읽기 + 검사 실행 도구
-판정: 통과 / 실패 / 미검증
-실패: 빌더에게 오류 보고서 반환</code></pre></div></div></div><div class="hx-flow"><div class="hx-node"><b>빌더</b><span>변경안 생성</span></div><span class="hx-arrow">→</span><div class="hx-node"><b>검증자</b><span>기준과 비교</span></div><span class="hx-arrow">→</span><div class="hx-node"><b>오류 보고서</b><span>수정 범위 특정</span></div><span class="hx-arrow">→</span><div class="hx-node"><b>빌더</b><span>수정 후 재제출</span></div></div><p class="lead hx-takeaway">수정 결과는 다시 검증합니다. <span class="hi">검증 근거가 완료 판정의 입력</span>입니다.</p></div>
-      <p class="a foot hx-source"><a href="https://github.com/revfactory/harness/blob/cceac68ea1d0ad198ef4b7b906cd238375836387/skills/harness/references/agent-design-patterns.md" target="_blank" rel="noopener noreferrer">revfactory/harness · agent-design-patterns.md</a></p>
+      <h2 class="a">계획 승인 뒤에도, <span class="hi">완료 판정</span>은 만든 쪽에 맡기지 않는다</h2>
+      <div class="content a"><div class="plan-compare">
+        <div class="pc-row pc-head" aria-hidden="true"><span></span><span>계획</span><span>승인</span><span>구현</span><span>완료 판정</span></div>
+        <div class="pc-row pc-plan"><div class="pc-label">Plan 모드</div><div class="pc-cell">읽기 전용으로 조사 · 계획</div><div class="pc-cell">사용자가 계획 승인</div><div class="pc-cell">같은 Claude가 구현</div><div class="pc-cell pc-verdict">같은 Claude가 <b>“완료했습니다”</b><small>만든 쪽이 스스로 판정</small></div></div>
+        <div class="reveal"><div class="pc-row pc-design"><div class="pc-label">이 설계</div><div class="pc-cell">요건 확인 → 계획</div><div class="pc-cell">사용자가 계획 승인</div><div class="pc-cell"><b>빌더</b> · 변경 도구로 구현</div><div class="pc-cell pc-verdict"><b>검증자</b> · 완료 조건 + 실제 산출물<small><code>통과</code> · <code>실패</code> · <code>미검증</code> 을 근거와 함께</small></div></div>
+        <p class="pc-loop">↺ 실패 → <b>오류 보고서</b> → 빌더 수정 → <b>재검증</b> (최대 2회)</p></div>
+      </div><p class="lead hx-takeaway pc-takeaway reveal">차이는 계획이 아니라, <span class="hi">승인 뒤 누가 무엇으로 완료를 판정하느냐</span>입니다.</p></div>
+      <p class="a foot hx-source"><a href="https://github.com/revfactory/harness/blob/cceac68ea1d0ad198ef4b7b906cd238375836387/skills/harness/references/agent-design-patterns.md" target="_blank" rel="noopener noreferrer">revfactory/harness · agent-design-patterns.md</a> · Plan 모드는 Claude Code 기본 흐름 기준 · 별도 검증자는 적용 설계(현재 킷은 빌더가 validate 도구로 검사)</p>
     </div>
 
     <!-- 15 [재구성] Harness design -->
-    <div class="slide hx" data-notes="[재구성 · n8n 적용 설계] [90초] 이 장은 실제 pipeline.json 안의 01 XML 결과 정규화 코드를 바탕으로 합니다. 왼쪽은 필수 필드를 일부러 뺀 테스트 입력 예시입니다. 앞 노드는 success와 종료 코드 0을 줬지만, 승인일 미기재 건수인 approvalDateMissingCount가 없습니다.
+    <div class="slide hx" data-notes="[재구성 · n8n 적용 설계] [90초] [조작] 진입하면 Plan 모드 + n8n-mcp 줄만 보입니다. 한 번 누르면 이 설계 줄, 한 번 더 누르면 16장입니다.
 
-뒤 노드 코드는 해당 값을 읽고 음수가 아닌 정수인지 확인합니다. 값이 없으면 0이 아니라 null이 됩니다. 그리고 정상 실행이라고 주장한 결과에서 필수 건수가 null이면 calendarStatus를 failed로 돌려줍니다. 따라서 명령이 종료됐다는 사실과 업무 결과가 준비됐다는 사실은 다릅니다.
+[대조] 여기부터 다섯 장은 같은 n8n-mcp 도구를 쓴다는 전제로 비교합니다. validate도 autofix도 test도 n8n-mcp에 있습니다. 차이는 도구가 아니라 절차입니다. Plan 모드에서는 무엇을 검사할지 정해 둔 규칙이 없어서, validate 통과를 완료로 보기 쉽습니다.
 
-출력 노드와 입력 노드가 존재하는지만 검사했다면 이 문제를 놓칩니다. 앞 노드가 무엇을 내보냈는지, 뒤 노드가 무엇을 기대하는지 양쪽을 비교해야 합니다. 알림 코드도 유효한 건수는 숫자로 표시하고, 확인하지 못한 값은 “확인 불가”로 표시합니다. 왼쪽 데이터는 검사를 설명하기 위한 예시이며, 실제 장애 로그는 아닙니다.
+[→ 이 설계] 이 설계는 샘플 입력으로 앞 노드 출력과 뒤 노드 기대를 비교합니다. 화면은 실제 pipeline.json의 01 XML 결과 정규화 코드입니다. 왼쪽은 필수 필드를 일부러 뺀 테스트 입력이고, 실제 장애 로그는 아닙니다. 앞 노드는 success와 종료 코드 0을 줬지만 approvalDateMissingCount가 없습니다. 뒤 노드는 이 값을 0이 아니라 null로 보고, calendarStatus를 failed로 돌려줍니다. 구조 검사만으로는 이 문제를 놓칩니다. 명령이 끝난 것과 업무 결과가 준비된 것은 다릅니다.
 
 [전환] 이 데이터 검사는 전체 검증 중 어느 위치에서 할까요? [근거] https://github.com/revfactory/harness/blob/cceac68ea1d0ad198ef4b7b906cd238375836387/skills/harness/references/qa-agent-guide.md">
       <p class="a kicker">04 · 어떻게 검증하나 · n8n 적용 설계</p>
       <h2 class="a">노드가 있는지보다, <br>연결 양쪽의 데이터가 맞는지 본다</h2>
+      <div class="pm-contrast a"><div class="pm-row pm-plan"><span class="pm-label">Plan 모드 + n8n-mcp</span><span>validate 통과 → 구조가 맞으면 완료로 보기 쉬움</span></div><div class="pm-row pm-design reveal"><span class="pm-label">이 설계</span><span>샘플 입력으로 앞 노드 출력과 뒤 노드 기대를 비교</span></div></div>
       <div class="content a"><div class="row r2 hx-top"><div><div class="code-container"><div class="code-header"><span class="code-dot red"></span><span class="code-dot yellow"></span><span class="code-dot green"></span><span class="code-filename">앞 노드 출력 · 필드 누락을 넣은 테스트 입력</span></div><pre><code>{
   &quot;status&quot;: &quot;success&quot;,
   &quot;exitCode&quot;: 0,
@@ -1039,32 +1109,36 @@
     ? value : null;
 
 const approvalDateMissingCount =
-  countOrNull(details.approvalDateMissingCount);</code></pre></div></div></div><div class="hx-band hx-danger"><b>필수 필드 누락</b> → <code>null</code> → 정상 주장 거부 → <code>calendarStatus: failed</code></div><p>실제 <b>01 XML 결과 정규화</b>는 성공 상태·종료 코드 0이어도 필수 점검 건수가 없으면 실패를 반환합니다.</p><p class="lead hx-takeaway">모르는 값을 <span class="hi">0건으로 채우지 않습니다.</span> “문제 없음”과 “확인 못 함”은 다릅니다.</p></div>
-      <p class="a foot hx-source"><a href="https://github.com/revfactory/harness/blob/cceac68ea1d0ad198ef4b7b906cd238375836387/skills/harness/references/qa-agent-guide.md" target="_blank" rel="noopener noreferrer">revfactory/harness · qa-agent-guide.md</a> · 실제 코드: pipeline.json / 01 XML 결과 정규화</p>
+  countOrNull(details.approvalDateMissingCount);</code></pre></div></div></div><div class="hx-band hx-danger"><b>필수 필드 누락</b> → <code>null</code> → 정상 주장 거부 → <code>calendarStatus: failed</code></div><p class="lead hx-takeaway">모르는 값을 <span class="hi">0건으로 채우지 않습니다.</span> “문제 없음”과 “확인 못 함”은 다릅니다.</p></div>
+      <p class="a foot hx-source"><a href="https://github.com/revfactory/harness/blob/cceac68ea1d0ad198ef4b7b906cd238375836387/skills/harness/references/qa-agent-guide.md" target="_blank" rel="noopener noreferrer">revfactory/harness · qa-agent-guide.md</a> · 실제 코드: pipeline.json / 01 XML 결과 정규화 · 비교는 같은 n8n-mcp 도구(validate · autofix · test) 기준</p>
     </div>
 
     <!-- 16 [재구성] Harness design -->
-    <div class="slide hx" data-notes="[재구성 · n8n 적용 설계] [70초] 검증은 세 층으로 나눕니다. 첫 번째는 구조와 설정입니다. 노드 설정, 표현식, 연결 참조가 유효한지 검사합니다. n8n 검증 도구가 맡을 수 있는 영역입니다. 두 번째는 연결 구간입니다. 샘플 데이터를 넣고 실제 값이 다음 노드가 기대하는 형태와 의미를 만족하는지 봅니다. 방금 필수 건수 누락이 여기에 해당합니다.
+    <div class="slide hx" data-notes="[재구성 · n8n 적용 설계] [70초] [조작] 진입하면 Plan 모드 + n8n-mcp 줄만 보입니다. 한 번 누르면 이 설계 줄, 한 번 더 누르면 17장입니다.
 
-세 번째는 전체 흐름입니다. 정상일 때 기대한 메시지가 만들어지는지, 실패일 때 성공 알림이 선택되지 않는지 확인합니다. 조회·변환 구간을 먼저 검사하고 업로드·알림을 연결한 뒤 전체를 다시 봅니다. 외부 전송 검사는 테스트용 채널·저장소로 수행합니다.
+[대조] Plan 모드에서는 무엇을 어디까지 검사할지 매번 Claude가 판단합니다. test 도구가 있어도 언제, 어떤 입력으로 돌릴지는 정해져 있지 않습니다.
 
-설정이 맞다고 업무 결과까지 맞는 것은 아닙니다. autofix는 지원하는 설정 오류를 고치는 도구이고, 누락 데이터의 의미까지 판단해 모든 오류를 고쳐주는 것은 아닙니다.
+[→ 이 설계] 이 설계는 세 층을 순서대로 거칩니다. 첫째 구조와 설정, validate가 맡는 영역입니다. 둘째 연결 구간, 샘플 데이터가 다음 노드의 기대를 만족하는지 봅니다. 방금 필수 건수 누락이 여기서 잡힙니다. 셋째 전체 흐름, 실패일 때 성공 알림이 선택되지 않는지 확인합니다. 외부 전송은 테스트용 채널·저장소로 검사합니다. autofix는 설정 오류를 고치는 도구이지, 누락 데이터의 의미까지 고쳐주지는 않습니다.
 
 [전환] 실패를 발견했다면 빌더가 고칠 수 있는 형태로 돌려줘야 합니다. [근거] https://github.com/revfactory/harness/blob/cceac68ea1d0ad198ef4b7b906cd238375836387/skills/harness/references/qa-agent-guide.md">
       <p class="a kicker">04 · 어떻게 검증하나 · n8n 적용 설계</p>
       <h2 class="a">한 번의 검증으로 끝내지 않는다</h2>
+      <div class="pm-contrast a"><div class="pm-row pm-plan"><span class="pm-label">Plan 모드 + n8n-mcp</span><span>무엇을 어디까지 검사할지 매번 Claude가 판단</span></div><div class="pm-row pm-design reveal"><span class="pm-label">이 설계</span><span>구조 → 연결 구간 → 전체 흐름, 3층을 순서대로</span></div></div>
       <div class="content a"><table><thead><tr><th>검증 층</th><th>무엇을 확인하나</th><th>실패를 찾는 예</th></tr></thead><tbody><tr><td>1 · 구조·설정</td><td>노드 설정 · 표현식 · 연결 참조</td><td>잘못된 파라미터 · 존재하지 않는 참조</td></tr><tr><td>2 · 연결 구간</td><td>샘플 입력 → 변환 → 뒤 노드 기대</td><td>종료 코드 0 + 필수 점검 건수 누락</td></tr><tr><td>3 · 전체 흐름</td><td>정상·실패 경로와 최종 메시지</td><td>실패했는데 성공 알림 경로가 선택됨</td></tr></tbody></table><div class="hx-flow"><div class="hx-node"><b>조회·변환</b><span>샘플로 데이터 계약 확인</span></div><span class="hx-arrow">→</span><div class="hx-node"><b>검사 통과</b><span>다음 구간 연결</span></div><span class="hx-arrow">→</span><div class="hx-node"><b>업로드·알림</b><span>테스트용 채널·저장소에서 확인</span></div></div><p class="lead hx-takeaway">구간마다 확인하고, 마지막에는 <span class="hi">전체 결과를 다시 확인</span>합니다.</p><p class="foot">설정 자동수정 도구가 모든 업무 오류를 고치지는 않습니다. 데이터 의미·데이터 계약 오류는 빌더가 수정합니다.</p></div>
       <p class="a foot hx-source"><a href="https://github.com/revfactory/harness/blob/cceac68ea1d0ad198ef4b7b906cd238375836387/skills/harness/references/qa-agent-guide.md" target="_blank" rel="noopener noreferrer">revfactory/harness · qa-agent-guide.md</a></p>
     </div>
 
     <!-- 17 [재구성] Harness design -->
-    <div class="slide hx" data-notes="[재구성 · n8n 적용 설계] [65초] “검증 실패, 다시 고쳐”라고만 돌려주면 빌더는 다시 전체를 추측합니다. 그래서 오류 보고서의 형식을 고정합니다. 위치, 기대값, 실제값, 근거, 수정 대상입니다. 이 예시의 기대값은 음수가 아닌 정수인데 실제 입력에는 필드가 없습니다. 정규화 노드가 실패 처리한 것은 잘못이 아니라 검사가 작동한 결과입니다.
+    <div class="slide hx" data-notes="[재구성 · n8n 적용 설계] [65초] [조작] 진입하면 Plan 모드 + n8n-mcp 줄만 보입니다. 한 번 누르면 이 설계 줄, 한 번 더 누르면 18장입니다.
 
-그러므로 실패를 없애겠다고 null을 0으로 바꾸면 안 됩니다. 앞 노드 결과에 데이터가 빠졌는지, 이름이 달라 전달되지 않았는지 확인해야 합니다. 검증자는 원인을 단정하지 않고 관측한 차이와 확인할 대상을 전달합니다. 빌더가 그 범위를 고친 다음 정상 입력과 누락 입력을 모두 다시 검사합니다.
+[대조] Plan 모드에서 실패하면 에러 문구를 보거나 사람이 “다시 고쳐”라고 하고, Claude가 원인을 추측해 고칩니다.
 
-화면은 보고 형식 예시이며 실제 실행 로그가 아닙니다. [전환] 이 왕복이 끝나지 않을 때도 미리 정해야 합니다. [근거] https://github.com/revfactory/harness/blob/cceac68ea1d0ad198ef4b7b906cd238375836387/skills/harness/references/qa-agent-guide.md">
+[→ 이 설계] 이 설계는 오류 보고서 형식을 고정합니다. 위치, 기대값, 실제값, 근거, 수정 대상입니다. 기대값은 음수가 아닌 정수인데 실제 입력에는 필드가 없습니다. 그렇다고 null을 0으로 바꾸면 안 됩니다. 검증자는 원인을 단정하지 않고 확인할 대상을 전달하고, 빌더는 그 범위를 고친 뒤 정상·누락 입력을 모두 다시 검사합니다. 화면은 형식 예시이며 실제 실행 로그가 아닙니다.
+
+[전환] 이 왕복이 끝나지 않을 때도 미리 정해야 합니다. [근거] https://github.com/revfactory/harness/blob/cceac68ea1d0ad198ef4b7b906cd238375836387/skills/harness/references/qa-agent-guide.md">
       <p class="a kicker">04 · 어떻게 검증하나 · n8n 적용 설계</p>
       <h2 class="a">“다시 고쳐” 대신 수정 가능한 오류를 돌려준다</h2>
+      <div class="pm-contrast a"><div class="pm-row pm-plan"><span class="pm-label">Plan 모드 + n8n-mcp</span><span>에러 문구나 “다시 고쳐” → 원인을 추측해 수정</span></div><div class="pm-row pm-design reveal"><span class="pm-label">이 설계</span><span>위치 · 기대값 · 실제값 · 근거 · 수정 대상을 고정 형식으로</span></div></div>
       <div class="content a"><div class="row r2 hx-top"><div><table><thead><tr><th>보고서 필드</th><th>필수 점검 건수 누락 사례</th></tr></thead><tbody><tr><td>위치</td><td>XML 결과 → 정규화 노드</td></tr><tr><td>기대값</td><td><code>approvalDateMissingCount</code><br>음수가 아닌 정수</td></tr><tr><td>실제값</td><td>필드 없음 → <code>null</code></td></tr><tr><td>근거</td><td>누락 입력 샘플에서 데이터 계약 불충족</td></tr><tr><td>수정 대상</td><td>앞 노드 결과 또는 결과 필드 매핑</td></tr></tbody></table></div><div><div class="code-container"><div class="code-header"><span class="code-dot red"></span><span class="code-dot yellow"></span><span class="code-dot green"></span><span class="code-filename">빌더에 돌려주는 수정 지시 · 예시</span></div><pre><code>필수 점검 건수의 누락 원인을 확인한다.
 앞 노드 결과와 필드 매핑을 수정한다.
 
@@ -1075,27 +1149,33 @@ const approvalDateMissingCount =
     </div>
 
     <!-- 18 [재구성] Harness design -->
-    <div class="slide hx" data-notes="[재구성 · n8n 적용 설계] [65초] 이 적용 설계에서는 초기 생성 뒤 수정 기회를 최대 두 번 둡니다. 매 수정 뒤 같은 기준으로 재검증하고, 필수 검사가 계속 실패하면 중단해 원인과 남은 작업을 보고합니다. 검사를 못 한 상태도 통과로 바꾸지 않습니다. 두 번은 이 발표에서 선택한 정책이지, 모든 상황의 정답은 아닙니다.
+    <div class="slide hx" data-notes="[재구성 · n8n 적용 설계] [65초] [조작] 진입하면 Plan 모드 + n8n-mcp 줄만 보입니다. 한 번 누르면 이 설계 줄, 한 번 더 누르면 19장입니다.
 
-또 하나는 AI가 워크플로우를 수정하는 것과 외부 작업을 다시 실행하는 것을 구분하는 것입니다. 업로드 요청이 시간 초과됐다고 이미 업로드되지 않았다는 뜻은 아닙니다. 반영 여부부터 확인해야 중복 전송을 피할 수 있습니다.
+[대조] Plan 모드에는 몇 번 고치고 멈출지 정한 규칙이 없습니다. 그리고 테스트 실행을 다시 돌리면 업로드나 전송이 중복될 수 있습니다.
 
-harness 템플릿의 일반 에이전트 장애 재시도와 생성-검증 수정 횟수는 다른 정책입니다. 이 사례에서는 필수 검증 실패를 누락한 채 성공 결과로 진행하지 않습니다. [전환] 실행을 고치는 일과 킷 자체를 개선하는 일도 나누어 보겠습니다. [근거] https://github.com/revfactory/harness/blob/cceac68ea1d0ad198ef4b7b906cd238375836387/skills/harness/references/orchestrator-template.md">
+[→ 이 설계] 이 설계는 수정 기회를 최대 두 번 두고, 매번 같은 기준으로 재검증합니다. 계속 실패하면 중단하고 원인과 남은 작업을 보고합니다. 검사를 못 한 상태도 성공으로 바꾸지 않습니다. 두 번은 이 발표에서 고른 정책입니다. 또 업로드가 시간 초과됐다고 반영되지 않았다는 뜻은 아닙니다. 반영 여부부터 확인해야 중복 전송을 피합니다. AI의 수정 재시도와 외부 작업 재실행은 따로 관리합니다.
+
+[전환] 실행을 고치는 일과 킷 자체를 개선하는 일도 나누어 보겠습니다. [근거] https://github.com/revfactory/harness/blob/cceac68ea1d0ad198ef4b7b906cd238375836387/skills/harness/references/orchestrator-template.md">
       <p class="a kicker">04 · 어떻게 검증하나 · n8n 적용 설계</p>
       <h2 class="a">재시도 횟수와 멈출 조건도 구현의 일부다</h2>
+      <div class="pm-contrast a"><div class="pm-row pm-plan"><span class="pm-label">Plan 모드 + n8n-mcp</span><span>몇 번 고치고 멈출지 규칙 없음 · 재실행이 업로드를 중복할 수 있음</span></div><div class="pm-row pm-design reveal"><span class="pm-label">이 설계</span><span>최대 2회 수정 · 미검증은 성공 아님 · 외부 쓰기는 반영 여부부터 확인</span></div></div>
       <div class="content a"><div class="hx-flow"><div class="hx-node"><b>검증</b><span>기준과 실제 비교</span></div><span class="hx-arrow">→</span><div class="hx-node"><b>수정 가능</b><span>빌더에게 반환</span></div><span class="hx-arrow">→</span><div class="hx-node"><b>최대 2회 수정</b><span>매번 재검증</span></div><span class="hx-arrow">→</span><div class="hx-node"><b>종료 판정</b><span>통과 또는 실패 보고</span></div></div><table><thead><tr><th>상태</th><th>다음 행동</th></tr></thead><tbody><tr><td>통과</td><td>확인한 범위와 근거를 남기고 완료</td></tr><tr><td>2회 수정 후에도 필수 검증 실패</td><td>자동 수정 중단 → 실패 원인과 남은 작업 보고</td></tr><tr><td>미검증 · 실행 권한 없음</td><td>성공 처리하지 않음 → 필요한 확인 명시</td></tr><tr><td>업로드·전송 응답 불명확</td><td>이미 반영됐는지 확인 → 중복 실행 가능성 판단</td></tr></tbody></table><p class="lead hx-takeaway">AI의 <span class="hi">수정 재시도</span>와 외부 서비스의 <span class="hi">작업 재실행</span>은 따로 관리합니다.</p></div>
       <p class="a foot hx-source"><a href="https://github.com/revfactory/harness/blob/cceac68ea1d0ad198ef4b7b906cd238375836387/skills/harness/references/orchestrator-template.md" target="_blank" rel="noopener noreferrer">revfactory/harness · orchestrator-template.md</a></p>
     </div>
 
     <!-- 19 [재구성] Harness design -->
-    <div class="slide hx" data-notes="[재구성 · n8n 적용 설계] [70초] 지금 요청의 워크플로우를 고치는 루프와, 다음 요청에서 더 잘하도록 킷을 고치는 루프는 다릅니다. 앞의 루프는 빌더와 검증자가 돌고, 뒤의 루프는 반복된 실패를 보고 스킬과 검사를 개선하는 과정입니다. 같은 실패가 반복되면 단순히 프롬프트를 길게 붙이기보다, 누락된 판단 기준을 넣거나 반복 작성되는 검사를 스크립트로 묶습니다.
+    <div class="slide hx" data-notes="[재구성 · n8n 적용 설계] [70초] [조작] 진입하면 Plan 모드 + n8n-mcp 줄만 보입니다. 한 번 누르면 이 설계 줄, 한 번 더 누르면 20장입니다.
 
-개선 전후에는 같은 요청과 입력으로 비교합니다. 정상 데이터, 필수 건수가 빠진 데이터, 그리고 IF 설명과 분기 추가처럼 비슷하지만 다른 요청을 사용합니다. 결과가 존재한다는 쉬운 기준만으로는 킷의 가치를 구별할 수 없습니다. 오류를 잡았는지, 정상 결과를 잘못 막지 않았는지, 시간과 재작업은 어땠는지를 함께 봅니다. 화면의 대시는 아직 측정하지 않았다는 뜻입니다.
+[대조] Plan 모드에서 얻은 교훈은 그 대화에 남습니다. 다음에도 쓰려면 CLAUDE.md 같은 곳에 따로 남기도록 챙겨야 합니다.
+
+[→ 이 설계] 이 설계는 루프를 둘로 나눕니다. 이번 워크플로우를 고치는 루프와, 반복된 실패를 보고 스킬과 검사를 고치는 루프입니다. 프롬프트를 길게 붙이기보다 빠진 판단 기준을 넣거나 반복되는 검사를 스크립트로 묶습니다. 개선 전후는 같은 요청과 입력으로 비교합니다. 정상 데이터, 필수 건수 누락, IF 설명과 분기 추가 같은 비슷한 요청입니다. 오류를 잡았는지, 정상 결과를 막지 않았는지, 재작업이 줄었는지 봅니다. 대시는 아직 측정하지 않았다는 뜻입니다.
 
 [전환] 여기까지는 적용 설계와 검사 방법입니다. 이제 이 킷을 팀원이 어떻게 받아 쓰는지부터 보겠습니다. [근거] https://github.com/revfactory/harness/blob/cceac68ea1d0ad198ef4b7b906cd238375836387/skills/harness/references/skill-testing-guide.md">
       <p class="a kicker">04 · 어떻게 검증하나 · n8n 적용 설계</p>
       <h2 class="a">결과물과 킷을 <br>서로 다른 루프로 개선한다</h2>
-      <div class="content a"><div class="row r2 hx-top"><div><div class="panel"><h3>이번 요청의 결과물을 수정</h3><p class="lead">생성 → 검증 → 부분 수정</p><p>대상: 워크플로우와 연결 데이터<br>종료: 완료 조건 충족 또는 수정 상한</p></div></div><div><div class="panel after"><h3>다음 요청의 수행 방법을 개선</h3><p class="lead">실패 패턴 → 규칙·검사 개선 → 비교</p><p>대상: 스킬 · 역할 정의 · 검증 스크립트<br>반복 작성한 검사는 실행 가능한 코드로 묶기</p></div></div></div><table><thead><tr><th>같은 요청·입력으로 비교</th><th>기존 버전</th><th>개선 버전</th><th>측정할 것</th></tr></thead><tbody><tr><td>정상 점검 데이터</td><td>—</td><td>—</td><td>기대 결과 일치</td></tr><tr><td>필수 건수 누락</td><td>—</td><td>—</td><td>실패 감지 · 성공 오판 방지</td></tr><tr><td>IF 설명 / IF 분기 추가</td><td>—</td><td>—</td><td>일반 응답 / 변경 경로 구분</td></tr></tbody></table><p class="foot">비교 설계 예시 · —는 미측정. 새 스킬은 스킬 없이, 개선 스킬은 수정 전 버전과 비교합니다.</p><p class="lead hx-takeaway">더 길어진 지시문보다 <span class="hi">더 잘 구별하는 검사와 줄어든 재작업</span>을 확인합니다.</p></div>
-      <p class="a foot hx-source"><a href="https://github.com/revfactory/harness/blob/cceac68ea1d0ad198ef4b7b906cd238375836387/skills/harness/references/skill-testing-guide.md" target="_blank" rel="noopener noreferrer">revfactory/harness · skill-testing-guide.md</a></p>
+      <div class="pm-contrast a"><div class="pm-row pm-plan"><span class="pm-label">Plan 모드 + n8n-mcp</span><span>교훈을 다음에 쓰려면 CLAUDE.md 등에 따로 남기도록 챙겨야 함</span></div><div class="pm-row pm-design reveal"><span class="pm-label">이 설계</span><span>실패 패턴 → 스킬 · 검사 개선 → 같은 입력으로 전후 비교</span></div></div>
+      <div class="content a"><div class="row r2 hx-top"><div><div class="panel"><h3>이번 요청의 결과물을 수정</h3><p class="lead">생성 → 검증 → 부분 수정</p><p>대상: 워크플로우와 연결 데이터<br>종료: 완료 조건 충족 또는 수정 상한</p></div></div><div><div class="panel after"><h3>다음 요청의 수행 방법을 개선</h3><p class="lead">실패 패턴 → 규칙·검사 개선 → 비교</p><p>대상: 스킬 · 역할 정의 · 검증 스크립트<br>반복 작성한 검사는 실행 가능한 코드로 묶기</p></div></div></div><table><thead><tr><th>같은 요청·입력으로 비교</th><th>기존 버전</th><th>개선 버전</th><th>측정할 것</th></tr></thead><tbody><tr><td>정상 점검 데이터</td><td>—</td><td>—</td><td>기대 결과 일치</td></tr><tr><td>필수 건수 누락</td><td>—</td><td>—</td><td>실패 감지 · 성공 오판 방지</td></tr><tr><td>IF 설명 / IF 분기 추가</td><td>—</td><td>—</td><td>일반 응답 / 변경 경로 구분</td></tr></tbody></table><p class="lead hx-takeaway">더 길어진 지시문보다 <span class="hi">더 잘 구별하는 검사와 줄어든 재작업</span>을 확인합니다.</p></div>
+      <p class="a foot hx-source"><a href="https://github.com/revfactory/harness/blob/cceac68ea1d0ad198ef4b7b906cd238375836387/skills/harness/references/skill-testing-guide.md" target="_blank" rel="noopener noreferrer">revfactory/harness · skill-testing-guide.md</a> · 비교 설계 예시 · —는 미측정 · 새 스킬은 스킬 없이, 개선 스킬은 수정 전 버전과 비교</p>
     </div>
 
     <!-- ===== 5. 설치·업데이트와 데모 ===== -->
@@ -1752,7 +1832,7 @@ harness 템플릿의 일반 에이전트 장애 재시도와 생성-검증 수�
     function mountChatFlow(root) {
       const command = root.querySelector('[data-chat-command]');
       const request = root.querySelector('[data-chat-request]');
-      const commandText = command.textContent, requestText = request.textContent;
+      const commandText = command ? command.textContent : '', requestText = request.textContent;
       const commandChars = Array.from(commandText), requestChars = Array.from(requestText);
       const commandCaret = root.querySelector('[data-command-caret]');
       const requestCaret = root.querySelector('[data-request-caret]');
@@ -1765,7 +1845,11 @@ harness 템플릿의 일반 에이전트 장애 재시도와 생성-검증 수�
       const hint = root.querySelector('[data-chat-hint]');
       const announcement = root.querySelector('[data-chat-announcement]');
       const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
-      const requestStart = 550 + commandChars.length * 32 + 280;
+      const requestStart = command ? 550 + commandChars.length * 32 + 280 : 550;
+      const lastScene = scenes.length - 1;
+      const typingText = root.dataset.chatTyping || '하고 싶은 일을 적어 주세요';
+      const doneText = root.dataset.chatDone || '요청 입력 완료';
+      const readyText = root.dataset.chatReady || '요청 입력 완료 · 다음으로 작업 과정을 봅니다';
       const liftStart = requestStart + requestChars.length * 55 + 620;
       const introEnd = liftStart + 1050;
       const duration = 6200; // Finish the current scene, then wait for presenter input.
@@ -1778,7 +1862,7 @@ harness 템플릿의 일반 에이전트 장애 재시도와 생성-검증 수�
       }
       function stop() { cancelFrame(); playing = false; }
       function setHint() {
-        hint.textContent = playing ? '→ 현재 장면 완성' : sceneIndex === 6 ? '→ 다음 슬라이드' : '→ 다음 단계';
+        hint.textContent = playing ? '→ 현재 장면 완성' : sceneIndex === lastScene ? '→ 다음 슬라이드' : '→ 다음 단계';
         root.dataset.chatPlaying = String(playing);
       }
       function sceneBeats(time, instant = false) {
@@ -1809,18 +1893,22 @@ harness 템플릿의 일반 에이전트 장애 재시도와 생성-검증 수�
         stop(); mode = 'request'; sceneIndex = -1;
         root.classList.add('chat-instant'); root.dataset.chatPhase = 'request'; root.dataset.chatStep = '0';
         composer.setAttribute('aria-hidden', 'false'); work.setAttribute('aria-hidden', 'true');
-        command.textContent = commandText; request.textContent = requestText;
-        commandCaret.hidden = requestCaret.hidden = true;
-        status.textContent = '요청 입력 완료 · 다음으로 작업 과정을 봅니다'; setHint();
+        if (command) command.textContent = commandText;
+        request.textContent = requestText;
+        if (commandCaret) commandCaret.hidden = true;
+        requestCaret.hidden = true;
+        status.textContent = readyText; setHint();
         announcement.textContent = '요청 입력 완료. 다음 입력으로 분석을 시작합니다.';
       }
       function renderIntro() {
         const cc = Math.max(0, Math.min(commandChars.length, Math.floor((elapsed - 550) / 32)));
         const rc = Math.max(0, Math.min(requestChars.length, Math.floor((elapsed - requestStart) / 55)));
-        command.textContent = commandChars.slice(0, cc).join(''); request.textContent = requestChars.slice(0, rc).join('');
-        commandCaret.hidden = elapsed >= requestStart; requestCaret.hidden = elapsed < requestStart;
+        if (command) command.textContent = commandChars.slice(0, cc).join('');
+        request.textContent = requestChars.slice(0, rc).join('');
+        if (commandCaret) commandCaret.hidden = elapsed >= requestStart;
+        requestCaret.hidden = elapsed < requestStart;
         root.dataset.chatPhase = elapsed >= liftStart ? 'lifting' : 'typing';
-        status.textContent = elapsed >= liftStart ? '요청 입력 완료' : '하고 싶은 일을 적어 주세요';
+        status.textContent = elapsed >= liftStart ? doneText : typingText;
       }
       function schedule() { if (playing && !document.hidden && frame === null) frame = requestAnimationFrame(tick); }
       function tick(timestamp) {
@@ -1864,7 +1952,7 @@ harness 템플릿의 일반 에이전트 장애 재시도와 생성-검증 수�
       document.addEventListener('visibilitychange', () => {
         if (document.hidden) cancelFrame(); else schedule();
       });
-      return { stop, finish() { selectScene(6, true); }, enter(where) { where === 'end' ? selectScene(6, true) : start(); }, step };
+      return { stop, finish() { selectScene(lastScene, true); }, enter(where) { where === 'end' ? selectScene(lastScene, true) : start(); }, step };
     }
     document.querySelectorAll('[data-chat-flow]').forEach(root => { root.__chatFlow = mountChatFlow(root); });
     const chatOf = i => slides[i] && slides[i].__chatFlow;
