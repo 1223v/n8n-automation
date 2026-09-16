@@ -773,7 +773,7 @@
       <ol class="toc">
         <li class="a"><span class="toc-num">01</span> 문제: 번잡한 제작 과정과 AI에게 맡겼을 때 생기는 일 <span class="toc-min">2분 25초</span></li>
         <li class="a"><span class="toc-num">02</span> 제작 원칙과 쉬운 사용 경험 <span class="toc-min">1분 45초</span></li>
-        <li class="a"><span class="toc-num">03</span> 어떻게 사고하나 · AI에게 맡길 일의 설계 <span class="toc-min">4분</span></li>
+        <li class="a"><span class="toc-num">03</span> 어떻게 사고하나 · AI에게 맡길 일의 설계 <span class="toc-min">3분</span></li>
         <li class="a"><span class="toc-num">04</span> 어떻게 검증하나 · 확인하고 고치는 구조 설계 <span class="toc-min">7분 20초</span></li>
         <li class="a"><span class="toc-num">05</span> 설치·업데이트와 데모 · 시뮬레이션 <span class="toc-min">4분 45초</span></li>
         <li class="a"><span class="toc-num">06</span> 실전 활용 · 차별점 <span class="toc-min">2분</span></li>
@@ -909,7 +909,7 @@
     </div>
 
     <!-- 10 [원안 #9] Two human gates -->
-    <div class="slide" data-notes="[원안 #9] [20초] 먼저 AI가 이해한 요건을 요약하면 사람이 확인합니다. 다음으로 실행 계획을 확인한 뒤 변경을 진행합니다. 두 지점 모두 AskUserQuestion으로 선택지와 답을 주고받습니다. 사용자는 원하는 결과를 확인하고, 킷은 구성과 검증을 맡습니다. [전환] 이제 AI에게 맡길 일을 검증 가능한 약속으로 바꾸는 방법을 보겠습니다.">
+    <div class="slide" data-notes="[원안 #9] [20초] 먼저 AI가 이해한 요건을 요약하면 사람이 확인합니다. 다음으로 실행 계획을 확인한 뒤 변경을 진행합니다. 두 지점 모두 AskUserQuestion으로 선택지와 답을 주고받습니다. 사용자는 원하는 결과를 확인하고, 킷은 구성과 검증을 맡습니다. [전환] 이제 AI에게 맡길 일을 어떻게 나누고 설계했는지 보겠습니다.">
       <p class="a kicker">02 · 해결 아이디어</p>
       <h2 class="a">사람이 개입하는 지점 <span class="hi">2곳</span></h2>
       <div class="cards c2">
@@ -928,19 +928,7 @@
     </div>
 
     <!-- 11 [재구성] Harness design -->
-    <div class="slide hx" data-notes="[재구성 · n8n 적용 설계] [60초] 이제 내부를 어떻게 설계했는지 보겠습니다. 여기부터는 harness의 기법을 배포 캘린더에 적용한 설계입니다. “매일 아침 갱신하고 알려줘”를 그대로 빌더에게 넘기면, 무엇을 완료로 볼지 빌더가 추측하게 됩니다. 그래서 먼저 입력, 기대 결과, 변경 범위, 완료 조건을 나눕니다.
-
-이 사례의 완료 조건은 필수 점검 데이터가 있어야 하고, 실패를 성공으로 알리면 안 된다는 것입니다. 노드가 존재하는 것만으로는 이 조건을 증명할 수 없습니다. 사람에게 확인받은 이 약속을 구현자와 검증자에게 똑같이 전달합니다. 이후 검증 결과는 모두 이 약속으로 돌아옵니다.
-
-[전환] 다음으로 누가 무엇을 할지 정하기 전에, 어떤 작업이 무엇을 기다리는지 그립니다. [근거] https://github.com/revfactory/harness/blob/cceac68ea1d0ad198ef4b7b906cd238375836387/skills/harness/SKILL.md">
-      <p class="a kicker">03 · 어떻게 사고하나 · n8n 적용 설계</p>
-      <h2 class="a">“만들어줘”를 <br>검증 가능한 약속으로 바꾼다</h2>
-      <div class="content a"><div class="cmd">매일 아침 배포 캘린더를 갱신하고 팀 채널에 알려줘.</div><table><thead><tr><th>설계할 것</th><th>배포 캘린더에 적용하면</th></tr></thead><tbody><tr><td>입력</td><td>기존 워크플로우 · 스크립트 결과 · 실행 시각 · 알림 대상</td></tr><tr><td>기대 결과</td><td>XML → HTML → 업로드 → 점검 결과를 담은 알림</td></tr><tr><td>변경 범위</td><td>승인한 노드와 연결만 수정 · 외부 쓰기는 별도로 확인</td></tr><tr><td>완료 조건</td><td>필수 데이터 확인 + 연결 구간 검증 + 실패 시 성공 알림 차단</td></tr></tbody></table><p class="lead hx-takeaway">완료는 <span class="hi">“노드가 만들어졌다”</span>가 아니라,<br>약속한 결과를 <span class="hi">증명할 수 있는 상태</span>입니다.</p></div>
-      <p class="a foot hx-source"><a href="https://github.com/revfactory/harness/blob/cceac68ea1d0ad198ef4b7b906cd238375836387/skills/harness/SKILL.md" target="_blank" rel="noopener noreferrer">revfactory/harness · SKILL.md</a> · 11~20장은 이 기법을 배포 캘린더에 적용한 설계이며, 화면의 파일명·역할 정의는 예시입니다</p>
-    </div>
-
-    <!-- 12 [재구성] Harness design -->
-    <div class="slide hx dependency-flow" data-notes="[재구성 · n8n 적용 설계] [60초] [조작: 진입하면 작업 흐름도가 먼저 부드럽게 나타납니다. →/Space로 순차, 병렬, 역할 분리 박스를 하나씩 표시합니다. 세 번째 박스와 함께 정리 문장이 나타나고, 다음 입력은 13장으로 이동합니다. ←는 박스를 하나씩 되돌립니다.] [연출: 화살표 위의 빛이 흐름 방향으로 이동하며 의존관계를 강조합니다. 병렬 조사 두 갈래는 동시에 움직입니다.] [흐름도] 역할 이름부터 늘리면 작은 작업에도 큰 팀이 붙습니다. 저는 작업의 의존관계부터 그립니다. 현재 JSON을 알아야 변경을 계획할 수 있고, 변경이 있어야 검증할 수 있으니 이 구간은 순차입니다. 반면 대상이 정해진 뒤 노드 공식 사양과 기존 구현 관례를 조사하는 일은 독립적으로 진행할 수 있습니다.
+    <div class="slide hx dependency-flow" data-notes="[재구성 · n8n 적용 설계] [60초] [도입] 이제 내부를 어떻게 설계했는지 보겠습니다. 여기부터는 revfactory/harness의 기법을 배포 캘린더에 적용한 설계입니다. [조작: 진입하면 작업 흐름도가 먼저 부드럽게 나타납니다. →/Space로 순차, 병렬, 역할 분리 박스를 하나씩 표시합니다. 세 번째 박스와 함께 정리 문장이 나타나고, 다음 입력은 12장으로 이동합니다. ←는 박스를 하나씩 되돌립니다.] [연출: 화살표 위의 빛이 흐름 방향으로 이동하며 의존관계를 강조합니다. 병렬 조사 두 갈래는 동시에 움직입니다.] [흐름도] 역할 이름부터 늘리면 작은 작업에도 큰 팀이 붙습니다. 저는 작업의 의존관계부터 그립니다. 현재 JSON을 알아야 변경을 계획할 수 있고, 변경이 있어야 검증할 수 있으니 이 구간은 순차입니다. 반면 대상이 정해진 뒤 노드 공식 사양과 기존 구현 관례를 조사하는 일은 독립적으로 진행할 수 있습니다.
 
 [→ 순차] 분석 결과가 있어야 계획하고 구현·검증할 수 있습니다. [→ 병렬] 독립적인 자료 조사만 동시에 진행합니다. harness가 제시하는 파이프라인과 팬아웃/팬인을 이 관계에 맞춰 선택한 것입니다. 결과만 전달하면 되는 구간은 서브에이전트로 충분하고, 서로 협의해야 하는 작업이면 팀 통신을 검토합니다. [→ 역할 분리 · 정리 문장] 빌더와 검증자를 나누는 이유는 병렬 실행이 아니라 서로 다른 판단 관점을 확보하기 위해서입니다.
 
@@ -953,10 +941,10 @@
 <g class="dependency-stream" aria-hidden="true"><path d="M225 150 H265 V65 H300" pathLength="100" style="--travel-delay:1.1s"/><path d="M265 150 V240 H300" pathLength="100" style="--travel-delay:1.1s"/><path d="M535 65 H570 V150 H620" pathLength="100" style="--travel-delay:2.15s"/><path d="M535 240 H570 V150" pathLength="100" style="--travel-delay:2.15s"/><path d="M835 150 H875" pathLength="100" style="--travel-delay:3.2s"/><path d="M1090 150 H1130" pathLength="100" style="--travel-delay:3.85s"/></g>
 <g class="hx-box"><rect x="10" y="100" width="215" height="100"/><rect x="300" y="15" width="235" height="100"/><rect x="300" y="190" width="235" height="100"/><rect x="620" y="100" width="215" height="100"/><rect x="875" y="100" width="215" height="100"/><rect x="1130" y="100" width="215" height="100"/></g>
 <g text-anchor="middle"><text x="117" y="137">대상 분석</text><text class="hx-sub" x="117" y="171">분석가 · 현재 JSON</text><text x="417" y="52">노드 공식 사양</text><text class="hx-sub" x="417" y="86">리서처 · 조사 A</text><text x="417" y="227">기존 구현 관례</text><text class="hx-sub" x="417" y="261">리서처 · 조사 B</text><text x="727" y="137">계획 · 사람 확인</text><text class="hx-sub" x="727" y="171">오케스트레이터</text><text x="982" y="137">변경 구성</text><text class="hx-sub" x="982" y="171">빌더 · 변경 도구</text><text x="1237" y="137">기대 결과와 비교</text><text class="hx-sub" x="1237" y="171">검증자 · 검사 도구</text></g></svg><div class="cards c3"><div class="card reveal"><div class="card-num">순차</div><h3>앞의 결과가 있어야 한다</h3><p>분석 → 계획 → 구현 → 검증</p></div><div class="card reveal"><div class="card-num">병렬</div><h3>서로 기다릴 필요가 없다</h3><p>독립 자료 조사만 동시에 수행</p></div><div class="card reveal"><div class="card-num">역할 분리</div><h3>서로 다른 관점이 필요하다</h3><p>만드는 역할과 판정하는 역할 분리</p></div></div><p class="lead hx-takeaway">에이전트 수는 <span class="hi">작업의 관계를 그린 뒤</span> 결정합니다.</p></div>
-      <p class="a foot hx-source"><a href="https://github.com/revfactory/harness/blob/cceac68ea1d0ad198ef4b7b906cd238375836387/skills/harness/references/agent-design-patterns.md" target="_blank" rel="noopener noreferrer">revfactory/harness · agent-design-patterns.md</a></p>
+      <p class="a foot hx-source"><a href="https://github.com/revfactory/harness/blob/cceac68ea1d0ad198ef4b7b906cd238375836387/skills/harness/references/agent-design-patterns.md" target="_blank" rel="noopener noreferrer">revfactory/harness · agent-design-patterns.md</a> · 11~19장은 이 기법을 배포 캘린더에 적용한 설계이며, 화면의 파일명·역할 정의는 예시입니다</p>
     </div>
 
-    <!-- 13 [재구성] Six morph scenes: context and intent -->
+    <!-- 12 [재구성] Six morph scenes: context and intent -->
     <div class="slide hx context-morph" data-context-morph data-context-step="1" data-notes="[재구성 · n8n 적용 설계] [60초 · 6장면, 장면당 약 10초]
 [1/6 오케스트레이터] 역할만 나누고 모든 자료를 전부 주면 컨텍스트 분리 효과가 줄어듭니다. 오케스트레이터는 요청 유형, 분기 규칙과 현재 상태를 받아 다음 작업을 결정합니다.
 [2/6 빌더] 빌더에게는 대상 JSON과 승인된 변경 계획, 이번에 쓸 노드 사양만 전달합니다.
@@ -964,7 +952,7 @@
 [4/6 필요한 만큼 읽기] Progressive Disclosure입니다. description으로 스킬을 선택하고, SKILL.md로 절차를 읽은 뒤, 이번 작업에 필요한 references만 더 읽습니다.
 [5/6 설명 요청] “IF 노드가 뭐야?”는 일반 질문이므로 설명하고, 변경 파이프라인은 호출하지 않습니다.
 [6/6 변경 요청] “IF 분기를 추가해줘”는 실제 변경이므로 분석·계획·검증 경로를 따릅니다. 같은 키워드여도 의도로 구분해야 합니다. 이런 유사 요청도 트리거 테스트에 넣습니다.
-[조작] →/Space/PageDown 또는 다음 버튼으로 다음 장면, ←/PageUp 또는 이전 버튼으로 이전 장면입니다. 마지막 장면 다음은 14장, 첫 장면 이전은 12장입니다. 뒤로 진입하면 마지막 장면이며, 처음부터 버튼은 첫 장면으로 돌아갑니다.
+[조작] →/Space/PageDown 또는 다음 버튼으로 다음 장면, ←/PageUp 또는 이전 버튼으로 이전 장면입니다. 마지막 장면 다음은 13장, 첫 장면 이전은 11장입니다. 뒤로 진입하면 마지막 장면이며, 처음부터 버튼은 첫 장면으로 돌아갑니다.
 [전환] 그리고 넘기는 정보는 대화 요약으로만 남기지 않습니다.
 [근거] https://github.com/revfactory/harness/blob/cceac68ea1d0ad198ef4b7b906cd238375836387/skills/harness/references/skill-writing-guide.md">
       <p class="a kicker">03 · 어떻게 사고하나 · n8n 적용 설계</p>
@@ -993,7 +981,7 @@
       <p class="chat-sr" data-context-announcement role="status" aria-live="polite"></p>
     </div>
 
-    <!-- 14 [재구성] Harness design -->
+    <!-- 13 [재구성] Harness design -->
     <div class="slide hx" data-notes="[재구성 · n8n 적용 설계] [60초] 각 역할의 출력이 다음 역할의 입력이 되도록 파일 경로와 내용을 정합니다. 여기서 다음 에이전트는 바로 다음 단계를 맡은 역할과, 나중에 새 대화에서 이어받는 에이전트를 모두 뜻합니다. 같은 기록은 사람도 읽고 추적할 수 있습니다. 이 화면의 파일명은 적용 예시이고, 핵심은 요청, 계획, 변경안, 검증 근거가 끊기지 않는 것입니다. 이렇게 남겨야 다음 대화에서도 이전 결과를 읽고 이어갈 수 있습니다.
 
 예를 들어 “알림 문구만 짧게”라는 요청이 왔다고 조회와 업로드까지 다시 만들 이유는 없습니다. 기존 워크플로우와 검증 결과를 읽고 메시지 구성 부분을 고칩니다. 다만 수정한 부분만 보는 것이 아니라, 메시지가 소비하는 데이터와 성공·실패 분기까지 영향을 확인합니다. 외부 업로드를 재실행하는 문제는 잠시 뒤 따로 다루겠습니다.
@@ -1008,7 +996,7 @@
       <p class="a foot hx-source"><a href="https://github.com/revfactory/harness/blob/cceac68ea1d0ad198ef4b7b906cd238375836387/skills/harness/references/orchestrator-template.md" target="_blank" rel="noopener noreferrer">revfactory/harness · orchestrator-template.md</a></p>
     </div>
 
-    <!-- 15 [재구성] Harness design -->
+    <!-- 14 [재구성] Harness design -->
     <div class="slide hx" data-notes="[재구성 · n8n 적용 설계] [80초] 빌더가 자기 변경을 설명하는 것과, 기대 조건을 만족했다고 판정하는 것은 다른 일입니다. 이 설계에서는 빌더와 검증자를 별도 역할로 둡니다. 빌더는 승인 계획과 현재 워크플로우를 받아 변경안을 만들고, 검증자는 완료 조건과 실제 산출물을 읽어 비교합니다.
 
 화면의 정의는 역할 계약 예시입니다. 빌더에게는 변경 도구를, 검증자에게는 읽기와 검사 실행 도구를 배정합니다. 검증자가 읽기만 할 수 있으면 실행 가능한 검사를 못 하므로 검사 실행 권한도 필요합니다. 실제 권한 제한은 사용하는 실행 환경에 별도로 설정해야 합니다. Markdown에 “금지”라고 적는 것 자체가 권한 차단 코드는 아닙니다.
@@ -1030,7 +1018,7 @@
       <p class="a foot hx-source"><a href="https://github.com/revfactory/harness/blob/cceac68ea1d0ad198ef4b7b906cd238375836387/skills/harness/references/agent-design-patterns.md" target="_blank" rel="noopener noreferrer">revfactory/harness · agent-design-patterns.md</a></p>
     </div>
 
-    <!-- 16 [재구성] Harness design -->
+    <!-- 15 [재구성] Harness design -->
     <div class="slide hx" data-notes="[재구성 · n8n 적용 설계] [90초] 이 장은 실제 pipeline.json 안의 01 XML 결과 정규화 코드를 바탕으로 합니다. 왼쪽은 필수 필드를 일부러 뺀 테스트 입력 예시입니다. 앞 노드는 success와 종료 코드 0을 줬지만, 승인일 미기재 건수인 approvalDateMissingCount가 없습니다.
 
 뒤 노드 코드는 해당 값을 읽고 음수가 아닌 정수인지 확인합니다. 값이 없으면 0이 아니라 null이 됩니다. 그리고 정상 실행이라고 주장한 결과에서 필수 건수가 null이면 calendarStatus를 failed로 돌려줍니다. 따라서 명령이 종료됐다는 사실과 업무 결과가 준비됐다는 사실은 다릅니다.
@@ -1055,7 +1043,7 @@ const approvalDateMissingCount =
       <p class="a foot hx-source"><a href="https://github.com/revfactory/harness/blob/cceac68ea1d0ad198ef4b7b906cd238375836387/skills/harness/references/qa-agent-guide.md" target="_blank" rel="noopener noreferrer">revfactory/harness · qa-agent-guide.md</a> · 실제 코드: pipeline.json / 01 XML 결과 정규화</p>
     </div>
 
-    <!-- 17 [재구성] Harness design -->
+    <!-- 16 [재구성] Harness design -->
     <div class="slide hx" data-notes="[재구성 · n8n 적용 설계] [70초] 검증은 세 층으로 나눕니다. 첫 번째는 구조와 설정입니다. 노드 설정, 표현식, 연결 참조가 유효한지 검사합니다. n8n 검증 도구가 맡을 수 있는 영역입니다. 두 번째는 연결 구간입니다. 샘플 데이터를 넣고 실제 값이 다음 노드가 기대하는 형태와 의미를 만족하는지 봅니다. 방금 필수 건수 누락이 여기에 해당합니다.
 
 세 번째는 전체 흐름입니다. 정상일 때 기대한 메시지가 만들어지는지, 실패일 때 성공 알림이 선택되지 않는지 확인합니다. 조회·변환 구간을 먼저 검사하고 업로드·알림을 연결한 뒤 전체를 다시 봅니다. 외부 전송 검사는 테스트용 채널·저장소로 수행합니다.
@@ -1069,7 +1057,7 @@ const approvalDateMissingCount =
       <p class="a foot hx-source"><a href="https://github.com/revfactory/harness/blob/cceac68ea1d0ad198ef4b7b906cd238375836387/skills/harness/references/qa-agent-guide.md" target="_blank" rel="noopener noreferrer">revfactory/harness · qa-agent-guide.md</a></p>
     </div>
 
-    <!-- 18 [재구성] Harness design -->
+    <!-- 17 [재구성] Harness design -->
     <div class="slide hx" data-notes="[재구성 · n8n 적용 설계] [65초] “검증 실패, 다시 고쳐”라고만 돌려주면 빌더는 다시 전체를 추측합니다. 그래서 오류 보고서의 형식을 고정합니다. 위치, 기대값, 실제값, 근거, 수정 대상입니다. 이 예시의 기대값은 음수가 아닌 정수인데 실제 입력에는 필드가 없습니다. 정규화 노드가 실패 처리한 것은 잘못이 아니라 검사가 작동한 결과입니다.
 
 그러므로 실패를 없애겠다고 null을 0으로 바꾸면 안 됩니다. 앞 노드 결과에 데이터가 빠졌는지, 이름이 달라 전달되지 않았는지 확인해야 합니다. 검증자는 원인을 단정하지 않고 관측한 차이와 확인할 대상을 전달합니다. 빌더가 그 범위를 고친 다음 정상 입력과 누락 입력을 모두 다시 검사합니다.
@@ -1086,7 +1074,7 @@ const approvalDateMissingCount =
       <p class="a foot hx-source"><a href="https://github.com/revfactory/harness/blob/cceac68ea1d0ad198ef4b7b906cd238375836387/skills/harness/references/qa-agent-guide.md" target="_blank" rel="noopener noreferrer">revfactory/harness · qa-agent-guide.md</a></p>
     </div>
 
-    <!-- 19 [재구성] Harness design -->
+    <!-- 18 [재구성] Harness design -->
     <div class="slide hx" data-notes="[재구성 · n8n 적용 설계] [65초] 이 적용 설계에서는 초기 생성 뒤 수정 기회를 최대 두 번 둡니다. 매 수정 뒤 같은 기준으로 재검증하고, 필수 검사가 계속 실패하면 중단해 원인과 남은 작업을 보고합니다. 검사를 못 한 상태도 통과로 바꾸지 않습니다. 두 번은 이 발표에서 선택한 정책이지, 모든 상황의 정답은 아닙니다.
 
 또 하나는 AI가 워크플로우를 수정하는 것과 외부 작업을 다시 실행하는 것을 구분하는 것입니다. 업로드 요청이 시간 초과됐다고 이미 업로드되지 않았다는 뜻은 아닙니다. 반영 여부부터 확인해야 중복 전송을 피할 수 있습니다.
@@ -1098,7 +1086,7 @@ harness 템플릿의 일반 에이전트 장애 재시도와 생성-검증 수�
       <p class="a foot hx-source"><a href="https://github.com/revfactory/harness/blob/cceac68ea1d0ad198ef4b7b906cd238375836387/skills/harness/references/orchestrator-template.md" target="_blank" rel="noopener noreferrer">revfactory/harness · orchestrator-template.md</a></p>
     </div>
 
-    <!-- 20 [재구성] Harness design -->
+    <!-- 19 [재구성] Harness design -->
     <div class="slide hx" data-notes="[재구성 · n8n 적용 설계] [70초] 지금 요청의 워크플로우를 고치는 루프와, 다음 요청에서 더 잘하도록 킷을 고치는 루프는 다릅니다. 앞의 루프는 빌더와 검증자가 돌고, 뒤의 루프는 반복된 실패를 보고 스킬과 검사를 개선하는 과정입니다. 같은 실패가 반복되면 단순히 프롬프트를 길게 붙이기보다, 누락된 판단 기준을 넣거나 반복 작성되는 검사를 스크립트로 묶습니다.
 
 개선 전후에는 같은 요청과 입력으로 비교합니다. 정상 데이터, 필수 건수가 빠진 데이터, 그리고 IF 설명과 분기 추가처럼 비슷하지만 다른 요청을 사용합니다. 결과가 존재한다는 쉬운 기준만으로는 킷의 가치를 구별할 수 없습니다. 오류를 잡았는지, 정상 결과를 잘못 막지 않았는지, 시간과 재작업은 어땠는지를 함께 봅니다. 화면의 대시는 아직 측정하지 않았다는 뜻입니다.
@@ -1112,7 +1100,7 @@ harness 템플릿의 일반 에이전트 장애 재시도와 생성-검증 수�
 
     <!-- ===== 5. 설치·업데이트와 데모 ===== -->
 
-    <!-- 21 [원안 #35 → 이동·변경] Team plugin install + marketplace auto-update -->
+    <!-- 20 [원안 #35 → 이동·변경] Team plugin install + marketplace auto-update -->
     <div class="slide" data-notes="[원안 #35 → 이동·변경 · 설치와 자동 업데이트] [섹션 5 · 4분 45초 시작 / 이 장 45초] 이 킷을 팀원이 어떻게 받아 쓰는지 보겠습니다. 오케스트레이션을 n8n-automation이라는 Claude 플러그인으로 묶어 팀 GitLab에 올렸고, 저장소 주소로 마켓플레이스를 등록한 뒤 플러그인을 설치합니다. [PAUSE] 이런 생각이 드실 수도 있습니다. '이거 설치해도 어차피 업데이트할 때마다 zip 파일 풀어서 다시 넣어줘야 하는 거 아니야?' 하지만 Claude 마켓플레이스로 플러그인을 등록해 두었기 때문에, 마켓플레이스 자동 업데이트를 한 번 켜 두시면 제가 GitLab에 새 버전을 올릴 때마다 최신 버전을 쓰실 수 있습니다. 중앙에서 라이브러리처럼 관리되니, 여러분은 사용만 하시면 됩니다. [전환] 그럼 설치부터 n8n 기동까지 시뮬레이션으로 보겠습니다. 기존 킷 동작의 재현이며 새 검증자·두 번 수정 정책의 실행 증거는 아닙니다. [발표자 참고] 팀 GitLab 같은 서드파티 마켓플레이스는 자동 업데이트가 기본 꺼짐이라 ③을 한 번 켜야 한다(관리자는 managed settings의 extraKnownMarketplaces에 autoUpdate: true로 일괄 설정 가능). 새 버전은 Claude Code 세션 시작 후 백그라운드에서 확인하고, 실행 중인 세션은 기존 버전을 유지하다가 /reload-plugins 또는 다음 실행부터 반영된다. '바로바로'가 실시간 반영으로 들리지 않게 한다. plugin.json에 version이 있으면 올려야 전파되고, 없으면 커밋 SHA 기준. 사내 GitLab이 비공개 HTTPS면 백그라운드 갱신에 SSH 원격이나 토큰 URL 설정이 필요할 수 있다. zip 수동 배치는 readme의 이전 방식. 근거 https://code.claude.com/docs/en/discover-plugins#configure-auto-updates">
       <p class="a kicker">05 · 설치와 업데이트 · 팀이 함께 쓰는 진입점</p>
       <h2 class="a">한 번 설치하면,<br><span class="hi">업데이트는 알아서 따라옵니다</span></h2>
@@ -1136,7 +1124,7 @@ harness 템플릿의 일반 에이전트 장애 재시도와 생성-검증 수�
       <p class="a foot hx-source"><a href="https://code.claude.com/docs/en/discover-plugins#configure-auto-updates" target="_blank" rel="noopener noreferrer" style="color:var(--text-secondary);">Claude Code 공식 문서 · 마켓플레이스 등록·설치와 자동 업데이트</a></p>
     </div>
 
-    <!-- 22 [원안 #26] Demo A — simulation (engine: SIM_DEFS.envA) -->
+    <!-- 21 [원안 #26] Demo A — simulation (engine: SIM_DEFS.envA) -->
     <div class="slide" data-notes="[원안 #26 · 시뮬레이션] [시나리오 A 1분 30초 · 컷 9개] 앞 장에서 본 등록·설치를 실제 순서로 따라가며 사용까지 보여준다. 실제 설치 로그가 아닌 절차 설명용 시뮬레이션이다. → / Space 다음 컷, ← 이전 컷, P 자동 재생. 컷 00 [10초]: 앞 장의 ① 명령으로 팀 GitLab 마켓플레이스를 등록한다. 플러그인은 아직 미설치다. 컷 01 [10초]: ② 명령으로 n8n-automation 플러그인을 설치한다. 활성화 안내와 환경·외부 서비스 연결 설정은 별도로 확인한다. 컷 02 [5초]: 연결 설정을 마친 뒤 “n8n 켜줘”라고 요청한다. 브라우저는 아직 연결 거부다. 컷 03 [10초]: 환경 요청을 n8n-env-setup 스킬과 에이전트로 라우팅한다. 컷 04 [10초]: OS와 포트를 확인한다. 컷 05 [10초]: 플러그인 실행 스크립트를 확인한다. 내부 경로와 설정 저장 위치는 생략한다. 컷 06 [15초]: n8n을 기동하고 localhost:5678과 healthz 200을 확인한다. 컷 07 [10초]: Playwright MCP 연결과 화면 스냅샷을 확인한다. 컷 08 [10초]: 환경 준비 완료를 보고한다. [전환] 이제 원하는 워크플로우를 만드는 요청으로 넘어간다. 설치 절차는 Claude Code 공식 안내, 라우팅·기동은 기존 킷 설명을 바탕으로 한 시뮬레이션이며 실제 출력 문구와 다를 수 있다.">
       <p class="a kicker">05 · 데모 A · 플러그인 설치부터 환경 기동까지 (시뮬레이션)</p>
       <div class="cmd a"><span>팀원 ›</span> 마켓플레이스 등록 → 플러그인 설치 → “n8n 켜줘” &nbsp;<span>→ 환경 기동·연결 확인</span></div>
@@ -1144,7 +1132,7 @@ harness 템플릿의 일반 에이전트 장애 재시도와 생성-검증 수�
       <p class="a foot">→ / Space 다음 컷 · ← 이전 컷 · P 자동 재생 — 마지막 컷 다음에 다음 슬라이드로 넘어간다.</p>
     </div>
 
-    <!-- 23 [원안 #27 → 변경] Demo B — build pipeline.json through the kit (engine: SIM_DEFS.buildB) -->
+    <!-- 22 [원안 #27 → 변경] Demo B — build pipeline.json through the kit (engine: SIM_DEFS.buildB) -->
     <div class="slide" data-notes="[원안 #27 → 변경 · 시뮬레이션] [시나리오 B 2분 30초] [화면 안내] 주황 테두리 캡션 = 반드시 멈춰서 설명할 컷. 요청은 짧다. '배포 캘린더 스킬을 공용 PC n8n 파이프라인으로 만들어줘'. 트리거도, 실패 처리도, 알림도 말하지 않았다. 결과물은 지금 공용 PC에서 실제로 도는 워크플로우와 같은 노드 18개 구조다. 컷 01 분석: 분석가가 스킬 파일과 스크립트를 직접 읽는다. 3단계, 종료 코드, CALENDAR_RESULT 마커. 컷 02 현황 감사: 기존 워크플로우 목록에서 후보 2개만 structure 모드로 읽고 '참고만'으로 판정. 재사용 가능 후보가 없으니 A/B/C 질문은 생략. 컷 03 요건 명확화 [멈춤]: 신규 워크플로우에 Confluence·Teams 쓰기가 있어 L 등급, 딥 인터뷰. 여기가 하이라이트다. 제가 말 안 한 트리거 시각, 실패 처리, 성공 알림에 점검 건수까지 넣을지를 먼저 물었다. 실패 처리 선택지의 근거가 '기존 워크플로우 2개처럼'이라는 점을 짚는다. 컷 04 요건 확인 [멈춤]: 이해한 내용 다섯 줄을 되묻는다. 승인 전에는 아무것도 바뀌지 않는다. 컷 05 리서치: 출처 3개 병렬. 'n8n 2.0부터 Execute Command 기본 차단', '파일 노드 접근 경로 기본 제한' 같은 사실은 기억으로는 못 잡는다. 컷 06 계획 [멈춤]: todo 8개를 파일로 남기고, 점선 노드 18개 설계도를 승인받는다. 컷 07 실행: MCP 도구로만 만든다. 컷 08 검증: 표현식 앞 = 누락 1건을 잡는다. 컷 09 autofix [멈춤]: 미리보기 → 적용 → 재검증 통과 → 게시. 컷 10 보고 [멈춤]: _workspace_n8n/에 파일 8개, 공용 PC에서 확인할 것 2건까지 남긴다. [전환] '이제 이런 파이프라인을 어디에 활용하는지 보겠습니다.' 주의: 문구·수치는 문서 기술 기준 시뮬레이션이고 웹훅 URL·회사 경로는 가렸다.">
       <p class="a kicker">05 · 데모 B · 스킬 → 파이프라인 (시뮬레이션)</p>
       <div class="cmd a"><span>사용자 ›</span> 배포 캘린더 스킬을 공용 PC n8n 파이프라인으로 만들어줘 &nbsp;<span>→ n8n-workflow-manager · L 등급 (작업 크기 S/M/L 중 가장 큼 · 신규 워크플로우 · 외부 시스템 쓰기)</span></div>
@@ -1154,7 +1142,7 @@ harness 템플릿의 일반 에이전트 장애 재시도와 생성-검증 수�
 
     <!-- ===== 6. 실전 활용 · 차별점 ===== -->
 
-    <!-- 24 [신규] Use case: where to use it -->
+    <!-- 23 [신규] Use case: where to use it -->
     <div class="slide" data-notes="[신규 · 실전 활용] [섹션 6 · 4분 시작] 데모가 끝나면 꼭 나오는 질문, '그러면 이걸 어디다가 써?' [PAUSE] 저희 팀은 기준을 하나만 뒀다. 꼭 해야 하지만 불필요하게 반복되는 작업. 여러분 팀에도 하나쯤 있을 것이다. [청중에게] '매일 손으로 하는 반복 작업, 하나만 떠올려 보세요.' 예전에는 팀원 각자가 자기 Claude 스킬로 직접 돌렸고, 지금은 공용 PC에 n8n을 올리고 그 스킬들을 스크립트화해 n8n 파이프라인으로 바꿨다. 사람이 켜지 않아도 24시간 돈다. [전환] '그럼 다른 방식과 무엇이 다른지 비교해 보겠습니다.'">
       <p class="a kicker">06 · 실전 활용</p>
       <h1 class="a">「그러면 이걸 <span class="hi">어디다가</span> 써?」</h1>
@@ -1180,7 +1168,7 @@ harness 템플릿의 일반 에이전트 장애 재시도와 생성-검증 수�
       <p class="a foot">차량제어서비스개발팀의 실제 적용 — 다음은 다른 방식과 무엇이 다른지 봅니다.</p>
     </div>
 
-    <!-- 25 [원안 #29] Comparison of approaches -->
+    <!-- 24 [원안 #29] Comparison of approaches -->
     <div class="slide" data-notes="[원안 #29] [20분 버전에서는 생략] 순정 Claude Code + n8n-mcp와 이 킷, 두 가지 방식을 비교한다. 각 방식이 커버하는 범위를 설명한다. 벤치마크 수치는 쓰지 않는다. 절차 강제, 도메인 지식, 변경 안전성과 기존 워크플로우 확인을 중심으로 짚는다.">
       <p class="a kicker">06 · 차별점</p>
       <h2 class="a">다른 방식과 무엇이 다른가 <span class="dim" style="font-size:0.95rem;font-weight:400;">· 우열이 아니라 커버 범위의 차이</span></h2>
@@ -1200,7 +1188,7 @@ harness 템플릿의 일반 에이전트 장애 재시도와 생성-검증 수�
       </div>
     </div>
 
-    <!-- 26 [원안 #30] Token view -->
+    <!-- 25 [원안 #30] Token view -->
     <div class="slide" data-notes="[원안 #30] [20분 버전에서는 생략] '몇 % 절감'은 말하지 않는다. 실측 전이고, 실측 후에도 S 과제에서는 킷이 더 쓸 수 있다. 말할 것은 구조적 절감 지점 네 가지와 비교 기준이다. ① 작은 작업(S 등급)에는 현황 감사·딥 인터뷰를 붙이지 않고 기본 게이트만 거친다. ② 분석가가 읽은 JSON, 리서처가 긁은 문서 본문은 서브에이전트 컨텍스트에 남고 메인에는 요약만 온다. ③ validate → autofix와 3곳 교차 확인으로 '고쳐줘 → 깨짐 → 다시' 왕복이 준다. 이게 총 토큰의 가장 큰 변수다. ④ 기존 워크플로우 확인은 후보 5개까지 노드 구조만(structure) 가볍게 읽는다. 더 쓰는 곳: 요건 재확인, 계획 승인, 3곳 교차 리서치, validate 호출. 첫 요청 한 번의 토큰은 순정보다 많다. 비교는 '검증 통과까지의 총 토큰'으로. 측정해 본 것: 로컬에 설치된 범용 오케스트레이션 플러그인의 스킬 37개의 description 합계는 약 1,500토큰 추정으로 세션당 무시할 수준이고, 본문은 호출 시에만 로드된다. 그래서 스킬이 많을 때의 문제는 토큰 비용이 아니라 관련 없는 스킬이 잘못 호출되는 트리거 판단 혼선으로 말한다. 제품명은 넣지 않는다. [전환] 마지막으로 한 문장만 남기겠습니다.">
       <p class="a kicker">06 · 토큰 관점</p>
       <h2 class="a">어디서 아끼고, 어디서 더 쓰는가 <span class="dim" style="font-size:0.95rem;font-weight:400;">· 절감률이 아니라 구조로</span></h2>
@@ -1241,7 +1229,7 @@ harness 템플릿의 일반 에이전트 장애 재시도와 생성-검증 수�
 
     <!-- ===== 7. 마무리 ===== -->
 
-    <!-- 27 [원안 #36] Closing -->
+    <!-- 26 [원안 #36] Closing -->
     <div class="slide" data-notes="[원안 #36 · 마무리] [섹션 7 · 25초 + Q&amp;A] 명령어 하나를 입력하고, 하고 싶은 일을 적어 주세요. 요구사항에 맞는 자동화는 함께 구체화합니다. [PAUSE] 플러그인 설치 및 환경·연결 설정 후 /n8n-automation:n8n-workflow-manager로 시작한다. 내부 기술을 깊게 몰라도 AI의 질문에 답하고 요건과 계획을 확인하면 된다. 자료 안내와 감사 인사 후 Q&amp;A. 30분 버전이면 Q&amp;A 4분 30초. 예상 질문은 script.md 말미 참조.">
       <p class="a kicker">07 · 마무리</p>
       <p class="a quote"><span class="hi">명령어 하나</span>를 입력하고,<br>하고 싶은 일을 적어 주세요.<br>요구사항에 맞는 자동화는 <span class="hi">함께 구체화합니다.</span></p>
