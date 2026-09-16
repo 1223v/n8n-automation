@@ -1088,17 +1088,17 @@
     </div>
 
     <!-- 15 [재구성] Harness design -->
-    <div class="slide hx" data-notes="[재구성 · n8n 적용 설계] [90초] [조작] 진입하면 Plan 모드 + n8n-mcp 줄만 보입니다. 한 번 누르면 이 설계 줄, 한 번 더 누르면 16장입니다.
+    <div class="slide hx" data-notes="[재구성 · n8n 적용 설계] [90초] [조작] 진입하면 Plan 모드 + n8n-mcp 줄만 보입니다. 한 번 누르면 이 설계 줄, 다시 누르면 아래 본문, 한 번 더 누르면 16장입니다.
 
 [대조] 여기부터 다섯 장은 같은 n8n-mcp 도구를 쓴다는 전제로 비교합니다. validate도 autofix도 test도 n8n-mcp에 있습니다. 차이는 도구가 아니라 절차입니다. Plan 모드에서는 무엇을 검사할지 정해 둔 규칙이 없어서, validate 통과를 완료로 보기 쉽습니다.
 
-[→ 이 설계] 이 설계는 샘플 입력으로 앞 노드 출력과 뒤 노드 기대를 비교합니다. 화면은 실제 pipeline.json의 01 XML 결과 정규화 코드입니다. 왼쪽은 필수 필드를 일부러 뺀 테스트 입력이고, 실제 장애 로그는 아닙니다. 앞 노드는 success와 종료 코드 0을 줬지만 approvalDateMissingCount가 없습니다. 뒤 노드는 이 값을 0이 아니라 null로 보고, calendarStatus를 failed로 돌려줍니다. 구조 검사만으로는 이 문제를 놓칩니다. 명령이 끝난 것과 업무 결과가 준비된 것은 다릅니다.
+[→ 이 설계] 이 설계는 샘플 입력으로 앞 노드 출력과 뒤 노드 기대를 비교합니다. [→ 본문] 화면은 실제 pipeline.json의 01 XML 결과 정규화 코드입니다. 왼쪽은 필수 필드를 일부러 뺀 테스트 입력이고, 실제 장애 로그는 아닙니다. 앞 노드는 success와 종료 코드 0을 줬지만 approvalDateMissingCount가 없습니다. 뒤 노드는 이 값을 0이 아니라 null로 보고, calendarStatus를 failed로 돌려줍니다. 구조 검사만으로는 이 문제를 놓칩니다. 명령이 끝난 것과 업무 결과가 준비된 것은 다릅니다.
 
 [전환] 이 데이터 검사는 전체 검증 중 어느 위치에서 할까요? [근거] https://github.com/revfactory/harness/blob/cceac68ea1d0ad198ef4b7b906cd238375836387/skills/harness/references/qa-agent-guide.md">
       <p class="a kicker">04 · 어떻게 검증하나 · n8n 적용 설계</p>
       <h2 class="a">노드가 있는지보다, <br>연결 양쪽의 데이터가 맞는지 본다</h2>
       <div class="pm-contrast a"><div class="pm-row pm-plan"><span class="pm-label">Plan 모드 + n8n-mcp</span><span>validate 통과 → 구조가 맞으면 완료로 보기 쉬움</span></div><div class="pm-row pm-design reveal"><span class="pm-label">이 설계</span><span>샘플 입력으로 앞 노드 출력과 뒤 노드 기대를 비교</span></div></div>
-      <div class="content a"><div class="row r2 hx-top"><div><div class="code-container"><div class="code-header"><span class="code-dot red"></span><span class="code-dot yellow"></span><span class="code-dot green"></span><span class="code-filename">앞 노드 출력 · 필드 누락을 넣은 테스트 입력</span></div><pre><code>{
+      <div class="content reveal"><div class="row r2 hx-top"><div><div class="code-container"><div class="code-header"><span class="code-dot red"></span><span class="code-dot yellow"></span><span class="code-dot green"></span><span class="code-filename">앞 노드 출력 · 필드 누락을 넣은 테스트 입력</span></div><pre><code>{
   &quot;status&quot;: &quot;success&quot;,
   &quot;exitCode&quot;: 0,
   &quot;details&quot;: {
@@ -1114,32 +1114,32 @@ const approvalDateMissingCount =
     </div>
 
     <!-- 16 [재구성] Harness design -->
-    <div class="slide hx" data-notes="[재구성 · n8n 적용 설계] [70초] [조작] 진입하면 Plan 모드 + n8n-mcp 줄만 보입니다. 한 번 누르면 이 설계 줄, 한 번 더 누르면 17장입니다.
+    <div class="slide hx" data-notes="[재구성 · n8n 적용 설계] [70초] [조작] 진입하면 Plan 모드 + n8n-mcp 줄만 보입니다. 한 번 누르면 이 설계 줄, 다시 누르면 아래 본문, 한 번 더 누르면 17장입니다.
 
 [대조] Plan 모드에서는 무엇을 어디까지 검사할지 매번 Claude가 판단합니다. test 도구가 있어도 언제, 어떤 입력으로 돌릴지는 정해져 있지 않습니다.
 
-[→ 이 설계] 이 설계는 세 층을 순서대로 거칩니다. 첫째 구조와 설정, validate가 맡는 영역입니다. 둘째 연결 구간, 샘플 데이터가 다음 노드의 기대를 만족하는지 봅니다. 방금 필수 건수 누락이 여기서 잡힙니다. 셋째 전체 흐름, 실패일 때 성공 알림이 선택되지 않는지 확인합니다. 외부 전송은 테스트용 채널·저장소로 검사합니다. autofix는 설정 오류를 고치는 도구이지, 누락 데이터의 의미까지 고쳐주지는 않습니다.
+[→ 이 설계] 이 설계는 세 층을 순서대로 거칩니다. [→ 본문] 첫째 구조와 설정, validate가 맡는 영역입니다. 둘째 연결 구간, 샘플 데이터가 다음 노드의 기대를 만족하는지 봅니다. 방금 필수 건수 누락이 여기서 잡힙니다. 셋째 전체 흐름, 실패일 때 성공 알림이 선택되지 않는지 확인합니다. 외부 전송은 테스트용 채널·저장소로 검사합니다. autofix는 설정 오류를 고치는 도구이지, 누락 데이터의 의미까지 고쳐주지는 않습니다.
 
 [전환] 실패를 발견했다면 빌더가 고칠 수 있는 형태로 돌려줘야 합니다. [근거] https://github.com/revfactory/harness/blob/cceac68ea1d0ad198ef4b7b906cd238375836387/skills/harness/references/qa-agent-guide.md">
       <p class="a kicker">04 · 어떻게 검증하나 · n8n 적용 설계</p>
       <h2 class="a">한 번의 검증으로 끝내지 않는다</h2>
       <div class="pm-contrast a"><div class="pm-row pm-plan"><span class="pm-label">Plan 모드 + n8n-mcp</span><span>무엇을 어디까지 검사할지 매번 Claude가 판단</span></div><div class="pm-row pm-design reveal"><span class="pm-label">이 설계</span><span>구조 → 연결 구간 → 전체 흐름, 3층을 순서대로</span></div></div>
-      <div class="content a"><table><thead><tr><th>검증 층</th><th>무엇을 확인하나</th><th>실패를 찾는 예</th></tr></thead><tbody><tr><td>1 · 구조·설정</td><td>노드 설정 · 표현식 · 연결 참조</td><td>잘못된 파라미터 · 존재하지 않는 참조</td></tr><tr><td>2 · 연결 구간</td><td>샘플 입력 → 변환 → 뒤 노드 기대</td><td>종료 코드 0 + 필수 점검 건수 누락</td></tr><tr><td>3 · 전체 흐름</td><td>정상·실패 경로와 최종 메시지</td><td>실패했는데 성공 알림 경로가 선택됨</td></tr></tbody></table><div class="hx-flow"><div class="hx-node"><b>조회·변환</b><span>샘플로 데이터 계약 확인</span></div><span class="hx-arrow">→</span><div class="hx-node"><b>검사 통과</b><span>다음 구간 연결</span></div><span class="hx-arrow">→</span><div class="hx-node"><b>업로드·알림</b><span>테스트용 채널·저장소에서 확인</span></div></div><p class="lead hx-takeaway">구간마다 확인하고, 마지막에는 <span class="hi">전체 결과를 다시 확인</span>합니다.</p><p class="foot">설정 자동수정 도구가 모든 업무 오류를 고치지는 않습니다. 데이터 의미·데이터 계약 오류는 빌더가 수정합니다.</p></div>
+      <div class="content reveal"><table><thead><tr><th>검증 층</th><th>무엇을 확인하나</th><th>실패를 찾는 예</th></tr></thead><tbody><tr><td>1 · 구조·설정</td><td>노드 설정 · 표현식 · 연결 참조</td><td>잘못된 파라미터 · 존재하지 않는 참조</td></tr><tr><td>2 · 연결 구간</td><td>샘플 입력 → 변환 → 뒤 노드 기대</td><td>종료 코드 0 + 필수 점검 건수 누락</td></tr><tr><td>3 · 전체 흐름</td><td>정상·실패 경로와 최종 메시지</td><td>실패했는데 성공 알림 경로가 선택됨</td></tr></tbody></table><div class="hx-flow"><div class="hx-node"><b>조회·변환</b><span>샘플로 데이터 계약 확인</span></div><span class="hx-arrow">→</span><div class="hx-node"><b>검사 통과</b><span>다음 구간 연결</span></div><span class="hx-arrow">→</span><div class="hx-node"><b>업로드·알림</b><span>테스트용 채널·저장소에서 확인</span></div></div><p class="lead hx-takeaway">구간마다 확인하고, 마지막에는 <span class="hi">전체 결과를 다시 확인</span>합니다.</p><p class="foot">설정 자동수정 도구가 모든 업무 오류를 고치지는 않습니다. 데이터 의미·데이터 계약 오류는 빌더가 수정합니다.</p></div>
       <p class="a foot hx-source"><a href="https://github.com/revfactory/harness/blob/cceac68ea1d0ad198ef4b7b906cd238375836387/skills/harness/references/qa-agent-guide.md" target="_blank" rel="noopener noreferrer">revfactory/harness · qa-agent-guide.md</a></p>
     </div>
 
     <!-- 17 [재구성] Harness design -->
-    <div class="slide hx" data-notes="[재구성 · n8n 적용 설계] [65초] [조작] 진입하면 Plan 모드 + n8n-mcp 줄만 보입니다. 한 번 누르면 이 설계 줄, 한 번 더 누르면 18장입니다.
+    <div class="slide hx" data-notes="[재구성 · n8n 적용 설계] [65초] [조작] 진입하면 Plan 모드 + n8n-mcp 줄만 보입니다. 한 번 누르면 이 설계 줄, 다시 누르면 아래 본문, 한 번 더 누르면 18장입니다.
 
 [대조] Plan 모드에서 실패하면 에러 문구를 보거나 사람이 “다시 고쳐”라고 하고, Claude가 원인을 추측해 고칩니다.
 
-[→ 이 설계] 이 설계는 오류 보고서 형식을 고정합니다. 위치, 기대값, 실제값, 근거, 수정 대상입니다. 기대값은 음수가 아닌 정수인데 실제 입력에는 필드가 없습니다. 그렇다고 null을 0으로 바꾸면 안 됩니다. 검증자는 원인을 단정하지 않고 확인할 대상을 전달하고, 빌더는 그 범위를 고친 뒤 정상·누락 입력을 모두 다시 검사합니다. 화면은 형식 예시이며 실제 실행 로그가 아닙니다.
+[→ 이 설계] 이 설계는 오류 보고서 형식을 고정합니다. [→ 본문] 위치, 기대값, 실제값, 근거, 수정 대상입니다. 기대값은 음수가 아닌 정수인데 실제 입력에는 필드가 없습니다. 그렇다고 null을 0으로 바꾸면 안 됩니다. 검증자는 원인을 단정하지 않고 확인할 대상을 전달하고, 빌더는 그 범위를 고친 뒤 정상·누락 입력을 모두 다시 검사합니다. 화면은 형식 예시이며 실제 실행 로그가 아닙니다.
 
 [전환] 이 왕복이 끝나지 않을 때도 미리 정해야 합니다. [근거] https://github.com/revfactory/harness/blob/cceac68ea1d0ad198ef4b7b906cd238375836387/skills/harness/references/qa-agent-guide.md">
       <p class="a kicker">04 · 어떻게 검증하나 · n8n 적용 설계</p>
       <h2 class="a">“다시 고쳐” 대신 수정 가능한 오류를 돌려준다</h2>
       <div class="pm-contrast a"><div class="pm-row pm-plan"><span class="pm-label">Plan 모드 + n8n-mcp</span><span>에러 문구나 “다시 고쳐” → 원인을 추측해 수정</span></div><div class="pm-row pm-design reveal"><span class="pm-label">이 설계</span><span>위치 · 기대값 · 실제값 · 근거 · 수정 대상을 고정 형식으로</span></div></div>
-      <div class="content a"><div class="row r2 hx-top"><div><table><thead><tr><th>보고서 필드</th><th>필수 점검 건수 누락 사례</th></tr></thead><tbody><tr><td>위치</td><td>XML 결과 → 정규화 노드</td></tr><tr><td>기대값</td><td><code>approvalDateMissingCount</code><br>음수가 아닌 정수</td></tr><tr><td>실제값</td><td>필드 없음 → <code>null</code></td></tr><tr><td>근거</td><td>누락 입력 샘플에서 데이터 계약 불충족</td></tr><tr><td>수정 대상</td><td>앞 노드 결과 또는 결과 필드 매핑</td></tr></tbody></table></div><div><div class="code-container"><div class="code-header"><span class="code-dot red"></span><span class="code-dot yellow"></span><span class="code-dot green"></span><span class="code-filename">빌더에 돌려주는 수정 지시 · 예시</span></div><pre><code>필수 점검 건수의 누락 원인을 확인한다.
+      <div class="content reveal"><div class="row r2 hx-top"><div><table><thead><tr><th>보고서 필드</th><th>필수 점검 건수 누락 사례</th></tr></thead><tbody><tr><td>위치</td><td>XML 결과 → 정규화 노드</td></tr><tr><td>기대값</td><td><code>approvalDateMissingCount</code><br>음수가 아닌 정수</td></tr><tr><td>실제값</td><td>필드 없음 → <code>null</code></td></tr><tr><td>근거</td><td>누락 입력 샘플에서 데이터 계약 불충족</td></tr><tr><td>수정 대상</td><td>앞 노드 결과 또는 결과 필드 매핑</td></tr></tbody></table></div><div><div class="code-container"><div class="code-header"><span class="code-dot red"></span><span class="code-dot yellow"></span><span class="code-dot green"></span><span class="code-filename">빌더에 돌려주는 수정 지시 · 예시</span></div><pre><code>필수 점검 건수의 누락 원인을 확인한다.
 앞 노드 결과와 필드 매핑을 수정한다.
 
 누락 값을 임의로 0으로 채우지 않는다.
@@ -1149,32 +1149,32 @@ const approvalDateMissingCount =
     </div>
 
     <!-- 18 [재구성] Harness design -->
-    <div class="slide hx" data-notes="[재구성 · n8n 적용 설계] [65초] [조작] 진입하면 Plan 모드 + n8n-mcp 줄만 보입니다. 한 번 누르면 이 설계 줄, 한 번 더 누르면 19장입니다.
+    <div class="slide hx" data-notes="[재구성 · n8n 적용 설계] [65초] [조작] 진입하면 Plan 모드 + n8n-mcp 줄만 보입니다. 한 번 누르면 이 설계 줄, 다시 누르면 아래 본문, 한 번 더 누르면 19장입니다.
 
 [대조] Plan 모드에는 몇 번 고치고 멈출지 정한 규칙이 없습니다. 그리고 테스트 실행을 다시 돌리면 업로드나 전송이 중복될 수 있습니다.
 
-[→ 이 설계] 이 설계는 수정 기회를 최대 두 번 두고, 매번 같은 기준으로 재검증합니다. 계속 실패하면 중단하고 원인과 남은 작업을 보고합니다. 검사를 못 한 상태도 성공으로 바꾸지 않습니다. 두 번은 이 발표에서 고른 정책입니다. 또 업로드가 시간 초과됐다고 반영되지 않았다는 뜻은 아닙니다. 반영 여부부터 확인해야 중복 전송을 피합니다. AI의 수정 재시도와 외부 작업 재실행은 따로 관리합니다.
+[→ 이 설계] 이 설계는 수정 기회를 최대 두 번 두고, 매번 같은 기준으로 재검증합니다. [→ 본문] 계속 실패하면 중단하고 원인과 남은 작업을 보고합니다. 검사를 못 한 상태도 성공으로 바꾸지 않습니다. 두 번은 이 발표에서 고른 정책입니다. 또 업로드가 시간 초과됐다고 반영되지 않았다는 뜻은 아닙니다. 반영 여부부터 확인해야 중복 전송을 피합니다. AI의 수정 재시도와 외부 작업 재실행은 따로 관리합니다.
 
 [전환] 실행을 고치는 일과 킷 자체를 개선하는 일도 나누어 보겠습니다. [근거] https://github.com/revfactory/harness/blob/cceac68ea1d0ad198ef4b7b906cd238375836387/skills/harness/references/orchestrator-template.md">
       <p class="a kicker">04 · 어떻게 검증하나 · n8n 적용 설계</p>
       <h2 class="a">재시도 횟수와 멈출 조건도 구현의 일부다</h2>
       <div class="pm-contrast a"><div class="pm-row pm-plan"><span class="pm-label">Plan 모드 + n8n-mcp</span><span>몇 번 고치고 멈출지 규칙 없음 · 재실행이 업로드를 중복할 수 있음</span></div><div class="pm-row pm-design reveal"><span class="pm-label">이 설계</span><span>최대 2회 수정 · 미검증은 성공 아님 · 외부 쓰기는 반영 여부부터 확인</span></div></div>
-      <div class="content a"><div class="hx-flow"><div class="hx-node"><b>검증</b><span>기준과 실제 비교</span></div><span class="hx-arrow">→</span><div class="hx-node"><b>수정 가능</b><span>빌더에게 반환</span></div><span class="hx-arrow">→</span><div class="hx-node"><b>최대 2회 수정</b><span>매번 재검증</span></div><span class="hx-arrow">→</span><div class="hx-node"><b>종료 판정</b><span>통과 또는 실패 보고</span></div></div><table><thead><tr><th>상태</th><th>다음 행동</th></tr></thead><tbody><tr><td>통과</td><td>확인한 범위와 근거를 남기고 완료</td></tr><tr><td>2회 수정 후에도 필수 검증 실패</td><td>자동 수정 중단 → 실패 원인과 남은 작업 보고</td></tr><tr><td>미검증 · 실행 권한 없음</td><td>성공 처리하지 않음 → 필요한 확인 명시</td></tr><tr><td>업로드·전송 응답 불명확</td><td>이미 반영됐는지 확인 → 중복 실행 가능성 판단</td></tr></tbody></table><p class="lead hx-takeaway">AI의 <span class="hi">수정 재시도</span>와 외부 서비스의 <span class="hi">작업 재실행</span>은 따로 관리합니다.</p></div>
+      <div class="content reveal"><div class="hx-flow"><div class="hx-node"><b>검증</b><span>기준과 실제 비교</span></div><span class="hx-arrow">→</span><div class="hx-node"><b>수정 가능</b><span>빌더에게 반환</span></div><span class="hx-arrow">→</span><div class="hx-node"><b>최대 2회 수정</b><span>매번 재검증</span></div><span class="hx-arrow">→</span><div class="hx-node"><b>종료 판정</b><span>통과 또는 실패 보고</span></div></div><table><thead><tr><th>상태</th><th>다음 행동</th></tr></thead><tbody><tr><td>통과</td><td>확인한 범위와 근거를 남기고 완료</td></tr><tr><td>2회 수정 후에도 필수 검증 실패</td><td>자동 수정 중단 → 실패 원인과 남은 작업 보고</td></tr><tr><td>미검증 · 실행 권한 없음</td><td>성공 처리하지 않음 → 필요한 확인 명시</td></tr><tr><td>업로드·전송 응답 불명확</td><td>이미 반영됐는지 확인 → 중복 실행 가능성 판단</td></tr></tbody></table><p class="lead hx-takeaway">AI의 <span class="hi">수정 재시도</span>와 외부 서비스의 <span class="hi">작업 재실행</span>은 따로 관리합니다.</p></div>
       <p class="a foot hx-source"><a href="https://github.com/revfactory/harness/blob/cceac68ea1d0ad198ef4b7b906cd238375836387/skills/harness/references/orchestrator-template.md" target="_blank" rel="noopener noreferrer">revfactory/harness · orchestrator-template.md</a></p>
     </div>
 
     <!-- 19 [재구성] Harness design -->
-    <div class="slide hx" data-notes="[재구성 · n8n 적용 설계] [70초] [조작] 진입하면 Plan 모드 + n8n-mcp 줄만 보입니다. 한 번 누르면 이 설계 줄, 한 번 더 누르면 20장입니다.
+    <div class="slide hx" data-notes="[재구성 · n8n 적용 설계] [70초] [조작] 진입하면 Plan 모드 + n8n-mcp 줄만 보입니다. 한 번 누르면 이 설계 줄, 다시 누르면 아래 본문, 한 번 더 누르면 20장입니다.
 
 [대조] Plan 모드에서 얻은 교훈은 그 대화에 남습니다. 다음에도 쓰려면 CLAUDE.md 같은 곳에 따로 남기도록 챙겨야 합니다.
 
-[→ 이 설계] 이 설계는 루프를 둘로 나눕니다. 이번 워크플로우를 고치는 루프와, 반복된 실패를 보고 스킬과 검사를 고치는 루프입니다. 프롬프트를 길게 붙이기보다 빠진 판단 기준을 넣거나 반복되는 검사를 스크립트로 묶습니다. 개선 전후는 같은 요청과 입력으로 비교합니다. 정상 데이터, 필수 건수 누락, IF 설명과 분기 추가 같은 비슷한 요청입니다. 오류를 잡았는지, 정상 결과를 막지 않았는지, 재작업이 줄었는지 봅니다. 대시는 아직 측정하지 않았다는 뜻입니다.
+[→ 이 설계] 이 설계는 루프를 둘로 나눕니다. [→ 본문] 이번 워크플로우를 고치는 루프와, 반복된 실패를 보고 스킬과 검사를 고치는 루프입니다. 프롬프트를 길게 붙이기보다 빠진 판단 기준을 넣거나 반복되는 검사를 스크립트로 묶습니다. 개선 전후는 같은 요청과 입력으로 비교합니다. 정상 데이터, 필수 건수 누락, IF 설명과 분기 추가 같은 비슷한 요청입니다. 오류를 잡았는지, 정상 결과를 막지 않았는지, 재작업이 줄었는지 봅니다. 대시는 아직 측정하지 않았다는 뜻입니다.
 
 [전환] 여기까지는 적용 설계와 검사 방법입니다. 이제 이 킷을 팀원이 어떻게 받아 쓰는지부터 보겠습니다. [근거] https://github.com/revfactory/harness/blob/cceac68ea1d0ad198ef4b7b906cd238375836387/skills/harness/references/skill-testing-guide.md">
       <p class="a kicker">04 · 어떻게 검증하나 · n8n 적용 설계</p>
       <h2 class="a">결과물과 킷을 <br>서로 다른 루프로 개선한다</h2>
       <div class="pm-contrast a"><div class="pm-row pm-plan"><span class="pm-label">Plan 모드 + n8n-mcp</span><span>교훈을 다음에 쓰려면 CLAUDE.md 등에 따로 남기도록 챙겨야 함</span></div><div class="pm-row pm-design reveal"><span class="pm-label">이 설계</span><span>실패 패턴 → 스킬 · 검사 개선 → 같은 입력으로 전후 비교</span></div></div>
-      <div class="content a"><div class="row r2 hx-top"><div><div class="panel"><h3>이번 요청의 결과물을 수정</h3><p class="lead">생성 → 검증 → 부분 수정</p><p>대상: 워크플로우와 연결 데이터<br>종료: 완료 조건 충족 또는 수정 상한</p></div></div><div><div class="panel after"><h3>다음 요청의 수행 방법을 개선</h3><p class="lead">실패 패턴 → 규칙·검사 개선 → 비교</p><p>대상: 스킬 · 역할 정의 · 검증 스크립트<br>반복 작성한 검사는 실행 가능한 코드로 묶기</p></div></div></div><table><thead><tr><th>같은 요청·입력으로 비교</th><th>기존 버전</th><th>개선 버전</th><th>측정할 것</th></tr></thead><tbody><tr><td>정상 점검 데이터</td><td>—</td><td>—</td><td>기대 결과 일치</td></tr><tr><td>필수 건수 누락</td><td>—</td><td>—</td><td>실패 감지 · 성공 오판 방지</td></tr><tr><td>IF 설명 / IF 분기 추가</td><td>—</td><td>—</td><td>일반 응답 / 변경 경로 구분</td></tr></tbody></table><p class="lead hx-takeaway">더 길어진 지시문보다 <span class="hi">더 잘 구별하는 검사와 줄어든 재작업</span>을 확인합니다.</p></div>
+      <div class="content reveal"><div class="row r2 hx-top"><div><div class="panel"><h3>이번 요청의 결과물을 수정</h3><p class="lead">생성 → 검증 → 부분 수정</p><p>대상: 워크플로우와 연결 데이터<br>종료: 완료 조건 충족 또는 수정 상한</p></div></div><div><div class="panel after"><h3>다음 요청의 수행 방법을 개선</h3><p class="lead">실패 패턴 → 규칙·검사 개선 → 비교</p><p>대상: 스킬 · 역할 정의 · 검증 스크립트<br>반복 작성한 검사는 실행 가능한 코드로 묶기</p></div></div></div><table><thead><tr><th>같은 요청·입력으로 비교</th><th>기존 버전</th><th>개선 버전</th><th>측정할 것</th></tr></thead><tbody><tr><td>정상 점검 데이터</td><td>—</td><td>—</td><td>기대 결과 일치</td></tr><tr><td>필수 건수 누락</td><td>—</td><td>—</td><td>실패 감지 · 성공 오판 방지</td></tr><tr><td>IF 설명 / IF 분기 추가</td><td>—</td><td>—</td><td>일반 응답 / 변경 경로 구분</td></tr></tbody></table><p class="lead hx-takeaway">더 길어진 지시문보다 <span class="hi">더 잘 구별하는 검사와 줄어든 재작업</span>을 확인합니다.</p></div>
       <p class="a foot hx-source"><a href="https://github.com/revfactory/harness/blob/cceac68ea1d0ad198ef4b7b906cd238375836387/skills/harness/references/skill-testing-guide.md" target="_blank" rel="noopener noreferrer">revfactory/harness · skill-testing-guide.md</a> · 비교 설계 예시 · —는 미측정 · 새 스킬은 스킬 없이, 개선 스킬은 수정 전 버전과 비교</p>
     </div>
 
