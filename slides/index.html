@@ -1,0 +1,2072 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>잔말말고 n8n 오케스트레이션으로 — 명령 하나와 요구사항으로 시작하는 맞춤 자동화</title>
+
+  <!-- Pretendard Font -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+  <!-- JetBrains Mono -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&display=swap">
+  <!-- Prism.js Tomorrow Theme -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+
+  <style>
+    /* ===== Reset ===== */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    /* ===== Theme: minimal-dark ===== */
+    :root {
+      --bg: #0a0a0a;
+      --text: #f0f0f0;
+      --text-secondary: #9a9a9a;
+      --muted: #666;
+      --accent: #3b82f6;
+      --accent-hover: #60a5fa;
+      --accent-soft: rgba(59, 130, 246, 0.12);
+      --surface: #161616;
+      --border: #2a2a2a;
+      --code-bg: #111;
+      --green: #22c55e;
+      --orange: #f59e0b;
+      --red: #ef4444;
+      --purple: #a855f7;
+      --font-body: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+    }
+
+    /* Fixed 16:9 stage (1600x900). The whole stage is scaled to fit the viewport by JS,
+       so every slide looks identical at any window size and nothing is ever cut off. */
+    html { font-size: 18.4px; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      word-break: keep-all;
+    }
+
+    /* ===== Chrome: progress / counter / hints / fullscreen ===== */
+    .progress {
+      position: fixed; top: 0; left: 0; height: 3px;
+      background: var(--accent); z-index: 1000;
+      transition: width 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+    .counter {
+      position: fixed; bottom: 22px; right: 30px;
+      font-family: var(--font-mono); font-size: 12px; color: var(--muted);
+      z-index: 900; user-select: none;
+    }
+    .hint {
+      position: fixed; bottom: 20px; left: 30px;
+      display: flex; gap: 8px; align-items: center; z-index: 900; user-select: none;
+    }
+    .hint kbd {
+      display: inline-block; background: var(--surface); border: 1px solid #333; color: var(--muted);
+      font-family: var(--font-mono); font-size: 11px; padding: 2px 7px; border-radius: 4px; line-height: 1.6;
+    }
+    .hint span { color: var(--muted); font-size: 11px; margin-right: 4px; }
+    .topbar { position: fixed; top: 16px; right: 24px; display: flex; gap: 8px; z-index: 900; }
+    .fullscreen-btn {
+      background: var(--surface); border: 1px solid var(--border); color: var(--text-secondary);
+      font-family: var(--font-body); font-size: 12px; padding: 6px 14px; border-radius: 6px;
+      cursor: pointer; z-index: 900; transition: all 0.2s ease; user-select: none;
+    }
+    .fullscreen-btn:hover { background: var(--border); color: var(--text); }
+
+    /* ===== Deck & Slides (Wide layout) ===== */
+    .stage { position: fixed; inset: 0; overflow: hidden; }
+    .deck {
+      width: 1600px; height: 900px; position: absolute; left: 50%; top: 50%;
+      transform: translate(-50%, -50%) scale(var(--fit, 1)); transform-origin: center center;
+    }
+
+    .slide {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column;
+      justify-content: flex-start; align-items: flex-start;
+      text-align: left;
+      padding: 45px 88px 63px;
+      opacity: 0; visibility: hidden; pointer-events: none;
+      overflow-y: auto;
+      transition: opacity 0.45s ease, visibility 0.45s ease;
+    }
+    /* Safe vertical centering: pseudo spacers absorb free space, collapse to 0 when content is taller,
+       so the top of a slide is always reachable (unlike justify-content:center + overflow). */
+    .slide::before, .slide::after { content: ''; display: block; flex: 1 0 0; min-height: 0; }
+    .slide.active { opacity: 1; visibility: visible; pointer-events: auto; z-index: 2; }
+
+    /* Stagger */
+    .slide.active .a { animation: staggerIn 0.55s ease forwards; opacity: 0; transform: translateY(16px); }
+    .slide.active .a:nth-child(1)  { animation-delay: 0.05s; }
+    .slide.active .a:nth-child(2)  { animation-delay: 0.12s; }
+    .slide.active .a:nth-child(3)  { animation-delay: 0.19s; }
+    .slide.active .a:nth-child(4)  { animation-delay: 0.26s; }
+    .slide.active .a:nth-child(5)  { animation-delay: 0.33s; }
+    .slide.active .a:nth-child(6)  { animation-delay: 0.40s; }
+    .slide.active .a:nth-child(7)  { animation-delay: 0.47s; }
+    .slide.active .a:nth-child(8)  { animation-delay: 0.54s; }
+    .slide.active .a:nth-child(9)  { animation-delay: 0.61s; }
+    .slide.active .a:nth-child(10) { animation-delay: 0.68s; }
+    @keyframes staggerIn { to { opacity: 1; transform: translateY(0); } }
+
+    /* Reveal builds: .reveal items appear one per forward key before the slide advances (see revealBuild) */
+    .slide .reveal { transition: opacity 0.45s ease, transform 0.45s ease, border-color 0.2s ease; }
+    .slide .reveal:not(.shown) { opacity: 0; transform: translateY(16px); }
+
+    /* ===== Typography ===== */
+    h1 { font-size: 3.1rem; font-weight: 800; line-height: 1.15; letter-spacing: -0.03em; margin-bottom: 1rem; width: 100%; }
+    h2 { font-size: 2rem; font-weight: 700; line-height: 1.2; letter-spacing: -0.02em; margin-bottom: 1.1rem; width: 100%; }
+    h3 { font-size: 1.15rem; font-weight: 600; line-height: 1.3; margin-bottom: 0.4rem; }
+    p  { font-size: 1.05rem; line-height: 1.65; color: var(--text-secondary); width: 100%; }
+    .hi { color: var(--accent); }
+    .dim { color: var(--muted); }
+    code:not([class]) { font-family: var(--font-mono); font-size: 0.88em; color: var(--accent-hover); background: rgba(255,255,255,0.05); padding: 1px 6px; border-radius: 4px; }
+
+    .kicker {
+      font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--accent); margin-bottom: 0.9rem;
+    }
+    .tag {
+      display: inline-block; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--accent); border: 1px solid var(--accent); padding: 4px 14px; border-radius: 100px; margin-bottom: 1.1rem;
+    }
+    .subtitle { font-size: 1.3rem; color: var(--text-secondary); margin-bottom: 1.4rem; }
+    .date { font-family: var(--font-mono); font-size: 0.85rem; color: var(--muted); letter-spacing: 0.05em; }
+    .lead { font-size: 1.35rem; color: var(--text); line-height: 1.5; }
+    .foot { margin-top: 1.2rem; font-size: 0.85rem; color: var(--muted); }
+
+    .content { width: 100%; }
+    .row { display: grid; width: 100%; gap: 35px; align-items: center; }
+    .row.r2 { grid-template-columns: 1fr 1fr; }
+    .row.r-3-2 { grid-template-columns: 3fr 2fr; }
+    .row.r-2-3 { grid-template-columns: 2fr 3fr; }
+
+    /* Bullets (wide) */
+    ul.bul { list-style: none; width: 100%; }
+    ul.bul li { font-size: 1.02rem; line-height: 1.6; color: var(--text-secondary); padding: 0.55rem 0 0.55rem 1.5rem; position: relative; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    ul.bul li:last-child { border-bottom: none; }
+    ul.bul li::before { content: '→'; position: absolute; left: 0; color: var(--accent); }
+    ul.bul li strong { color: var(--text); font-weight: 600; }
+
+    /* Agenda */
+    .toc { list-style: none; width: 100%; columns: 1; }
+    .toc li { display: flex; align-items: center; gap: 1rem; padding: 0.55rem 0; border-bottom: 1px solid var(--border); font-size: 1.05rem; color: var(--text); }
+    .toc li:last-child { border-bottom: none; }
+    .toc-num { font-family: var(--font-mono); font-size: 0.8rem; color: var(--accent); font-weight: 600; min-width: 2rem; }
+    .toc-min { margin-left: auto; font-family: var(--font-mono); font-size: 0.8rem; color: var(--muted); }
+
+    /* Tables */
+    table { width: 100%; border-collapse: collapse; margin-top: 0.4rem; }
+    th { text-align: left; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-secondary); padding: 0.55rem 0.8rem; border-bottom: 2px solid var(--accent); vertical-align: bottom; }
+    td { font-size: 0.86rem; line-height: 1.5; color: var(--text-secondary); padding: 0.6rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.07); vertical-align: top; }
+    td:first-child { color: var(--text); font-weight: 600; }
+    td code, th code { font-size: 0.82em; }
+    table.compact td { font-size: 0.8rem; padding: 0.45rem 0.65rem; }
+    table .hl { background: var(--accent-soft); color: var(--text); }
+    th.hl { color: var(--accent); }
+    table .grey td:nth-child(2), td.before { color: var(--muted); }
+    td.after { color: var(--text); }
+    td.empty { color: #3a3a3a; text-align: center; }
+
+    /* Cards */
+    .cards { display: grid; gap: 1rem; width: 100%; }
+    .cards.c2 { grid-template-columns: repeat(2, 1fr); }
+    .cards.c3 { grid-template-columns: repeat(3, 1fr); }
+    .cards.c4 { grid-template-columns: repeat(4, 1fr); }
+    .cards.c5 { grid-template-columns: repeat(5, 1fr); }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.2rem 1.1rem; transition: border-color 0.2s ease, transform 0.2s ease; }
+    .card:hover { border-color: var(--accent); transform: translateY(-2px); }
+    .card.focus { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; background: var(--accent-soft); }
+    .card.warn { border-color: rgba(245, 158, 11, 0.5); }
+    .card-icon { font-size: 1.7rem; margin-bottom: 0.6rem; display: block; line-height: 1; }
+    .card-num { font-family: var(--font-mono); font-size: 0.75rem; color: var(--accent); margin-bottom: 0.4rem; }
+    .card h3 { font-size: 1rem; margin-bottom: 0.4rem; color: var(--text); }
+    .card p { font-size: 0.85rem; line-height: 1.5; }
+    .card ul.bul li { font-size: 0.88rem; padding: 0.35rem 0 0.35rem 1.3rem; }
+
+    /* Steps / flow */
+    .steps { display: flex; align-items: flex-start; width: 100%; }
+    .step { display: flex; flex-direction: column; align-items: center; text-align: center; flex: 1; position: relative; padding-top: 1.6rem; }
+    .step-num { width: 2.4rem; height: 2.4rem; border-radius: 50%; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-weight: 700; font-size: 1rem; margin-bottom: 0.7rem; }
+    .step.gate .step-num { background: var(--surface); border: 2px solid var(--accent); color: var(--accent); }
+    .step-title { font-weight: 600; font-size: 0.95rem; margin-bottom: 0.3rem; color: var(--text); }
+    .step-desc { font-size: 0.78rem; color: var(--text-secondary); line-height: 1.45; padding: 0 0.3rem; }
+    .step-arrow { display: flex; align-items: center; justify-content: center; padding-top: 2.2rem; color: #3a3a3a; font-size: 1.3rem; width: 1.4rem; flex-shrink: 0; }
+    .badge { position: absolute; top: 0; left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: 0.68rem; font-weight: 600; letter-spacing: 0.05em; color: #fff; background: var(--accent); padding: 2px 9px; border-radius: 100px; }
+
+    /* Big numbers */
+    .bignums { display: grid; grid-template-columns: 1fr auto 1fr; gap: 32px; align-items: center; width: 100%; }
+    .bignum { text-align: center; padding: 1.5rem 1rem; border-radius: 16px; border: 1px solid var(--border); background: var(--surface); }
+    .bignum .n { font-family: var(--font-mono); font-size: 6rem; font-weight: 700; line-height: 1; letter-spacing: -0.04em; }
+    .bignum.grey .n { color: #4a4a4a; }
+    .bignum.acc { border-color: var(--accent); }
+    .bignum.acc .n { color: var(--accent); }
+    .bignum .l { margin-top: 0.6rem; font-size: 1rem; color: var(--text-secondary); }
+    .vs { font-family: var(--font-mono); color: var(--muted); font-size: 1.2rem; }
+
+    /* Chips */
+    .chips { display: flex; gap: 0.6rem; flex-wrap: wrap; width: 100%; }
+    .chip { font-size: 0.82rem; color: var(--text-secondary); background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 0.45rem 0.8rem; line-height: 1.45; }
+    .chip b { color: var(--accent); font-family: var(--font-mono); margin-right: 0.4rem; }
+    .cmd { font-family: var(--font-mono); font-size: 0.95rem; color: var(--text); background: var(--code-bg); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 8px; padding: 0.7rem 1rem; margin-bottom: 1rem; width: 100%; }
+    .cmd span { color: var(--muted); }
+
+    /* Code */
+    .code-container { width: 100%; background: var(--code-bg); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+    .code-header { display: flex; align-items: center; gap: 8px; padding: 0.55rem 1rem; background: var(--surface); border-bottom: 1px solid var(--border); }
+    .code-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .code-dot.red { background: #ef4444; } .code-dot.yellow { background: #eab308; } .code-dot.green { background: #22c55e; }
+    .code-filename { font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-secondary); margin-left: 8px; }
+    .code-container pre { margin: 0; padding: 1rem 1.1rem; overflow-x: auto; }
+    .code-container pre code { font-family: var(--font-mono); font-size: 0.82rem; line-height: 1.65; }
+    .code-container pre[class*="language-"] { background: var(--code-bg); margin: 0; border-radius: 0; }
+
+    /* Image slots (option B: URLs supplied later) */
+    .img-slot { width: 100%; min-height: 9rem; border: 2px dashed var(--border); border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.35rem; color: var(--muted); font-size: 0.8rem; background: rgba(255,255,255,0.02); position: relative; overflow: hidden; }
+    .img-slot.key { border-color: var(--accent); border-style: solid; background: var(--accent-soft); }
+    .img-slot .ic { font-size: 1.6rem; line-height: 1; }
+    .img-slot .id { font-family: var(--font-mono); font-size: 0.7rem; color: #4a4a4a; }
+    .img-slot .cap { color: var(--text-secondary); font-size: 0.82rem; text-align: center; padding: 0 0.6rem; }
+    .img-slot .step-tag { position: absolute; top: 8px; left: 8px; font-family: var(--font-mono); font-size: 0.65rem; color: #fff; background: var(--accent); padding: 2px 7px; border-radius: 100px; }
+    .img-slot img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; }
+    .img-slot.sm { min-height: 5rem; }
+    .img-slot.round { width: 11rem; height: 11rem; min-height: 0; border-radius: 50%; }
+
+    /* Pyramid */
+    .pyramid { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; width: 100%; }
+    .pyr { text-align: center; padding: 0.9rem 1rem; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); }
+    .pyr b { display: block; color: var(--text); font-family: var(--font-mono); font-size: 0.9rem; margin-bottom: 0.2rem; }
+    .pyr span { font-size: 0.8rem; color: var(--text-secondary); }
+    .pyr.l1 { width: 46%; border-color: var(--accent); background: var(--accent-soft); }
+    .pyr.l2 { width: 72%; }
+    .pyr.l3 { width: 100%; }
+
+    /* Tree */
+    .tree { font-family: var(--font-mono); font-size: 0.82rem; line-height: 1.75; color: var(--text-secondary); }
+    .tree b { color: var(--text); font-weight: 600; }
+    .tree .n { color: var(--accent); }
+    .tree .c { color: var(--muted); }
+
+    /* Comparison panels */
+    .panel { border-radius: 12px; border: 1px solid var(--border); background: var(--surface); padding: 1.2rem 1.3rem; }
+    .panel h3 { font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.9rem; }
+    .panel.before h3 { color: var(--muted); }
+    .panel.after h3 { color: var(--accent); }
+    .panel.after { border-color: var(--accent); }
+    .mini-steps { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+    .mini-steps .ms { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 0.55rem 0.9rem; font-size: 0.95rem; color: var(--text); }
+    .mini-steps .ma { color: #3a3a3a; }
+    .mini-steps .ms.acc { border-color: var(--accent); color: var(--accent); }
+    .mini-steps .ms.bad { border-color: var(--red); color: var(--red); }
+
+    /* SVG diagrams */
+    svg.diagram { width: 100%; height: auto; display: block; font-family: var(--font-body); }
+    svg.diagram .box { fill: var(--surface); stroke: var(--border); stroke-width: 1.5; rx: 8; }
+    svg.diagram .box.acc { stroke: var(--accent); }
+    svg.diagram .box.fill { fill: var(--accent); stroke: var(--accent); }
+    svg.diagram .box.ok { stroke: var(--green); }
+    svg.diagram .box.warn { stroke: var(--orange); }
+    svg.diagram .box.bad { stroke: var(--red); }
+    svg.diagram text { fill: var(--text); font-size: 15px; }
+    svg.diagram text.s { font-size: 12px; fill: var(--text-secondary); }
+    svg.diagram text.m { font-family: var(--font-mono); font-size: 11px; fill: var(--accent-hover); }
+    svg.diagram text.w { fill: #fff; font-weight: 600; }
+    svg.diagram text.lbl { font-size: 12px; fill: var(--muted); }
+    svg.diagram .ln { stroke: #4a4a4a; stroke-width: 1.5; fill: none; }
+    svg.diagram .ln.acc { stroke: var(--accent); }
+    svg.diagram .ln.ok { stroke: var(--green); }
+    svg.diagram .ln.warn { stroke: var(--orange); }
+    svg.diagram .ln.bad { stroke: var(--red); }
+    svg.diagram .ln.dash { stroke-dasharray: 5 5; }
+    svg.diagram .ov { fill: none; stroke-width: 2.5; stroke-dasharray: 8 6; rx: 12; }
+    svg.diagram .bar { rx: 4; }
+
+    /* 3-box flow (input → kit → output) */
+    .flow3 { display: grid; grid-template-columns: 1fr auto 1.3fr auto 1fr; gap: 0.8rem; align-items: stretch; width: 100%; }
+    .flow3 .panel { padding: 1rem 1.1rem; }
+    .flow3 .fl-t { font-size: 1.05rem; font-weight: 600; color: var(--text); margin-bottom: 0.35rem; line-height: 1.4; }
+    .flow3 .fl-s { font-size: 0.82rem; color: var(--text-secondary); line-height: 1.5; }
+    .flow3 .fl-arrow { display: flex; align-items: center; color: #3a3a3a; font-size: 1.6rem; }
+
+    .legend { list-style: none; width: 100%; }
+    .legend li { display: flex; gap: 0.8rem; align-items: flex-start; padding: 0.55rem 0; border-bottom: 1px solid rgba(255,255,255,0.06); font-size: 0.88rem; color: var(--text-secondary); line-height: 1.45; }
+    .legend li:last-child { border-bottom: none; }
+    .legend .sw { flex-shrink: 0; width: 1.1rem; height: 1.1rem; border-radius: 4px; border: 2px dashed; margin-top: 0.15rem; }
+    .legend b { color: var(--text); }
+
+    /* Title background flow */
+    .bg-flow { position: absolute; left: 0; right: 0; bottom: 108px; text-align: center; font-family: var(--font-mono); font-size: 2.2rem; font-weight: 700; letter-spacing: 0.04em; color: var(--text); opacity: 0.07; white-space: nowrap; pointer-events: none; user-select: none; }
+
+    /* Quote / closing */
+    .quote { font-size: 1.7rem; font-weight: 500; line-height: 1.5; color: var(--text); max-width: 60rem; margin-bottom: 1.5rem; }
+    .quote .hi { font-weight: 700; }
+    .contact { display: flex; gap: 1rem; margin-top: 1rem; flex-wrap: wrap; }
+    .contact a { font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent); text-decoration: none; padding: 0.5rem 1.1rem; border: 1px solid var(--border); border-radius: 8px; transition: all 0.2s ease; }
+    .contact a:hover { border-color: var(--accent); background: var(--accent-soft); }
+
+    /* ===== Demo simulator (.sim) — pipeline stepper + terminal + screen + caption ===== */
+    .chip.on { border-color: var(--accent); color: var(--text); background: var(--accent-soft); }
+    .chip.on em { font-style: normal; color: var(--accent-hover); font-size: 0.75rem; margin-left: 0.3rem; }
+    .sim { width: 100%; height: 630px; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: 10px; font-family: var(--font-body); }
+
+    .sx-pipe { position: relative; display: grid; grid-template-columns: 9.2rem 1fr; align-items: center; gap: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px 16px 15px; overflow: hidden; }
+    .sx-pipe-title { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); line-height: 1.5; }
+    .sx-pipe-title b { display: block; color: var(--text); font-size: 13px; letter-spacing: 0; text-transform: none; font-weight: 600; }
+    .sx-steps { display: flex; align-items: flex-start; }
+    .sx-st { flex: 1; position: relative; display: flex; flex-direction: column; align-items: center; text-align: center; min-width: 0; }
+    .sx-st::before, .sx-st::after { content: ''; position: absolute; top: 15px; right: 50%; height: 2px; z-index: 0; }
+    .sx-st::before { width: 100%; background: #2c2c2c; }
+    .sx-st::after { width: 0; background: var(--green); transition: width 0.5s ease; }
+    .sx-st:first-child::before, .sx-st:first-child::after { display: none; }
+    .sx-st.done::after, .sx-st.run::after, .sx-st.gate::after, .sx-st.fix::after { width: 100%; }
+    .sx-dot { position: relative; z-index: 1; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 13px; font-weight: 700; background: var(--bg); border: 2px solid #3a3a3a; color: var(--muted); transition: background 0.35s ease, border-color 0.35s ease, color 0.35s ease; }
+    .sx-gate { position: absolute; top: -7px; left: calc(50% + 9px); font-size: 12px; z-index: 2; }
+    .sx-lbl { margin-top: 6px; font-size: 13.5px; font-weight: 600; color: var(--muted); white-space: nowrap; transition: color 0.3s ease; }
+    .sx-sub { margin-top: 1px; font-family: var(--font-mono); font-size: 10.5px; color: #4d4d4d; white-space: nowrap; }
+    .sx-st.done .sx-dot { background: var(--green); border-color: var(--green); color: #052e12; }
+    .sx-st.done .sx-lbl { color: var(--text-secondary); }
+    .sx-st.run .sx-dot { background: var(--accent); border-color: var(--accent); color: #fff; animation: sxPulse 1.6s infinite; }
+    .sx-st.run .sx-lbl, .sx-st.gate .sx-lbl, .sx-st.fix .sx-lbl { color: var(--text); }
+    .sx-st.run .sx-sub { color: var(--accent-hover); }
+    .sx-st.gate .sx-dot { background: rgba(245, 158, 11, 0.15); border-color: var(--orange); color: var(--orange); animation: sxPulseO 1.6s infinite; }
+    .sx-st.fix .sx-dot { background: var(--orange); border-color: var(--orange); color: #2a1a00; animation: sxPulseO 1.6s infinite; }
+    .sx-st.gate .sx-sub, .sx-st.fix .sx-sub { color: var(--orange); }
+    .sx-bar { position: absolute; left: 0; bottom: 0; height: 3px; width: 0; background: linear-gradient(90deg, var(--accent), var(--green)); transition: width 0.5s ease; }
+    @keyframes sxPulse { 0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.55); } 70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); } 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); } }
+    @keyframes sxPulseO { 0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.55); } 70% { box-shadow: 0 0 0 10px rgba(245, 158, 11, 0); } 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); } }
+
+    .sx-body { display: grid; grid-template-columns: 0.92fr 1.08fr; gap: 10px; min-height: 0; }
+    .sx-win { background: #0d0d0d; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; min-height: 0; }
+    .sx-winbar { flex: 0 0 auto; display: flex; align-items: center; gap: 7px; height: 34px; padding: 0 12px; background: var(--surface); border-bottom: 1px solid var(--border); min-width: 0; }
+    .sx-winbar > i { flex: 0 0 auto; width: 10px; height: 10px; border-radius: 50%; }
+    .sx-winbar > i:nth-child(1) { background: #ef4444; } .sx-winbar > i:nth-child(2) { background: #eab308; } .sx-winbar > i:nth-child(3) { background: #22c55e; }
+    .sx-wintitle { margin-left: 6px; font-family: var(--font-mono); font-size: 11.5px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+    .sx-simtag { margin-left: auto; flex: 0 0 auto; font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.12em; color: var(--orange); border: 1px solid rgba(245, 158, 11, 0.45); padding: 1px 7px; border-radius: 100px; }
+    .sx-tab { flex: 0 0 auto; font-family: var(--font-body); font-size: 11.5px; color: var(--muted); padding: 3px 10px; border-radius: 6px; margin-left: 2px; }
+    .sx-tab.on { color: var(--text); background: #262626; }
+
+    /* Terminal (Claude Code / n8n log) */
+    .sx-term { flex: 1; min-height: 0; overflow: hidden; padding: 10px 14px 14px; font-family: var(--font-mono); font-size: 13px; line-height: 1.55; color: var(--text); }
+    .sx-term.scrolled { -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 34px); mask-image: linear-gradient(to bottom, transparent 0, #000 34px); }
+    .tl { position: relative; padding: 1px 0 1px 18px; overflow-wrap: anywhere; word-break: normal; transition: opacity 0.3s ease; }
+    .tl.old { opacity: 0.45; }
+    .tl.new { animation: sxLine 0.35s ease both; }
+    @keyframes sxLine { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
+    .tl .g { position: absolute; left: 0; top: 1px; }
+    .tl b { font-weight: 700; color: var(--text); }
+    .tl .arg { color: var(--text-secondary); }
+    .tl.user { margin: 2px 0 8px; padding: 6px 10px 6px 28px; background: #1c1c1c; border-radius: 6px; }
+    .tl.user .g { left: 11px; top: 6px; color: var(--muted); }
+    .tl.say { margin-top: 6px; }
+    .tl.tool { margin-top: 7px; }
+    .tl.tool .g { color: var(--green); }
+    .tl.new.tool .g { animation: sxBlink 0.4s steps(2, jump-none) 3; }
+    @keyframes sxBlink { 50% { opacity: 0.15; } }
+    .tl.out, .tl.todo { padding-left: 40px; color: var(--text-secondary); }
+    .tl.out .g, .tl.todo .g { left: 18px; color: #555; }
+    .tl.todo .g { color: var(--text-secondary); }
+    .tl.ok { color: var(--green); } .tl.warn { color: var(--orange); } .tl.err { color: var(--red); } .tl.dim { color: var(--muted); }
+    .tl.ok .g { color: var(--green); } .tl.warn .g { color: var(--orange); } .tl.err .g { color: var(--red); }
+    .tl.ask { margin: 7px 0 3px 18px; padding: 7px 10px; border: 1px solid rgba(59, 130, 246, 0.5); border-radius: 8px; background: rgba(59, 130, 246, 0.07); }
+    .ask-h { font-size: 10.5px; letter-spacing: 0.06em; color: var(--accent-hover); margin-bottom: 3px; }
+    .ask-q { color: var(--text); }
+    .ask-q + .ask-q { margin-top: 2px; }
+    .ask-q .sel { color: var(--accent-hover); font-weight: 700; }
+    .ask-q .alt { color: #595959; }
+    .tl.box { margin: 5px 0 3px 18px; padding: 6px 10px; border-left: 2px solid var(--accent); background: #151515; color: var(--text-secondary); }
+    .tl.log { display: grid; grid-template-columns: 6.6em 1.5em 1fr; padding-left: 0; }
+    .tl.log .ts { color: #595959; }
+
+    /* Screen views */
+    .sx-screen { flex: 1; position: relative; min-height: 0; overflow: hidden; }
+    .sx-view { position: absolute; inset: 0; }
+    .sx-view.swap { animation: sxFade 0.35s ease both; }
+    @keyframes sxFade { from { opacity: 0; } to { opacity: 1; } }
+    .sx-doc { position: absolute; inset: 0; padding: 14px 18px; overflow: hidden; font-size: 13px; line-height: 1.55; color: var(--text-secondary); }
+    .sx-doc .fn { font-family: var(--font-mono); font-size: 11px; color: var(--accent-hover); margin-bottom: 6px; }
+    .sx-doc h4 { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 10px; line-height: 1.35; }
+    .sx-doc .note { margin-top: 10px; font-size: 11.5px; color: var(--muted); }
+    .sx-doc code { font-size: 0.9em; }
+    .sx-ck { list-style: none; }
+    .sx-ck li { display: grid; grid-template-columns: 1.3em 8.6em 1fr; gap: 6px; padding: 6px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.06); }
+    .sx-ck li:last-child { border-bottom: none; }
+    .sx-ck .k { color: var(--text); font-weight: 600; }
+    .sx-ck .y { color: var(--green); } .sx-ck .p { color: #555; } .sx-ck .w { color: var(--orange); } .sx-ck .r { color: var(--red); }
+    .sx-src { display: inline-block; font-family: var(--font-mono); font-size: 10px; color: var(--muted); border: 1px solid var(--border); border-radius: 4px; padding: 0 5px; margin-left: 4px; white-space: nowrap; vertical-align: 1px; }
+    .sx-code { font-family: var(--font-mono); font-size: 12.5px; line-height: 1.75; background: #111; border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; color: var(--text); white-space: pre; overflow: hidden; }
+    .sx-code .c { color: #5c6370; } .sx-code .k { color: var(--accent-hover); } .sx-code .v { color: #c3e88d; }
+    .sx-grid { display: grid; grid-template-columns: 1.25fr 0.55fr 2fr; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; font-size: 12.5px; }
+    .sx-grid > span { padding: 7px 10px; border-bottom: 1px solid rgba(255, 255, 255, 0.06); }
+    .sx-grid > span.h { font-size: 10.5px; letter-spacing: 0.06em; color: var(--muted); background: #151515; border-bottom: 1px solid var(--accent); }
+    .sx-grid > span.nm { color: var(--text); font-weight: 600; }
+    .sx-flow { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; gap: 6px; align-items: stretch; margin-bottom: 12px; }
+    .sx-flow > i { font-style: normal; color: #444; align-self: center; }
+    .sx-flow .fb { background: #151515; border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 11.5px; line-height: 1.45; }
+    .sx-flow .fb .m { display: block; font-family: var(--font-mono); font-size: 10.5px; color: var(--accent-hover); }
+    .sx-flow .fb b { display: block; font-size: 13px; color: var(--text); margin: 1px 0 3px; }
+    .sx-route { display: grid; gap: 8px; }
+    .sx-route .rq { justify-self: start; background: var(--accent); color: #fff; font-weight: 600; border-radius: 8px; padding: 6px 12px; }
+    .sx-route .br { border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px; font-size: 13px; }
+    .sx-route .br.on { border-color: var(--green); color: var(--text); background: rgba(34, 197, 94, 0.07); }
+    .sx-route .br.off { color: #555; border-style: dashed; }
+    .sx-route .tg { font-family: var(--font-mono); font-size: 10.5px; padding: 1px 6px; border-radius: 4px; background: #222; color: var(--text-secondary); margin-right: 6px; }
+    .sx-route em { font-style: normal; color: #555; margin-left: 6px; }
+    .sx-gatev { position: absolute; inset: 0; display: grid; grid-template-columns: auto 1fr; gap: 18px; align-items: center; padding: 18px 22px; }
+    .sx-gatev .big { width: 96px; height: 96px; border-radius: 50%; border: 2px solid var(--orange); display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 34px; line-height: 1; background: rgba(245, 158, 11, 0.08); }
+    .sx-gatev .big span { font-family: var(--font-mono); font-size: 10px; color: var(--orange); margin-top: 6px; }
+    .sx-ok { display: inline-block; margin-top: 10px; font-size: 12.5px; color: var(--green); border: 1px solid rgba(34, 197, 94, 0.5); border-radius: 100px; padding: 3px 12px; }
+    .sx-tree { font-family: var(--font-mono); font-size: 12.5px; line-height: 1.95; }
+    .sx-tree div { display: grid; grid-template-columns: 11.5em 1fr; }
+    .sx-tree b { color: var(--text); font-weight: 600; }
+    .sx-tree span { color: var(--muted); font-family: var(--font-body); font-size: 12px; }
+
+    /* Browser mock */
+    .sx-br { position: absolute; inset: 0; display: flex; flex-direction: column; background: #121212; }
+    .sx-url { flex: 0 0 auto; display: flex; align-items: center; gap: 10px; height: 34px; padding: 0 10px; background: #181818; border-bottom: 1px solid var(--border); font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+    .sx-url .pill { flex: 1; background: #0b0b0b; border: 1px solid #262626; border-radius: 100px; padding: 3px 12px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; }
+    .sx-url .pw { font-family: var(--font-body); font-size: 11px; color: var(--purple); border: 1px solid rgba(168, 85, 247, 0.5); border-radius: 100px; padding: 1px 8px; white-space: nowrap; }
+    .sx-page { flex: 1; position: relative; overflow: hidden; }
+    .sx-cerr { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; padding: 0 12%; color: var(--text-secondary); font-size: 13px; }
+    .sx-cerr .ic { width: 38px; height: 46px; border: 3px solid #666; border-radius: 3px; margin-bottom: 18px; display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 13px; font-weight: 700; color: #777; }
+    .sx-cerr h4 { font-size: 19px; color: var(--text); font-weight: 600; margin-bottom: 8px; }
+    .sx-cerr .mono { font-family: var(--font-mono); font-size: 11.5px; color: var(--muted); margin-top: 10px; }
+    .sx-n8n { position: absolute; inset: 0; display: grid; grid-template-columns: 52px 1fr; }
+    .sx-n8n .side { background: #161616; border-right: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; gap: 10px; padding-top: 10px; }
+    .sx-n8n .logo { font-family: var(--font-mono); font-weight: 700; font-size: 12px; color: #fff; background: #ea4b71; border-radius: 6px; padding: 3px 5px; }
+    .sx-n8n .si { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 14px; }
+    .sx-n8n .si.on { background: #262626; color: var(--text); }
+    .sx-n8n .main { padding: 16px 20px; position: relative; }
+    .sx-n8n .top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .sx-n8n .top h4 { font-size: 18px; color: var(--text); font-weight: 700; }
+    .sx-n8n .btn { position: relative; font-size: 12px; font-weight: 600; color: #fff; background: #ea4b71; border-radius: 6px; padding: 6px 12px; }
+    .sx-n8n .tabs { display: flex; gap: 18px; font-size: 12.5px; color: var(--muted); border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+    .sx-n8n .tabs span { position: relative; padding-bottom: 7px; }
+    .sx-n8n .tabs .on { color: var(--text); border-bottom: 2px solid #ea4b71; }
+    .sx-n8n .empty { border: 1px dashed #333; border-radius: 10px; padding: 26px; text-align: center; display: flex; flex-direction: column; gap: 6px; align-items: center; color: var(--text-secondary); font-size: 13px; position: relative; }
+    .sx-n8n .empty b { color: var(--text); font-size: 15px; }
+    .sx-n8n .empty .s { border: 1px solid #3a3a3a; border-radius: 6px; padding: 5px 12px; margin-top: 6px; position: relative; }
+    .sx-ref { position: absolute; top: -9px; right: -8px; font-family: var(--font-mono); font-size: 9.5px; font-weight: 600; color: #fff; background: var(--purple); border-radius: 4px; padding: 0 4px; line-height: 1.5; white-space: nowrap; }
+    .sx-hl { outline: 1.5px dashed var(--purple); outline-offset: 3px; }
+
+    /* n8n canvas mock */
+    .sx-cv { position: absolute; inset: 0; display: flex; flex-direction: column; background-color: #141414; background-image: radial-gradient(#2b2b2b 1px, transparent 1.2px); background-size: 16px 16px; }
+    .sx-cvhead { flex: 0 0 auto; display: flex; align-items: center; gap: 10px; height: 38px; padding: 0 12px; background: rgba(22, 22, 22, 0.95); border-bottom: 1px solid var(--border); font-size: 12.5px; color: var(--text); min-width: 0; }
+    .sx-cvhead .wf { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+    .sx-cvhead .clk { font-family: var(--font-mono); font-size: 12px; color: var(--accent-hover); white-space: nowrap; }
+    .sx-pub { margin-left: auto; flex: 0 0 auto; font-size: 11px; padding: 2px 10px; border-radius: 100px; border: 1px solid #3a3a3a; color: var(--muted); white-space: nowrap; }
+    .sx-pub.on { color: var(--green); border-color: rgba(34, 197, 94, 0.55); }
+    .sx-pub.plan { color: var(--orange); border-color: rgba(245, 158, 11, 0.55); }
+    .sx-cv svg { flex: 1; width: 100%; min-height: 0; display: block; }
+    .sx-cv .shp { fill: #202020; stroke: #505050; stroke-width: 1.5; }
+    .sx-cv .nd .ic { font-size: 17px; fill: #e5e5e5; text-anchor: middle; dominant-baseline: central; font-family: var(--font-body); }
+    .sx-cv .nd .ic.m { font-family: var(--font-mono); font-size: 13px; font-weight: 700; }
+    .sx-cv .nd .lb { font-size: 10.5px; fill: var(--text-secondary); text-anchor: middle; font-family: var(--font-body); }
+    .sx-cv .nd.planned .shp { fill: rgba(255, 255, 255, 0.02); stroke: #5a5a5a; stroke-dasharray: 5 4; }
+    .sx-cv .nd.planned .ic { opacity: 0.45; }
+    .sx-cv .nd.run .shp { stroke: var(--accent); stroke-width: 2.5; }
+    .sx-cv .nd.ok .shp { stroke: var(--green); stroke-width: 2.2; }
+    .sx-cv .nd.err .shp { stroke: var(--red); stroke-width: 2.5; fill: rgba(239, 68, 68, 0.1); }
+    .sx-cv .nd.skip { opacity: 0.3; }
+    .sx-cv .nd.pop { animation: sxPop 0.4s ease both; transform-box: fill-box; transform-origin: center; }
+    @keyframes sxPop { from { opacity: 0; transform: scale(0.6); } to { opacity: 1; transform: none; } }
+    .sx-cv .spin { fill: none; stroke: var(--accent); stroke-width: 2.5; stroke-dasharray: 26 170; stroke-linecap: round; animation: sxSpin 1s linear infinite; transform-box: fill-box; transform-origin: center; }
+    @keyframes sxSpin { to { transform: rotate(360deg); } }
+    .sx-cv .bdg text { font-size: 9px; font-weight: 700; fill: #fff; text-anchor: middle; dominant-baseline: central; }
+    .sx-cv .fixlb { font-family: var(--font-mono); font-size: 9.5px; fill: var(--orange); text-anchor: middle; }
+    .sx-cv .ed { fill: none; stroke: #4a4a4a; stroke-width: 1.5; }
+    .sx-cv .ed.ok { stroke: var(--green); stroke-width: 2; }
+    .sx-cv .ed.planned { stroke: #444; stroke-dasharray: 4 4; }
+    .sx-cv .edpop { animation: sxFade 0.6s ease 0.9s both; }
+    .sx-code + .sx-ck { margin-top: 10px; }
+    .sx-cv .errlb { font-size: 10px; fill: var(--orange); font-family: var(--font-mono); }
+    .sx-cv .empty-add { fill: none; stroke: #555; stroke-dasharray: 6 5; stroke-width: 1.5; }
+    .sx-cv .empty-t { font-size: 13px; fill: var(--text-secondary); text-anchor: middle; }
+
+    /* Teams mock */
+    .sx-teams { position: absolute; inset: 0; display: grid; grid-template-columns: 50px 1fr; background: #1f1f23; }
+    .sx-teams .rail { background: #17171a; border-right: 1px solid #2c2c31; display: flex; flex-direction: column; align-items: center; gap: 12px; padding-top: 12px; color: #8b8b95; font-size: 15px; }
+    .sx-teams .rail .on { color: #a5a7ff; }
+    .sx-teams .ch { display: flex; flex-direction: column; min-height: 0; }
+    .sx-teams .chh { flex: 0 0 auto; height: 40px; display: flex; align-items: center; gap: 8px; padding: 0 16px; border-bottom: 1px solid #2c2c31; font-size: 13px; color: #e6e6e6; font-weight: 600; }
+    .sx-teams .chh span { font-weight: 400; color: #8b8b95; font-size: 12px; }
+    .sx-teams .msgs { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; gap: 2px; padding: 6px 0 10px; overflow: hidden; }
+    .sx-msg { display: grid; grid-template-columns: 32px 1fr; gap: 10px; padding: 4px 16px; }
+    .sx-msg.old { opacity: 0.4; }
+    .sx-msg.new .bub { animation: sxMsg 0.55s ease both; }
+    @keyframes sxMsg { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+    .sx-msg .av { width: 32px; height: 32px; border-radius: 50%; background: #5b5fc7; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+    .sx-msg .who { font-size: 12px; color: #e6e6e6; font-weight: 600; margin-bottom: 3px; }
+    .sx-msg .who span { font-weight: 400; color: #8b8b95; margin-left: 6px; }
+    .sx-msg .bub { background: #2d2d33; border-radius: 6px; padding: 7px 13px; font-size: 12px; line-height: 1.42; color: #e6e6e6; white-space: pre-line; }
+    .sx-msg.old .bub { padding: 4px 12px; }
+    .sx-msg .who { line-height: 1.3; }
+    .sx-msg.new .bub { box-shadow: 0 0 0 1px rgba(91, 95, 199, 0.8); }
+    .sx-msg .bub b { font-weight: 700; }
+
+    /* Caption */
+    .sx-cap { display: flex; align-items: center; gap: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 7px 10px 7px 14px; min-height: 48px; transition: border-color 0.3s ease; }
+    .sx-cap.key { border-color: rgba(245, 158, 11, 0.7); }
+    .sx-cut { flex: 0 0 auto; font-family: var(--font-mono); font-size: 11.5px; color: var(--accent-hover); background: var(--accent-soft); border-radius: 6px; padding: 3px 8px; white-space: nowrap; }
+    .sx-stop { flex: 0 0 auto; font-size: 11px; font-weight: 600; color: var(--orange); border: 1px solid rgba(245, 158, 11, 0.6); border-radius: 100px; padding: 1px 8px; white-space: nowrap; }
+    .sx-stop[hidden] { display: none; }
+    .sx-captext { flex: 1; min-width: 0; font-size: 15px; line-height: 1.4; color: var(--text); }
+    .sx-owner { flex: 0 0 auto; font-family: var(--font-mono); font-size: 11px; color: var(--muted); white-space: nowrap; }
+    .sx-ctl { flex: 0 0 auto; display: flex; gap: 6px; }
+    .sx-btn { background: #1f1f1f; border: 1px solid var(--border); color: var(--text-secondary); font-family: var(--font-body); font-size: 12.5px; padding: 6px 11px; border-radius: 7px; cursor: pointer; white-space: nowrap; transition: border-color 0.2s ease, color 0.2s ease; }
+    .sx-btn:hover { border-color: var(--accent); color: var(--text); }
+    .sx-btn:disabled { opacity: 0.35; cursor: default; border-color: var(--border); color: var(--text-secondary); }
+    .sx-btn.on { border-color: var(--accent); color: var(--accent-hover); }
+
+    @media (prefers-reduced-motion: reduce) {
+      .sim *, .sim *::before, .sim *::after { animation: none !important; transition: none !important; }
+      .slide .reveal { transition: none !important; }
+    }
+
+    /* Small windows: the stage scales down, so only the fixed chrome needs to shrink */
+    @media (max-width: 700px) { .hint { display: none; } }
+
+    /* ===== Print / PDF ===== */
+    @media print {
+      body { overflow: visible; background: #0a0a0a; height: auto; width: auto; }
+      .progress, .counter, .hint, .topbar { display: none !important; }
+      .stage { position: static; overflow: visible; }
+      .deck { width: 1600px; height: auto; position: static; transform: none; }
+      .slide { position: relative; opacity: 1; visibility: visible; width: 1600px; height: 900px; overflow: hidden; page-break-after: always; page-break-inside: avoid; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .slide .a { opacity: 1 !important; transform: none !important; animation: none !important; }
+      .slide .reveal { opacity: 1 !important; transform: none !important; }
+      .sx-ctl { display: none !important; }
+      .sim *, .sim *::before, .sim *::after { animation: none !important; transition: none !important; }
+      @page { size: 1600px 900px; margin: 0; }
+    }
+
+    /* Harness design examples — scoped to the replacement slides. */
+    .hx .hx-top { align-items: start; }
+    .hx h2 { line-height: 1.3; margin-bottom: 1.35rem; }
+    .hx .card h3 { font-size: 1.1rem; }
+    .hx .card p { font-size: .96rem; }
+    .hx td { font-size: .96rem; padding: .65rem .8rem; }
+    .hx th { font-size: .8rem; }
+    .hx .code-container pre code { font-size: .9rem; line-height: 1.75; }
+    .hx .code-container code { overflow-wrap: anywhere; white-space: pre-wrap; }
+    .hx .hx-takeaway { margin-top: 1.25rem; font-size: 1.25rem; }
+    .hx .hx-source { margin-top: .9rem; font-size: .7rem; }
+    .hx .hx-source a { color: var(--text-secondary); text-decoration: none; }
+    .hx-band { width: 100%; margin: 1.1rem 0; padding: .8rem 1rem; background: var(--accent-soft); border-left: 3px solid var(--accent); font-size: 1.05rem; line-height: 1.6; }
+    .hx-danger { border-color: var(--orange); background: rgba(245,158,11,.08); }
+    .hx-flow { width: 100%; display: flex; align-items: stretch; gap: 12px; margin: 1rem 0; }
+    .hx-node { flex: 1; min-width: 0; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); padding: 17px; }
+    .hx-node b { display: block; font-size: 1.05rem; color: var(--accent-hover); margin-bottom: 7px; }
+    .hx-node span { font-size: .85rem; color: var(--text-secondary); overflow-wrap: anywhere; }
+    .hx-arrow { align-self: center; color: var(--accent); font-size: 1.5rem; }
+    .hx-graph { width: 100%; height: auto; margin-bottom: 1rem; flex-shrink: 0; }
+    .hx-graph .hx-box rect { fill: var(--surface); stroke: var(--border); stroke-width: 2; rx: 12; }
+    .hx-graph text { fill: var(--text); font-family: var(--font-body); font-size: 22px; font-weight: 600; }
+    .hx-graph text.hx-sub { fill: var(--accent-hover); font-size: 18px; font-weight: 400; }
+
+    /* Request-to-procedure story: a large composer lifts to reveal the seven steps. */
+    .chat-flow::before, .chat-flow::after { display: none; }
+    .chat-flow h2 { margin-bottom: 0.8rem; }
+    .chat-stage { position: relative; width: 100%; height: 550px; flex: 0 0 550px; }
+    .chat-window { position: absolute; inset: 0 0 auto; height: 270px; z-index: 2;
+      border: 1px solid #3f4f68; border-radius: 20px; background: #14171c;
+      box-shadow: 0 24px 80px rgba(0,0,0,.38); transform: translateY(132px);
+      transform-origin: top center; transition: transform .8s cubic-bezier(.22,1,.36,1), border-color .8s ease; }
+    .chat-window-head { height: 48px; display: flex; align-items: center; gap: 10px; padding: 0 28px;
+      border-bottom: 1px solid var(--border); color: var(--text-secondary); font-size: 15px; }
+    .chat-window-head b { color: var(--text); font-weight: 600; }
+    .chat-mark { color: var(--accent-hover); font-size: 25px; }
+    .chat-example { margin-left: auto; font-size: 13px; color: var(--text-secondary); }
+    .chat-message { padding: 28px 34px 0; }
+    .chat-command { min-height: 30px; font: 21px/1.45 var(--font-mono); color: var(--accent-hover); }
+    .chat-request { min-height: 54px; margin-top: 15px; font-size: 31px; line-height: 1.5; letter-spacing: -.025em; color: var(--text); }
+    .chat-caret { display: inline-block; width: 2px; height: 1em; margin-left: 3px; background: var(--accent-hover); vertical-align: -.12em; }
+    .chat-caret[hidden] { display: none; }
+    .chat-flow[data-chat-phase="typing"] .chat-caret { animation: chatBlink .8s step-end infinite; }
+    .chat-window-foot { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 17px 34px 0; color: var(--text-secondary); font-size: 14px; }
+    .chat-send { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 50%; background: var(--accent); color: white; font-size: 23px; }
+    .chat-stage { overflow: hidden; }
+    .chat-flow[data-chat-phase="lifting"] .chat-window { transform: translateY(-580px); transition: transform 1s cubic-bezier(.65,0,.35,1); }
+    .chat-flow[data-chat-phase="scene"] .chat-window { visibility: hidden; transform: translateY(-580px); }
+    .chat-flow:not([data-chat-phase="typing"]) .chat-caret { visibility: hidden; }
+    .chat-work { display: none; position: relative; height: 100%; padding: 38px 48px;
+      border: 1px solid #344054; border-radius: 22px; background: #151b24; }
+    .chat-flow[data-chat-phase="scene"] .chat-work { display: flex; flex-direction: column; }
+    .work-progress { position: absolute; top: 54px; right: 48px; display: flex; gap: 10px; padding: 0; list-style: none; }
+    .work-progress li { width: 8px; height: 8px; border-radius: 50%; background: #384454; }
+    .work-progress li.passed { background: #6389b5; }
+    .work-progress li[aria-current="step"] { background: #93c5fd; box-shadow: 0 0 0 4px #263b55; }
+    .work-scene { display: none; flex-direction: column; min-height: 0; flex: 1; }
+    .work-scene.active { display: flex; }
+    .work-heading { display: flex; gap: 20px; align-items: baseline; }
+    .work-number { font: 19px/1 var(--font-mono); color: #93c5fd; }
+    .work-heading h3 { font-size: 38px; margin: 0; letter-spacing: -.03em; }
+    .work-body { position: relative; flex: 1; min-height: 0; }
+    .simple-moment { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 22px; text-align: center; }
+    .simple-main { font-size: 43px; color: #edf3fc; line-height: 1.35; letter-spacing: -.035em; }
+    .simple-sub { font-size: 25px; color: #a7b7ca; line-height: 1.5; }
+    .simple-answer { color: #93c5fd; }
+    .simple-person { font-size: 16px; color: #d9be8e; letter-spacing: .04em; }
+    .simple-success { color: #a5dec6; }
+    .simple-rail { display: flex; align-items: center; gap: 30px; font-size: 38px; color: #dbeafe; }
+    .simple-rail i { font-style: normal; font-size: 28px; color: #5a7da5; }
+    .simple-scan { display: flex; flex-direction: column; gap: 10px; width: 120px; margin: 0 auto; }
+    .simple-scan i { display: block; height: 4px; border-radius: 2px; background: #32465f; }
+    .simple-scan i:nth-child(2) { width: 80%; }
+    .simple-scan i:last-child { width: 60%; }
+    .shown .simple-scan i { animation: simpleScan 1.4s ease-in-out 3; }
+    .shown .simple-scan i:nth-child(2) { animation-delay: .2s; }
+    .shown .simple-scan i:last-child { animation-delay: .4s; }
+    .simple-pipeline { width: 840px; height: 140px; }
+    .simple-pipeline text { font-family: var(--font-body); font-size: 30px; fill: #dbeafe; }
+    .simple-pipeline path { stroke: #6389b5; stroke-width: 3; stroke-dasharray: 225; stroke-dashoffset: 225; transition: stroke-dashoffset 1.1s ease; }
+    .simple-pipeline .shown path { stroke-dashoffset: 0; }
+    .simple-pipeline circle { fill: #93c5fd; }
+    .work-tag { position: absolute; left: 48px; bottom: 25px; color: #8493a6; font-size: 13px; }
+    .work-scene [data-at] { opacity: 0; transform: translateY(8px); transition: opacity .4s ease, transform .4s ease; }
+    .work-scene [data-at].shown { opacity: 1; transform: none; }
+    .work-scene [data-until].expired { display: none; }
+    .work-print { display: none; }
+    @keyframes simpleScan { 50% { background: #93c5fd; } }
+    .chat-flow .chat-meta { display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 22px; margin-top: 18px; }
+    .chat-meta .foot { margin-top: 0; font-size: 13px; line-height: 1.6; color: var(--text-secondary); }
+    .chat-controls { display: flex; flex-shrink: 0; align-items: center; gap: 16px; font-size: 13px; color: var(--text-secondary); }
+    .chat-controls button { color: var(--text); background: var(--surface); border: 1px solid #444; border-radius: 8px; padding: 9px 14px; cursor: pointer; font: inherit; }
+    .chat-controls button:hover { border-color: var(--accent); }
+    .chat-controls button:focus-visible { outline: 2px solid var(--accent-hover); outline-offset: 4px; }
+    .chat-sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+    .chat-instant *, .chat-instant *::before, .chat-instant *::after { transition: none !important; animation: none !important; }
+    @keyframes chatBlink { 50% { opacity: 0; } }
+    @media (prefers-reduced-motion: reduce) {
+      .chat-flow *, .chat-flow *::before, .chat-flow *::after { transition: none !important; animation: none !important; }
+    }
+    @media print {
+      .chat-flow .chat-stage, .chat-flow .chat-meta, .chat-flow .chat-sr { display: none !important; }
+      .work-print { display: block; width: 100%; }
+      .work-print > p { font-size: 20px; margin: 15px 0 20px; color: #b8c8dc; }
+      .work-print-grid { border: 1px solid #3b4656; border-radius: 16px; background: #151b24; padding: 22px 30px; }
+      .work-print-card { display: flex; align-items: baseline; gap: 24px; padding: 14px 0; }
+      .work-print-card b { flex: 0 0 245px; color: #93c5fd; font-size: 22px; }
+      .work-print-card p { font-size: 18px; line-height: 1.5; }
+      .chat-flow *, .chat-flow *::before, .chat-flow *::after { animation: none !important; transition: none !important; }
+    }
+
+    /* Slide 13: one persistent card morphs between six focused explanations. */
+    .context-player { width: 100%; }
+    .context-stage { height: 470px; display: flex; justify-content: center; align-items: center; }
+    .context-card { position: relative; width: 1100px; height: 420px; border: 1px solid #3b536f; border-radius: 24px;
+      background: #151b24; transition: width .6s ease, height .6s ease, border-color .6s ease, border-radius .6s ease; }
+    .context-morph[data-context-step="4"] .context-card { width: 1340px; height: 390px; border-radius: 16px; border-color: #7e6baf; }
+    .context-morph:is([data-context-step="5"],[data-context-step="6"]) .context-card { width: 1200px; height: 410px; border-radius: 32px; border-color: #579583; }
+    .context-count { position: absolute; left: 38px; top: 28px; font: 15px var(--font-mono); color: #90accd; }
+    .context-frame { position: absolute; inset: 62px 38px 30px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 25px;
+      opacity: 0; visibility: hidden; transform: translateY(18px); transition: opacity .45s ease, transform .55s ease, visibility .45s; text-align: center; }
+    .context-frame.active { opacity: 1; visibility: visible; transform: none; }
+    .context-frame h3 { font-size: 40px; margin: 0; color: #edf3fc; }
+    .context-frame .context-main { font-size: 30px; line-height: 1.6; color: #bed7f6; }
+    .context-frame .context-sub { font-size: 21px; color: #9dacbf; }
+    .context-frame strong { color: #93c5fd; font-weight: 600; }
+    .context-path { display: flex; align-items: center; gap: 22px; font-size: 29px; color: #bed7f6; }
+    .context-path i { font-style: normal; font-size: 23px; color: #6d849f; }
+    .context-controls { display: flex; justify-content: flex-end; align-items: center; gap: 12px; font-size: 14px; color: #90a0b4; }
+    .context-controls button { background: #161b23; color: var(--text); border: 1px solid #3d4858; border-radius: 8px; padding: 9px 15px; font: inherit; cursor: pointer; }
+    .context-controls button:hover { border-color: #93c5fd; }
+    .context-controls button:focus-visible { outline: 2px solid #93c5fd; outline-offset: 3px; }
+    .context-print { display: none; }
+    .context-instant .context-card, .context-instant .context-frame { transition: none !important; }
+    @media (prefers-reduced-motion: reduce) { .context-card, .context-frame { transition: none !important; } }
+    @media print {
+      .context-player { display: none !important; }
+      .context-print { display: block; width: 100%; }
+      .context-print ol { padding-left: 28px; }
+      .context-print li { padding: 13px 0; font-size: 22px; line-height: 1.6; }
+      .context-print b { color: #93c5fd; }
+    }
+    /* Slide 12: graph first, then three presenter-controlled explanation cards. */
+    .dependency-flow.active .hx-graph.a { animation: staggerIn .95s cubic-bezier(.22,1,.36,1) .12s forwards; }
+    .dependency-flow .hx-takeaway { opacity: 0; transform: translateY(16px); transition: opacity .5s ease, transform .5s ease; }
+    .dependency-flow:has(.cards .card:last-child.shown) .hx-takeaway { opacity: 1; transform: none; }
+    @media (prefers-reduced-motion: reduce) {
+      .dependency-flow.active .hx-graph.a { animation: none; opacity: 1; transform: none; }
+      .dependency-flow .reveal, .dependency-flow .hx-takeaway { transition: none; }
+    }
+    @media print {
+      .dependency-flow .hx-graph.a, .dependency-flow .hx-takeaway { animation: none !important; opacity: 1 !important; transform: none !important; }
+    }
+    /* Directional highlights travel over the fixed arrow paths. */
+    .dependency-stream { display: none; pointer-events: none; }
+    .dependency-flow.active .dependency-stream { display: inline; }
+    .dependency-stream path { fill: none; stroke: #dbeafe; stroke-width: 4; stroke-linecap: round;
+      stroke-dasharray: 16 104; stroke-dashoffset: 18; opacity: 0; }
+    .dependency-flow.active .dependency-stream path { animation: dependencyTravel 4.8s linear infinite; animation-delay: var(--travel-delay); }
+    @keyframes dependencyTravel {
+      0% { stroke-dashoffset: 18; opacity: 0; }
+      8% { opacity: 1; }
+      65% { stroke-dashoffset: -100; opacity: 1; }
+      75%, 100% { stroke-dashoffset: -100; opacity: 0; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .dependency-flow.active .dependency-stream { display: none; }
+      .dependency-flow.active .dependency-stream path { animation: none; }
+    }
+    @media print {
+      .dependency-stream { display: none !important; }
+      .dependency-stream path { animation: none !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="progress" id="progress"></div>
+  <div class="counter" id="counter"></div>
+  <div class="hint">
+    <kbd>Space</kbd><span>다음</span>
+    <kbd>&larr;</kbd><kbd>&rarr;</kbd><span>이동</span>
+    <kbd>F</kbd><span>전체화면</span>
+    <kbd>S</kbd><span>발표자 노트</span>
+    <kbd>P</kbd><span>데모 자동 재생</span>
+  </div>
+  <div class="topbar">
+    <button class="fullscreen-btn" onclick="toggleNotes()" title="발표자 노트 (S)">&#128221; Notes</button>
+    <button class="fullscreen-btn" onclick="toggleFullscreen()" title="전체화면 (F)">&#x26F6; Fullscreen</button>
+  </div>
+
+  <div class="stage">
+  <div class="deck">
+
+    <!-- ===== 0. 타이틀 & 자기소개 ===== -->
+
+    <!-- 1 [원안 #1] Title -->
+    <div class="slide active" data-notes="[원안 #1 · 메시지 보강] [섹션 0 · 1분 / 이 장 25초] 오늘의 목표는 누구나 내부 기술을 몰라도 요구사항에 맞는 자동화를 만들 수 있게 하는 것이다. 팀장님과 팀원들에게도 명령어 하나를 입력하고 하고 싶은 일을 적으면 된다고 안내했다. 짧은 요청에서 출발해 AI와 요구사항을 구체화하고, 알맞은 노드로 구성한다. 딸깍은 쉬운 시작을 뜻한다. 사전 환경 설정과 요건 확인·계획 승인은 필요하다. 배경의 7단계는 그 경험을 뒷받침하는 절차다. [전환] 먼저 제가 이 자동화를 어디에 쓰는지 소개하겠다.">
+      <div class="bg-flow">분석 → 요건 명확화 → 요건 확인 → 리서치 → 계획 → 실행 → 보고</div>
+      <span class="a tag">n8n × Claude Code · 밋업 발표</span>
+      <h1 class="a">잔말말고<br><span class="hi">n8n 오케스트레이션</span>으로</h1>
+      <p class="a subtitle">명령 하나와 요구사항으로 시작하는 맞춤 자동화</p>
+      <p class="a date">30분 · 한국어 · 데모는 시뮬레이션</p>
+    </div>
+
+    <!-- 2 [원안 #2] Speaker -->
+    <div class="slide" data-notes="[원안 #2] 이름, 소속, 그리고 n8n을 실제로 어디에 쓰고 있는지 한 줄. 길게 하지 않는다. 청중이 n8n을 모를 수 있으니 다음 섹션 들어가기 전에 한 문장으로 정의할 것이라고 예고한다. [전환] '그럼 바로, 제가 겪은 사고부터 보여드리겠습니다.'">
+      <div class="row r-3-2">
+        <div>
+          <p class="a kicker">Speaker</p>
+          <h1 class="a">조현식 <span class="dim" style="font-size:0.55em;font-weight:500;">책임</span></h1>
+          <p class="a lead">차량제어서비스개발팀</p>
+          <p class="a" style="margin-top:0.8rem;">n8n을 쓰는 곳: 팀 배포 캘린더 · ITOM EOS 현황 리포트 · Jira due date 납기 · 배포 후 시뮬레이터 E2E 자동화 리포트 (공용 PC에서 24시간 자동 실행)</p>
+        </div>
+        <div class="a" style="display:flex;justify-content:center;">
+          <div class="img-slot round" data-slot="IMG-01" style="border-style:solid;border-color:var(--accent);"><img src="https://avatars.githubusercontent.com/u/78861124?v=4" alt="조현식 책임 프로필 사진" loading="lazy"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3 [신규] Agenda -->
+    <div class="slide" data-notes="[목차] 먼저 n8n을 만드는 번잡함과 AI에게 맡겼을 때의 사고를 봅니다. 이어 제작 원칙과 쉬운 사용 경험을 본 뒤, 어떻게 사고하나와 어떻게 만들었나 두 구간에서 내부 설계를 설명합니다. 배포 캘린더 예시로 완료 조건, 작업 관계, 데이터 계약, 검증과 수정 루프를 따라갑니다. 이어 설치·자동 업데이트와 기존 데모, 활용과 차별점, 마무리 순서입니다.">
+      <p class="a kicker">Agenda</p>
+      <h2 class="a">오늘의 흐름 <span class="dim" style="font-size:1rem;font-weight:400;">· 30분</span></h2>
+      <ol class="toc">
+        <li class="a"><span class="toc-num">01</span> 문제: 번잡한 제작 과정과 AI에게 맡겼을 때의 사고 <span class="toc-min">2분 25초</span></li>
+        <li class="a"><span class="toc-num">02</span> 제작 원칙과 쉬운 사용 경험 <span class="toc-min">1분 45초</span></li>
+        <li class="a"><span class="toc-num">03</span> 어떻게 사고하나 · AI에게 맡길 일의 설계 <span class="toc-min">4분</span></li>
+        <li class="a"><span class="toc-num">04</span> 어떻게 만들었나 · 검증하고 고치는 구조 <span class="toc-min">7분 20초</span></li>
+        <li class="a"><span class="toc-num">05</span> 설치·업데이트와 데모 · 시뮬레이션 <span class="toc-min">4분 45초</span></li>
+        <li class="a"><span class="toc-num">06</span> 실전 활용 · 차별점 <span class="toc-min">2분</span></li>
+        <li class="a"><span class="toc-num">07</span> 마무리 &amp; Q&amp;A <span class="toc-min">25초 +</span></li>
+      </ol>
+    </div>
+
+    <!-- ===== 1. 문제 ===== -->
+
+    <!-- 4 [신규] Creation burden: n8n -->
+    <div class="slide" data-notes="[신규 · 제작 배경] [섹션 1 · 2분 25초 시작 / 이 장 25초] n8n 워크플로우는 노드를 선으로 이은 자동화 흐름입니다. 하나를 만들려면 노드를 찾고, 설정하고 연결해야 합니다. 수정하고 실행해 보고, 다시 고친 뒤 배포까지 해야 합니다. 자동화하려고 시작했는데 만드는 과정부터 번잡합니다. 어려우면 시간을 들이는 대신 익숙한 수작업으로 돌아가게 됩니다. [전환] 이 번거로움을 줄여보려고 AI에게 맡겨봤습니다.">
+      <p class="a kicker">01 · 문제 · 만드는 과정의 부담</p>
+      <h2 class="a">자동화 하나 만들려는데,<br><span class="hi">거쳐야 할 일이 너무 많습니다</span></h2>
+      <div class="cards" style="grid-template-columns:repeat(6,1fr);">
+        <div class="card a"><div class="card-num">01 →</div><h3>노드 찾기</h3><p>어떤 노드를 쓸까?</p></div>
+        <div class="card a"><div class="card-num">02 →</div><h3>설정·연결</h3><p>어떻게 이어야 할까?</p></div>
+        <div class="card a"><div class="card-num">03 →</div><h3>Claude에<br>수정 요청</h3><p>무엇을 고쳐야 할까?</p></div>
+        <div class="card a"><div class="card-num">04 →</div><h3>실행</h3><p>제대로 동작할까?</p></div>
+        <div class="card a"><div class="card-num">05 →</div><h3>다시 수정</h3><p>이번에는 왜 안 될까?</p></div>
+        <div class="card a"><div class="card-num">06</div><h3>배포</h3><p>이제 계속 돌려도 될까?</p></div>
+      </div>
+      <p class="a lead" style="margin-top:1.5rem;">자동화하려고 시작했는데,<br><b class="hi">만드는 과정부터 부담이 됩니다.</b></p>
+      <p class="a foot">결국 시간을 들이기보다, 익숙한 수작업으로 돌아가게 됩니다.</p>
+    </div>
+
+    <!-- 5 [원안 #3] Statement -->
+    <div class="slide" data-notes="[원안 #3] [30초] 그래서 AI에게 맡겨봤습니다. “이렇게 고쳐줘” 한 마디를 던졌더니, 제가 말한 것과 다르게 이해한 채로 워크플로우가 이미 바뀌어 있었습니다. [PAUSE] 청중에게 비슷한 경험이 있는지 묻습니다. [전환] 이런 사고는 다섯 가지 패턴으로 반복됐습니다.">
+      <p class="a kicker">01 · 문제</p>
+      <h1 class="a">「이렇게 고쳐줘」<br>한 마디의 <span class="hi">결말</span></h1>
+      <p class="a lead">요구사항을 다르게 이해한 채, 워크플로우가 <b>바로</b> 바뀐다.</p>
+    </div>
+
+    <!-- 6 [원안 #4] Five accidents -->
+    <div class="slide" data-notes="[원안 #4] [→ 누를 때마다 카드 1장씩 · 5장 다 나온 뒤 → 다음 슬라이드] 다섯 가지 모두 실제로 겪은 것들이다. 표를 읽지 말고 하나당 한 문장짜리 상황극으로. 오해: 확인 없이 바로 바뀐다. 구식 문법: 학습 데이터가 오래돼서 옛날 노드 파라미터와 typeVersion을 쓴다. 무검증: UI에서 손으로 고치면 실수를 바로 알기 어렵다. 무기록: 무엇을 왜 바꿨는지 남지 않는다. 셋업 삽질: 'n8n 설치 어떻게 했더라', '스크립트 어디 있지'가 매번 반복되고, 개인 PC 절대 경로가 박힌 스크립트가 돌아다닌다. [전환] 이런 사고를 매번 만든 사람이 해결하다 보면, 결국 어떤 워크플로우가 남을까요?">
+      <p class="a kicker">01 · 문제</p>
+      <h2 class="a">다섯 가지 반복되는 사고</h2>
+      <div class="cards c5">
+        <div class="card reveal"><span class="card-icon">🤔</span><h3>요구사항 오해</h3><p>확인 없이 즉시 변경. 내가 말한 것과 다른 워크플로우가 된다.</p></div>
+        <div class="card reveal"><span class="card-icon">🕰️</span><h3>구식 문법</h3><p>기억·학습 데이터 기반이라 오래된 노드 파라미터 / <code>typeVersion</code> 사용.</p></div>
+        <div class="card reveal"><span class="card-icon">🙈</span><h3>무검증</h3><p>UI에서 손으로 고치면 실수를 바로 알기 어렵다.</p></div>
+        <div class="card reveal"><span class="card-icon">📭</span><h3>무기록</h3><p>무엇을, 왜 바꿨는지 남지 않는다.</p></div>
+        <div class="card reveal"><span class="card-icon">🔧</span><h3>셋업 삽질</h3><p>「설치 어떻게 했더라」가 매번 반복. 개인 PC 절대 경로가 박힌 스크립트.</p></div>
+      </div>
+    </div>
+
+    <!-- 7 [원안 #5] Consequence: only the creator can maintain it -->
+    <div class="slide" data-notes="[원안 #5 · 다섯 사고가 남긴 결과] [30초] 앞에서 본 다섯 가지 사고가 반복되면, 결국 나만 만들고 나만 수정할 수 있는 워크플로우가 됩니다. 설정 방법, 수정한 이유, 확인 기준이 만든 사람의 기억에만 남으니, 파일을 공유해도 문제가 생길 때마다 저를 다시 찾게 됩니다. [PAUSE] 편해지려고 자동화했는데, 오히려 제가 관리할 일만 더 늘어난 겁니다. 자동화가 하나 늘 때마다 챙겨야 할 설정과 오류, 수정 요청도 함께 늘었습니다. [전환] 그래서 만드는 부담과 이후의 관리 부담을 줄이고, 팀원도 함께 만들고 고칠 수 있도록 세 가지 원칙을 세웠습니다.">
+      <p class="a kicker">01 · 문제 · 다섯 가지 사고가 남긴 결과</p>
+      <h1 class="a">결국, <span class="hi">나만 만들고<br>나만 수정할 수 있는</span><br>워크플로우가 됩니다.</h1>
+      <p class="a lead">편해지려고 자동화했는데,<br><b class="hi">오히려 관리할 일만 더 늘어났습니다.</b></p>
+      <p class="a foot">설정·수정·점검까지, 결국 만든 사람이 계속 챙겨야 합니다.</p>
+    </div>
+
+    <!-- ===== 2. 해결 아이디어 ===== -->
+
+    <!-- 8 [신규] My three principles -->
+    <div class="slide" data-notes="[신규 · 나의 원칙] [25초] 이 하네스를 만든 배경이자 제가 세운 원칙은 세 가지입니다. 세팅이 쉬워야 하고, 편하게 만들 수 있어야 하고, 만든 워크플로우는 누구나 수정할 수 있어야 합니다. 만든 사람의 기억에만 의존하지 않도록 변경한 이유와 확인 방법을 남겨, 다른 팀원도 이해하고 이어서 고칠 수 있어야 합니다. 노드 사용법을 하나하나 배우고 직접 연결하는 부담을 줄여야 다시 손이 갑니다. 시작할 때의 부담도 줄이려고 오케스트레이션을 팀에서 설치할 수 있는 n8n-automation 플러그인으로 묶었습니다. 이 원칙을 담은 진입점이 Claude 대화창 하나였습니다. [전환] 사용자는 이렇게 시작합니다.">
+      <p class="a kicker">02 · 이 하네스를 만들며 세운 나의 원칙</p>
+      <h2 class="a">그래서 제가 세운 원칙은 <span class="hi">세 가지</span>입니다</h2>
+      <div class="cards c3">
+        <div class="card a"><div class="card-num">01 · 시작</div><h3>세팅이 쉬워야 한다</h3><p>시작부터 지치지 않도록</p></div>
+        <div class="card a"><div class="card-num">02 · 만들기</div><h3>편하게 만들 수 있어야 한다</h3><p>노드 사용법과 연결을 직접 익히지 않아도</p></div>
+        <div class="card a"><div class="card-num">03 · 함께 고치기</div><h3>누구나 수정할 수 있어야 한다</h3><p>만든 사람이 아니어도 이해하고 고칠 수 있도록</p></div>
+      </div>
+      <p class="a lead" style="margin-top:1.5rem;">이 원칙을 담은 진입점이<br><b class="hi">Claude 대화창 하나</b>였습니다.</p>
+    </div>
+
+    <!-- 9 [원안 #11·#8 통합] Typed request reveals seven-step flow -->
+    <div class="slide chat-flow" data-chat-flow data-chat-phase="request" data-notes="[원안 #11·#8 통합 · 대화에서 7단계로] [60초]
+[화면 구성] 한 개의 큰 박스 안에서 핵심 장면만 교체합니다. 세부 설명은 말로 전달합니다.
+[큰 대화창] 플러그인 설치와 환경·연결 설정을 마쳤다면, 명령어와 원하는 일을 입력합니다. 배포 캘린더 갱신과 팀 알림 요청입니다.
+[대화창 퇴장 · 1 분석] 요청창은 완전히 사라지고 작업 과정으로 들어갑니다. 먼저 파일을 읽고 입력과 출력 구조를 확인합니다.
+[2 요건 명확화] 매일 몇 시에, 어디로 무엇을 알릴지, 실패하면 어떻게 할지 질문하고 답을 받습니다.
+[3 요건 확인] 이해한 요건을 요약합니다. 요건 확인은 사람의 응답으로 완료됩니다.
+[4 리서치] 공식 문서와 기존 구현에서 실행 조건과 검증 기준을 찾습니다.
+[5 계획 수립] 구성, 연결, 검증 순서를 _workspace/에 파일로 남깁니다. 실행 전 계획 역시 사람이 승인합니다.
+[6 실행] 승인된 범위의 노드를 구성하고 연결합니다. 화면은 구성 → 연결 → 검증으로 단순화했습니다. 필수 데이터와 실패 시 성공 알림 차단까지 검증합니다.
+[7 보고] 하네스는 각 단계에서 분석, 요건, 계획, 실행·검증 결과를 _workspace/에 기록합니다. 보고에서는 누적된 기록과 남은 운영 확인 사항을 정리합니다. 변경한 이유와 확인 결과가 남으므로 만든 사람이 아니어도 기록을 읽고 같은 대화로 이어서 수정을 요청할 수 있습니다.
+[전환] 이 가운데 사람이 확인하는 두 지점을 보겠습니다.
+[조작] 각 작업 장면은 약 6초간 움직인 뒤 멈춥니다. →/Space/PageDown은 진행 중인 장면을 완성하고, 다시 누르면 다음 단계입니다. 이전 입력은 이전 단계 완성 화면으로 돌아갑니다. 분석의 이전은 요청 화면, 그다음은 8장입니다. 처음부터 버튼은 타이핑부터 재생합니다. 뒤로 진입하면 보고 완성 화면입니다.
+[참고] 과정 시뮬레이션이며 실제 실행 기록이 아닙니다. 사람 응답도 설명용 예시입니다. 요건은 기존 배포 캘린더 데모와 동일하며 기존 워크플로우 검토·작업 크기 분류는 확장 설계입니다.">
+      <p class="kicker">02 · 해결 아이디어 · 요청은 대화로, 실행은 절차로</p>
+      <h2><span class="hi">대화 하나로,</span> 자동화를 만듭니다</h2>
+      <div class="chat-stage">
+        <div class="chat-window">
+          <div class="chat-window-head"><span class="chat-mark" aria-hidden="true">✳</span><b>Claude Code</b><span>· n8n-automation</span><span class="chat-example">자동화 요청 예시</span></div>
+          <div class="chat-message" role="group" aria-label="자동화 요청 예시">
+            <p class="chat-sr">/n8n-automation:n8n-workflow-manager. 매일 아침 배포 캘린더를 갱신하고 팀 채널에 알려줘.</p>
+            <div class="chat-command" aria-hidden="true"><span data-chat-command>/n8n-automation:n8n-workflow-manager</span><span class="chat-caret" data-command-caret></span></div>
+            <div class="chat-request" aria-hidden="true"><span data-chat-request>매일 아침 배포 캘린더를 갱신하고 팀 채널에 알려줘.</span><span class="chat-caret" data-request-caret></span></div>
+          </div>
+          <div class="chat-window-foot"><span data-chat-status>요청을 절차로 이어갑니다</span><span class="chat-send" aria-hidden="true">↑</span></div>
+        </div>
+<div class="chat-work" aria-hidden="true">
+<ol class="work-progress" aria-label="7단계 진행"><li aria-label="1단계 분석"></li><li aria-label="2단계 요건 명확화"></li><li aria-label="3단계 요건 확인"></li><li aria-label="4단계 리서치"></li><li aria-label="5단계 계획 수립"></li><li aria-label="6단계 실행"></li><li aria-label="7단계 보고"></li></ol>
+<section class="work-scene" data-scene="0" aria-hidden="true" aria-label="1단계 분석">
+<div class="work-heading"><span class="work-number">01 / 07</span><h3>분석</h3></div>
+<div class="work-body"><div class="simple-moment" data-at="0" data-until="3200"><div class="simple-scan" aria-hidden="true"><i></i><i></i><i></i></div><p class="simple-main">먼저, 파일을 읽습니다</p><p class="simple-sub">워크플로우와 스크립트 확인</p></div><div class="simple-moment" data-at="3200"><div class="simple-rail"><span>입력</span><i>→</i><span>변환</span><i>→</i><span>출력</span></div><p class="simple-main">어떤 데이터가 어디로 흐를까?</p></div></div>
+</section>
+<section class="work-scene" data-scene="1" aria-hidden="true" aria-label="2단계 요건 명확화">
+<div class="work-heading"><span class="work-number">02 / 07</span><h3>요건 명확화</h3></div>
+<div class="work-body"><div class="simple-moment" data-at="0" data-until="2000"><p class="simple-main">언제 실행할까요?</p><p class="simple-sub" data-at="700"><span class="simple-answer">매일 08:00 KST + 수동 실행</span></p></div><div class="simple-moment" data-at="2000" data-until="4000"><p class="simple-main">어디로 알려드릴까요?</p><p class="simple-sub" data-at="2700"><span class="simple-answer">Teams에 점검 건수와 업로드 결과</span></p></div><div class="simple-moment" data-at="4000"><p class="simple-main">실패하면 어떻게 할까요?</p><p class="simple-sub" data-at="4700"><span class="simple-answer">오류를 알리고, 실패로 종료</span></p></div></div>
+</section>
+<section class="work-scene" data-scene="2" aria-hidden="true" aria-label="3단계 요건 확인">
+<div class="work-heading"><span class="work-number">03 / 07</span><h3>요건 확인</h3></div>
+<div class="work-body"><div class="simple-moment" data-at="0" data-until="3700"><p class="simple-main">이렇게 이해했어요. 맞나요?</p><p class="simple-sub">매일 08:00 · Teams 알림 · 실패 시 오류 보고</p></div><div class="simple-moment" data-at="3700"><span class="simple-person">사람의 응답 예시</span><p class="simple-main"><span class="simple-success">✓ 네, 맞습니다</span></p><p class="simple-sub">요건 확인 완료</p></div></div>
+</section>
+<section class="work-scene" data-scene="3" aria-hidden="true" aria-label="4단계 리서치">
+<div class="work-heading"><span class="work-number">04 / 07</span><h3>리서치</h3></div>
+<div class="work-body"><div class="simple-moment" data-at="0" data-until="3000"><div class="simple-scan" aria-hidden="true"><i></i><i></i><i></i></div><p class="simple-main">공식 문서에서 근거를 찾습니다</p><p class="simple-sub">실행 시각 · 환경 제약</p></div><div class="simple-moment" data-at="3000"><div class="simple-scan" aria-hidden="true"><i></i><i></i><i></i></div><p class="simple-main">기존 구현과 비교합니다</p><p class="simple-sub">설정 조건과 검증 기준 정리</p></div></div>
+</section>
+<section class="work-scene" data-scene="4" aria-hidden="true" aria-label="5단계 계획 수립">
+<div class="work-heading"><span class="work-number">05 / 07</span><h3>계획 수립</h3></div>
+<div class="work-body"><div class="simple-moment" data-at="0" data-until="3700"><p class="simple-main">구성 → 연결 → 검증</p><p class="simple-sub">_workspace/에 실행 계획을 남깁니다</p></div><div class="simple-moment" data-at="3700"><span class="simple-person">사람의 응답 예시</span><p class="simple-main"><span class="simple-success">✓ 이 계획으로 진행해 주세요</span></p><p class="simple-sub">사람이 승인한 뒤 실행</p></div></div>
+</section>
+<section class="work-scene" data-scene="5" aria-hidden="true" aria-label="6단계 실행">
+<div class="work-heading"><span class="work-number">06 / 07</span><h3>실행</h3></div>
+<div class="work-body"><div class="simple-moment" data-at="0"><svg class="simple-pipeline" viewBox="0 0 840 140" role="img" aria-label="구성 후 연결하고 검증하는 과정"><g data-at="0"><circle cx="120" cy="45" r="7"/><text x="120" y="110" text-anchor="middle">구성</text></g><g data-at="1200"><path d="M135 45 H405"/><circle cx="420" cy="45" r="7"/><text x="420" y="110" text-anchor="middle">연결</text></g><g data-at="2700"><path d="M435 45 H705"/><circle cx="720" cy="45" r="7"/><text x="720" y="110" text-anchor="middle">검증</text></g></svg><p class="simple-sub simple-success" data-at="4400">✓ 필수 데이터와 실패 분기까지 확인</p></div></div>
+</section>
+<section class="work-scene" data-scene="6" aria-hidden="true" aria-label="7단계 보고">
+<div class="work-heading"><span class="work-number">07 / 07</span><h3>보고</h3></div>
+<div class="work-body"><div class="simple-moment" data-at="0" data-until="3500"><p class="simple-main"><span class="simple-answer">_workspace/</span>에 작업 기록을 남깁니다</p><p class="simple-sub">분석 · 요건 · 계획 · 실행·검증 결과</p></div><div class="simple-moment" data-at="3500"><p class="simple-main">기록을 읽고, 누구나 이어서 수정합니다</p><p class="simple-sub">_workspace/에 남긴 맥락을 바탕으로, 같은 대화에서</p></div></div>
+</section>
+<span class="work-tag">과정 시뮬레이션</span>
+</div>
+      </div>
+      <div class="chat-meta">
+        <p class="foot">플러그인 설치 및 환경·연결 설정 후 이용</p>
+        <div class="chat-controls"><span data-chat-hint>→ 현재 장면 완성</span><button type="button" data-chat-prev aria-label="이전 단계">← 이전</button><button type="button" data-chat-next aria-label="현재 장면 완성 또는 다음 단계">다음 →</button><button class="chat-replay" type="button">↻ 처음부터</button></div>
+      </div>
+<div class="work-print"><p>과정 시뮬레이션 · /n8n-automation:n8n-workflow-manager<br>“매일 아침 배포 캘린더를 갱신하고 팀 채널에 알려줘.”</p><div class="work-print-grid"><div class="work-print-card"><b>1. 분석</b><p>JSON·스크립트에서 입력 → 변환 → 출력 구조 확인</p></div><div class="work-print-card"><b>2. 요건 명확화</b><p>매일 08:00 KST · Teams 알림 · 오류 알림 후 실패 종료</p></div><div class="work-print-card"><b>3. 요건 확인 · 사람</b><p>요건 전체를 요약하고 사용자 응답으로 확정</p></div><div class="work-print-card"><b>4. 리서치</b><p>공식 문서와 기존 구현에서 실행 조건·검증 기준 확인</p></div><div class="work-print-card"><b>5. 계획 수립 · 사람</b><p>구성 → 연결 → 검증 계획을 파일로 남기고 승인</p></div><div class="work-print-card"><b>6. 실행</b><p>노드 연결 후 구조·필수 데이터·실패 분기 검증</p></div><div class="work-print-card"><b>7. 보고</b><p>_workspace/에 작업 기록을 남기고, 누구나 이어서 수정</p></div></div><p>플러그인 설치 및 환경·연결 설정 후 이용 · 예시 장면이며 실제 실행 기록이 아닙니다.</p></div>
+      <p class="chat-sr" data-chat-announcement role="status" aria-live="polite"></p>
+    </div>
+
+    <!-- 10 [원안 #9] Two human gates -->
+    <div class="slide" data-notes="[원안 #9] [20초] 먼저 AI가 이해한 요건을 요약하면 사람이 확인합니다. 다음으로 실행 계획을 확인한 뒤 변경을 진행합니다. 두 지점 모두 AskUserQuestion으로 선택지와 답을 주고받습니다. 사용자는 원하는 결과를 확인하고, 하네스는 구성과 검증을 맡습니다. [전환] 이제 AI에게 맡길 일을 검증 가능한 약속으로 바꾸는 방법을 보겠습니다.">
+      <p class="a kicker">02 · 해결 아이디어</p>
+      <h2 class="a">사람이 개입하는 지점 <span class="hi">2곳</span></h2>
+      <div class="cards c2">
+        <div class="card focus a">
+          <div class="card-num">STEP 3 · 필수</div>
+          <h3>요건 확인</h3>
+          <p>이해한 내용을 <b>요약해 매번 재확인</b>한다. 모호한 부분만 묻는 게 아니라, 확인이 끝나야 다음 단계로 간다.</p>
+        </div>
+        <div class="card focus a">
+          <div class="card-num">STEP 5 · 필수</div>
+          <h3>계획 승인</h3>
+          <p>todo 목록을 파일로 남기고, <b>실행 전에 다시 한번</b> 승인을 받는다.</p>
+        </div>
+      </div>
+      <p class="a foot">둘 다 Claude Code 내장 도구 <code>AskUserQuestion</code>으로 구현 — 선택지를 제시하고 답을 받아야 진행된다.</p>
+    </div>
+
+    <!-- 11 [재구성] Harness design -->
+    <div class="slide hx" data-notes="[재구성 · n8n 적용 설계] [60초] 이제 내부를 어떻게 설계했는지 보겠습니다. 여기부터는 harness의 기법을 배포 캘린더에 적용한 설계입니다. “매일 아침 갱신하고 알려줘”를 그대로 빌더에게 넘기면, 무엇을 완료로 볼지 빌더가 추측하게 됩니다. 그래서 먼저 입력, 기대 결과, 변경 범위, 완료 조건을 나눕니다.
+
+이 사례의 완료 조건은 필수 점검 데이터가 있어야 하고, 실패를 성공으로 알리면 안 된다는 것입니다. 노드가 존재하는 것만으로는 이 조건을 증명할 수 없습니다. 사람에게 확인받은 이 약속을 구현자와 검증자에게 똑같이 전달합니다. 이후 검증 결과는 모두 이 약속으로 돌아옵니다.
+
+[전환] 다음으로 누가 무엇을 할지 정하기 전에, 어떤 작업이 무엇을 기다리는지 그립니다. [근거] https://github.com/revfactory/harness/blob/cceac68ea1d0ad198ef4b7b906cd238375836387/skills/harness/SKILL.md">
+      <p class="a kicker">03 · 어떻게 사고하나 · n8n 적용 설계</p>
+      <h2 class="a">“만들어줘”를 <br>검증 가능한 약속으로 바꾼다</h2>
+      <div class="content a"><div class="cmd">매일 아침 배포 캘린더를 갱신하고 팀 채널에 알려줘.</div><table><thead><tr><th>설계할 것</th><th>배포 캘린더에 적용하면</th></tr></thead><tbody><tr><td>입력</td><td>기존 워크플로우 · 스크립트 결과 · 실행 시각 · 알림 대상</td></tr><tr><td>기대 결과</td><td>XML → HTML → 업로드 → 점검 결과를 담은 알림</td></tr><tr><td>변경 범위</td><td>승인한 노드와 연결만 수정 · 외부 쓰기는 별도로 확인</td></tr><tr><td>완료 조건</td><td>필수 데이터 확인 + 연결 구간 검증 + 실패 시 성공 알림 차단</td></tr></tbody></table><p class="lead hx-takeaway">완료는 <span class="hi">“노드가 만들어졌다”</span>가 아니라,<br>약속한 결과를 <span class="hi">증명할 수 있는 상태</span>입니다.</p></div>
+      <p class="a foot hx-source"><a href="https://github.com/revfactory/harness/blob/cceac68ea1d0ad198ef4b7b906cd238375836387/skills/harness/SKILL.md" target="_blank" rel="noopener noreferrer">harness · SKILL.md</a></p>
+    </div>
+
+    <!-- 12 [재구성] Harness design -->
+    <div class="slide hx dependency-flow" data-notes="[재구성 · n8n 적용 설계] [60초] [조작: 진입하면 작업 흐름도가 먼저 부드럽게 나타납니다. →/Space로 순차, 병렬, 역할 분리 박스를 하나씩 표시합니다. 세 번째 박스와 함께 정리 문장이 나타나고, 다음 입력은 13장으로 이동합니다. ←는 박스를 하나씩 되돌립니다.] [연출: 화살표 위의 빛이 흐름 방향으로 이동하며 의존관계를 강조합니다. 병렬 조사 두 갈래는 동시에 움직입니다.] [흐름도] 역할 이름부터 늘리면 작은 작업에도 큰 팀이 붙습니다. 저는 작업의 의존관계부터 그립니다. 현재 JSON을 알아야 변경을 계획할 수 있고, 변경이 있어야 검증할 수 있으니 이 구간은 순차입니다. 반면 대상이 정해진 뒤 노드 공식 사양과 기존 구현 관례를 조사하는 일은 독립적으로 진행할 수 있습니다.
+
+[→ 순차] 분석 결과가 있어야 계획하고 구현·검증할 수 있습니다. [→ 병렬] 독립적인 자료 조사만 동시에 진행합니다. harness가 제시하는 파이프라인과 팬아웃/팬인을 이 관계에 맞춰 선택한 것입니다. 결과만 전달하면 되는 구간은 서브에이전트로 충분하고, 서로 협의해야 하는 작업이면 팀 통신을 검토합니다. [→ 역할 분리 · 정리 문장] 생성자와 검증자를 나누는 이유는 병렬 실행이 아니라 서로 다른 판단 관점을 확보하기 위해서입니다.
+
+[전환] 역할을 나눴으면 각 역할이 어떤 정보를 받을지도 정해야 합니다. [근거] https://github.com/revfactory/harness/blob/cceac68ea1d0ad198ef4b7b906cd238375836387/skills/harness/references/agent-design-patterns.md">
+      <p class="a kicker">03 · 어떻게 사고하나 · n8n 적용 설계</p>
+      <h2 class="a">역할 이름보다 작업의 의존관계를 먼저 그린다</h2>
+      <div class="content"><svg class="hx-graph a" viewBox="0 0 1360 320" role="img" aria-label="분석 후 두 독립 조사를 병렬 수행하고 계획, 빌더, 검증자로 순차 전달하는 작업 그래프">
+<defs><marker id="hx-dependency-arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8" fill="#60a5fa"/></marker></defs>
+<g fill="none" stroke="#60a5fa" stroke-width="2" marker-end="url(#hx-dependency-arrow)"><path d="M225 150 H265 V65 H300"/><path d="M265 150 V240 H300"/><path d="M535 65 H570 V150 H620"/><path d="M535 240 H570 V150"/><path d="M835 150 H875"/><path d="M1090 150 H1130"/></g>
+<g class="dependency-stream" aria-hidden="true"><path d="M225 150 H265 V65 H300" pathLength="100" style="--travel-delay:1.1s"/><path d="M265 150 V240 H300" pathLength="100" style="--travel-delay:1.1s"/><path d="M535 65 H570 V150 H620" pathLength="100" style="--travel-delay:2.15s"/><path d="M535 240 H570 V150" pathLength="100" style="--travel-delay:2.15s"/><path d="M835 150 H875" pathLength="100" style="--travel-delay:3.2s"/><path d="M1090 150 H1130" pathLength="100" style="--travel-delay:3.85s"/></g>
+<g class="hx-box"><rect x="10" y="100" width="215" height="100"/><rect x="300" y="15" width="235" height="100"/><rect x="300" y="190" width="235" height="100"/><rect x="620" y="100" width="215" height="100"/><rect x="875" y="100" width="215" height="100"/><rect x="1130" y="100" width="215" height="100"/></g>
+<g text-anchor="middle"><text x="117" y="137">대상 분석</text><text class="hx-sub" x="117" y="171">분석가 · 현재 JSON</text><text x="417" y="52">노드 공식 사양</text><text class="hx-sub" x="417" y="86">리서처 · 조사 A</text><text x="417" y="227">기존 구현 관례</text><text class="hx-sub" x="417" y="261">리서처 · 조사 B</text><text x="727" y="137">계획 · 사람 확인</text><text class="hx-sub" x="727" y="171">오케스트레이터</text><text x="982" y="137">변경 구성</text><text class="hx-sub" x="982" y="171">빌더 · 변경 도구</text><text x="1237" y="137">기대 결과와 비교</text><text class="hx-sub" x="1237" y="171">검증자 · 검사 도구</text></g></svg><div class="cards c3"><div class="card reveal"><div class="card-num">순차</div><h3>앞의 결과가 있어야 한다</h3><p>분석 → 계획 → 구현 → 검증</p></div><div class="card reveal"><div class="card-num">병렬</div><h3>서로 기다릴 필요가 없다</h3><p>독립 자료 조사만 동시에 수행</p></div><div class="card reveal"><div class="card-num">역할 분리</div><h3>서로 다른 관점이 필요하다</h3><p>만드는 역할과 판정하는 역할 분리</p></div></div><p class="lead hx-takeaway">에이전트 수는 <span class="hi">작업의 관계를 그린 뒤</span> 결정합니다.</p></div>
+      <p class="a foot hx-source"><a href="https://github.com/revfactory/harness/blob/cceac68ea1d0ad198ef4b7b906cd238375836387/skills/harness/references/agent-design-patterns.md" target="_blank" rel="noopener noreferrer">harness · agent-design-patterns.md</a></p>
+    </div>
+
+    <!-- 13 [재구성] Six morph scenes: context and intent -->
+    <div class="slide hx context-morph" data-context-morph data-context-step="1" data-notes="[재구성 · n8n 적용 설계] [60초 · 6장면, 장면당 약 10초]
+[1/6 오케스트레이터] 역할만 나누고 모든 자료를 전부 주면 컨텍스트 분리 효과가 줄어듭니다. 오케스트레이터는 요청 유형, 분기 규칙과 현재 상태를 받아 다음 작업을 결정합니다.
+[2/6 빌더] 빌더에게는 대상 JSON과 승인된 변경 계획, 이번에 쓸 노드 사양만 전달합니다.
+[3/6 검증자] 검증자는 기대 결과와 변경 산출물, 샘플 입력과 실제 출력을 받습니다. 빌더가 잘했다고 쓴 요약만 읽고 완료를 판정하면 안 됩니다.
+[4/6 필요한 만큼 읽기] Progressive Disclosure입니다. description으로 스킬을 선택하고, SKILL.md로 절차를 읽은 뒤, 이번 작업에 필요한 references만 더 읽습니다.
+[5/6 설명 요청] “IF 노드가 뭐야?”는 일반 질문이므로 설명하고, 변경 파이프라인은 호출하지 않습니다.
+[6/6 변경 요청] “IF 분기를 추가해줘”는 실제 변경이므로 분석·계획·검증 경로를 따릅니다. 같은 키워드여도 의도로 구분해야 합니다. 이런 유사 요청도 트리거 테스트에 넣습니다.
+[조작] →/Space/PageDown 또는 다음 버튼으로 다음 장면, ←/PageUp 또는 이전 버튼으로 이전 장면입니다. 마지막 장면 다음은 14장, 첫 장면 이전은 12장입니다. 뒤로 진입하면 마지막 장면이며, 처음부터 버튼은 첫 장면으로 돌아갑니다.
+[전환] 그리고 넘기는 정보는 대화 요약으로만 남기지 않습니다.
+[근거] https://github.com/revfactory/harness/blob/cceac68ea1d0ad198ef4b7b906cd238375836387/skills/harness/references/skill-writing-guide.md">
+      <p class="a kicker">03 · 어떻게 사고하나 · n8n 적용 설계</p>
+      <h2 class="a">각 에이전트가 알아야 할 것만 전달한다</h2>
+      <div class="context-player">
+        <div class="context-stage"><div class="context-card">
+          <span class="context-count" data-context-count>01 / 06</span>
+          <section class="context-frame active" aria-hidden="false" aria-label="1장면 오케스트레이터"><h3>오케스트레이터</h3><div class="context-main">요청 유형 · 분기 규칙<br>현재 단계 · 사람 확인 상태</div><p class="context-sub">다음에 어떤 작업을 할지 판단합니다.</p></section>
+          <section class="context-frame" aria-hidden="true" aria-label="2장면 빌더"><h3>빌더</h3><div class="context-main">대상 JSON · 승인된 변경 계획<br>이번에 쓸 노드의 사양</div><p class="context-sub">승인된 범위 안에서 구현합니다.</p></section>
+          <section class="context-frame" aria-hidden="true" aria-label="3장면 검증자"><h3>검증자</h3><div class="context-main">기대 결과 · 변경 산출물<br>샘플 입력 · 실제 출력</div><p class="context-sub">완료됐다는 설명 대신, <strong>결과를 직접 비교</strong>합니다.</p></section>
+          <section class="context-frame" aria-hidden="true" aria-label="4장면 필요한 만큼만 읽습니다"><h3>필요한 만큼만 읽습니다</h3><div class="context-main"><span class="context-path"><span>description</span><i>→</i><span>SKILL.md</span><i>→</i><span>필요한 references</span></span></div><p class="context-sub">스킬 선택 → 작업 절차 → 이번 작업에 필요한 문서</p></section>
+          <section class="context-frame" aria-hidden="true" aria-label="5장면 “n8n의 IF 노드가 뭐야?”"><h3>“n8n의 IF 노드가 뭐야?”</h3><div class="context-main"><strong>설명</strong> 요청 → 답변</div><p class="context-sub">워크플로우를 변경하는 절차는 시작하지 않습니다.</p></section>
+          <section class="context-frame" aria-hidden="true" aria-label="6장면 “이 흐름에 IF 분기를 추가해줘”"><h3>“이 흐름에 IF 분기를 추가해줘”</h3><div class="context-main"><strong>변경</strong> 요청 → 분석 · 계획 · 검증</div><p class="context-sub">같은 키워드여도 <strong>요청 의도</strong>에 따라 경로가 달라집니다.</p></section>
+        </div></div>
+        <div class="context-controls"><span data-context-hint>→ 다음 장면</span><button type="button" data-context-prev aria-label="이전 장면">← 이전</button><button type="button" data-context-next aria-label="다음 장면">다음 →</button><button type="button" data-context-restart>↻ 처음부터</button></div>
+      </div>
+      <div class="context-print"><ol>
+        <li><b>오케스트레이터</b> · 요청 유형, 분기 규칙, 현재 단계, 사람 확인 상태</li>
+        <li><b>빌더</b> · 대상 JSON, 승인된 변경 계획, 필요한 노드 사양</li>
+        <li><b>검증자</b> · 기대 결과, 변경 산출물, 샘플 입력, 실제 출력</li>
+        <li><b>필요한 만큼 읽기</b> · description → SKILL.md → 필요한 references</li>
+        <li><b>“IF 노드가 뭐야?”</b> · 일반 설명, 변경 파이프라인 호출 안 함</li>
+        <li><b>“IF 분기를 추가해줘”</b> · 실제 변경, 분석·계획·검증 진행</li>
+      </ol></div>
+      <p class="a foot hx-source"><a href="https://github.com/revfactory/harness/blob/cceac68ea1d0ad198ef4b7b906cd238375836387/skills/harness/references/skill-writing-guide.md" target="_blank" rel="noopener noreferrer">harness · skill-writing-guide.md</a></p>
+      <p class="chat-sr" data-context-announcement role="status" aria-live="polite"></p>
+    </div>
+
+    <!-- 14 [재구성] Harness design -->
+    <div class="slide hx" data-notes="[재구성 · n8n 적용 설계] [60초] 각 역할의 출력이 다음 역할의 입력이 되도록 파일 경로와 내용을 정합니다. 이 화면의 파일명은 적용 예시이고, 핵심은 요청, 계획, 변경안, 검증 근거가 끊기지 않는 것입니다. 이렇게 남겨야 다음 대화에서도 이전 결과를 읽고 이어갈 수 있습니다.
+
+예를 들어 “알림 문구만 짧게”라는 요청이 왔다고 조회와 업로드까지 다시 만들 이유는 없습니다. 기존 워크플로우와 검증 결과를 읽고 메시지 구성 부분을 고칩니다. 다만 수정한 부분만 보는 것이 아니라, 메시지가 소비하는 데이터와 성공·실패 분기까지 영향을 확인합니다. 외부 업로드를 재실행하는 문제는 잠시 뒤 따로 다루겠습니다.
+
+[전환] 이제 이 설계를 실제 생성과 검증 역할로 조립해 보겠습니다. [근거] https://github.com/revfactory/harness/blob/cceac68ea1d0ad198ef4b7b906cd238375836387/skills/harness/references/orchestrator-template.md">
+      <p class="a kicker">03 · 어떻게 사고하나 · n8n 적용 설계</p>
+      <h2 class="a">다음 작업자가 읽을 산출물까지 설계한다</h2>
+      <div class="content a"><div class="hx-flow"><div class="hx-node"><b>요청</b><span>01-request.md</span></div><span class="hx-arrow">→</span><div class="hx-node"><b>계획</b><span>02-plan.md</span></div><span class="hx-arrow">→</span><div class="hx-node"><b>변경안</b><span>03-workflow.json</span></div><span class="hx-arrow">→</span><div class="hx-node"><b>검증</b><span>04-review.json</span></div></div><div class="cmd" style="margin-top:1.2rem;">후속 요청 › “알림 문구만 짧게 바꿔줘”</div><div class="row r2 hx-top"><div><div class="code-container"><div class="code-header"><span class="code-dot red"></span><span class="code-dot yellow"></span><span class="code-dot green"></span><span class="code-filename">전달 계약 · 적용 예시</span></div><pre><code>입력: 기존 workflow + review + 피드백
+수정: 알림 메시지 구성 노드
+보존: 조회·변환·업로드 설정
+검증: 메시지 데이터 + 성공/실패 분기</code></pre></div></div><div><div class="panel after"><h3>이전 산출물에서 재개</h3><ul class="bul"><li>작업별 디렉터리에 결과 보존</li><li>이전 버전을 읽고 변경 범위 확인</li><li>수정 구간과 영향받는 연결부 재검증</li></ul></div></div></div><p class="lead hx-takeaway">부분 재실행은 <span class="hi">관련 없는 일을 다시 하지 않기</span> 위한 설계입니다.</p></div>
+      <p class="a foot hx-source"><a href="https://github.com/revfactory/harness/blob/cceac68ea1d0ad198ef4b7b906cd238375836387/skills/harness/references/orchestrator-template.md" target="_blank" rel="noopener noreferrer">harness · orchestrator-template.md</a></p>
+    </div>
+
+    <!-- 15 [재구성] Harness design -->
+    <div class="slide hx" data-notes="[재구성 · n8n 적용 설계] [80초] 생성자가 자기 변경을 설명하는 것과, 기대 조건을 만족했다고 판정하는 것은 다른 일입니다. 이 설계에서는 빌더와 검증자를 별도 역할로 둡니다. 빌더는 승인 계획과 현재 워크플로우를 받아 변경안을 만들고, 검증자는 완료 조건과 실제 산출물을 읽어 비교합니다.
+
+화면의 정의는 역할 계약 예시입니다. 빌더에게는 변경 도구를, 검증자에게는 읽기와 검사 실행 도구를 배정합니다. 검증자가 읽기만 할 수 있으면 실행 가능한 검사를 못 하므로 검사 실행 권한도 필요합니다. 실제 권한 제한은 사용하는 실행 환경에 별도로 설정해야 합니다. Markdown에 “금지”라고 적는 것 자체가 권한 차단 코드는 아닙니다.
+
+검증자는 통과·실패·미검증을 구분하고 근거를 반환합니다. 실패하면 빌더가 수정하지만, 수정했다는 답변만으로 닫지 않고 다시 검증합니다. 이것이 생성-검증 패턴을 적용한 루프입니다.
+
+[전환] 그럼 검증자는 구체적으로 무엇을 비교할까요? [근거] https://github.com/revfactory/harness/blob/cceac68ea1d0ad198ef4b7b906cd238375836387/skills/harness/references/agent-design-patterns.md">
+      <p class="a kicker">04 · 어떻게 만들었나 · n8n 적용 설계</p>
+      <h2 class="a">생성자에게 완료 판정까지 맡기지 않는다</h2>
+      <div class="content a"><div class="row r2 hx-top"><div><div class="code-container"><div class="code-header"><span class="code-dot red"></span><span class="code-dot yellow"></span><span class="code-dot green"></span><span class="code-filename">builder.md · 역할 정의 예시</span></div><pre><code>입력: 승인 계획 + 현재 workflow
+출력: 변경안 + 변경 요약
+도구: 워크플로우 변경 도구
+수정: 보고서가 가리킨 범위
+완료: 검증자에게 산출물 전달</code></pre></div></div><div><div class="code-container"><div class="code-header"><span class="code-dot red"></span><span class="code-dot yellow"></span><span class="code-dot green"></span><span class="code-filename">reviewer.md · 역할 정의 예시</span></div><pre><code>입력: 완료 조건 + 실제 산출물
+출력: 판정 + 근거 + 수정 대상
+도구: 읽기 + 검사 실행 도구
+판정: 통과 / 실패 / 미검증
+실패: 빌더에게 오류 보고서 반환</code></pre></div></div></div><div class="hx-flow"><div class="hx-node"><b>빌더</b><span>변경안 생성</span></div><span class="hx-arrow">→</span><div class="hx-node"><b>검증자</b><span>기준과 비교</span></div><span class="hx-arrow">→</span><div class="hx-node"><b>오류 보고서</b><span>수정 범위 특정</span></div><span class="hx-arrow">→</span><div class="hx-node"><b>빌더</b><span>수정 후 재제출</span></div></div><p class="lead hx-takeaway">수정 결과는 다시 검증합니다. <span class="hi">검증 근거가 완료 판정의 입력</span>입니다.</p></div>
+      <p class="a foot hx-source"><a href="https://github.com/revfactory/harness/blob/cceac68ea1d0ad198ef4b7b906cd238375836387/skills/harness/references/agent-design-patterns.md" target="_blank" rel="noopener noreferrer">harness · agent-design-patterns.md</a></p>
+    </div>
+
+    <!-- 16 [재구성] Harness design -->
+    <div class="slide hx" data-notes="[재구성 · n8n 적용 설계] [90초] 이 장은 실제 pipeline.json 안의 01 XML 결과 정규화 코드를 바탕으로 합니다. 왼쪽은 필수 필드를 일부러 뺀 테스트 입력 예시입니다. 생산자는 success와 종료 코드 0을 줬지만, 승인일 미기재 건수인 approvalDateMissingCount가 없습니다.
+
+소비자 코드는 해당 값을 읽고 음수가 아닌 정수인지 확인합니다. 값이 없으면 0이 아니라 null이 됩니다. 그리고 정상 실행이라고 주장한 결과에서 필수 건수가 null이면 calendarStatus를 failed로 돌려줍니다. 따라서 명령이 종료됐다는 사실과 업무 결과가 준비됐다는 사실은 다릅니다.
+
+출력 노드와 입력 노드가 존재하는지만 검사했다면 이 문제를 놓칩니다. 생산자가 무엇을 내보냈는지, 소비자가 무엇을 기대하는지 양쪽을 비교해야 합니다. 알림 코드도 유효한 건수는 숫자로 표시하고, 확인하지 못한 값은 “확인 불가”로 표시합니다. 왼쪽 데이터는 검사를 설명하기 위한 예시이며, 실제 장애 로그는 아닙니다.
+
+[전환] 이 데이터 검사는 전체 검증 중 어느 위치에서 할까요? [근거] https://github.com/revfactory/harness/blob/cceac68ea1d0ad198ef4b7b906cd238375836387/skills/harness/references/qa-agent-guide.md">
+      <p class="a kicker">04 · 어떻게 만들었나 · n8n 적용 설계</p>
+      <h2 class="a">노드가 있는지보다, <br>연결 양쪽의 데이터가 맞는지 본다</h2>
+      <div class="content a"><div class="row r2 hx-top"><div><div class="code-container"><div class="code-header"><span class="code-dot red"></span><span class="code-dot yellow"></span><span class="code-dot green"></span><span class="code-filename">생산자 출력 · 필드 누락을 넣은 테스트 입력</span></div><pre><code>{
+  &quot;status&quot;: &quot;success&quot;,
+  &quot;exitCode&quot;: 0,
+  &quot;details&quot;: {
+    &quot;deploymentCompletionUnconfirmedCount&quot;: 0
+  }
+}</code></pre></div></div><div><div class="code-container"><div class="code-header"><span class="code-dot red"></span><span class="code-dot yellow"></span><span class="code-dot green"></span><span class="code-filename">소비자 · 실제 정규화 코드의 검사 조건</span></div><pre><code>const countOrNull = (value) =&gt;
+  Number.isInteger(value) &amp;&amp; value &gt;= 0
+    ? value : null;
+
+const approvalDateMissingCount =
+  countOrNull(details.approvalDateMissingCount);</code></pre></div></div></div><div class="hx-band hx-danger"><b>필수 필드 누락</b> → <code>null</code> → 정상 주장 거부 → <code>calendarStatus: failed</code></div><p>실제 <b>01 XML 결과 정규화</b>는 성공 상태·종료 코드 0이어도 필수 점검 건수가 없으면 실패를 반환합니다.</p><p class="lead hx-takeaway">모르는 값을 <span class="hi">0건으로 채우지 않습니다.</span> “문제 없음”과 “확인 못 함”은 다릅니다.</p></div>
+      <p class="a foot hx-source"><a href="https://github.com/revfactory/harness/blob/cceac68ea1d0ad198ef4b7b906cd238375836387/skills/harness/references/qa-agent-guide.md" target="_blank" rel="noopener noreferrer">harness · qa-agent-guide.md</a> · 실제 코드: pipeline.json / 01 XML 결과 정규화</p>
+    </div>
+
+    <!-- 17 [재구성] Harness design -->
+    <div class="slide hx" data-notes="[재구성 · n8n 적용 설계] [70초] 검증은 세 층으로 나눕니다. 첫 번째는 구조와 설정입니다. 노드 설정, 표현식, 연결 참조가 유효한지 검사합니다. n8n 검증 도구가 맡을 수 있는 영역입니다. 두 번째는 연결 구간입니다. 샘플 데이터를 넣고 실제 값이 다음 노드가 기대하는 형태와 의미를 만족하는지 봅니다. 방금 필수 건수 누락이 여기에 해당합니다.
+
+세 번째는 전체 흐름입니다. 정상일 때 기대한 메시지가 만들어지는지, 실패일 때 성공 알림이 선택되지 않는지 확인합니다. 조회·변환 구간을 먼저 검사하고 업로드·알림을 연결한 뒤 전체를 다시 봅니다. 외부 전송 검사는 테스트 대상으로 수행합니다.
+
+설정이 맞다고 업무 결과까지 맞는 것은 아닙니다. autofix는 지원하는 설정 오류를 고치는 도구이고, 누락 데이터의 의미까지 판단해 모든 오류를 고쳐주는 것은 아닙니다.
+
+[전환] 실패를 발견했다면 빌더가 고칠 수 있는 형태로 돌려줘야 합니다. [근거] https://github.com/revfactory/harness/blob/cceac68ea1d0ad198ef4b7b906cd238375836387/skills/harness/references/qa-agent-guide.md">
+      <p class="a kicker">04 · 어떻게 만들었나 · n8n 적용 설계</p>
+      <h2 class="a">한 번의 검증으로 끝내지 않는다</h2>
+      <div class="content a"><table><thead><tr><th>검증 층</th><th>무엇을 확인하나</th><th>실패를 찾는 예</th></tr></thead><tbody><tr><td>1 · 구조·설정</td><td>노드 설정 · 표현식 · 연결 참조</td><td>잘못된 파라미터 · 존재하지 않는 참조</td></tr><tr><td>2 · 연결 구간</td><td>샘플 입력 → 변환 → 소비자 기대</td><td>종료 코드 0 + 필수 점검 건수 누락</td></tr><tr><td>3 · 전체 흐름</td><td>정상·실패 경로와 최종 메시지</td><td>실패했는데 성공 알림 경로가 선택됨</td></tr></tbody></table><div class="hx-flow"><div class="hx-node"><b>조회·변환</b><span>샘플로 계약 확인</span></div><span class="hx-arrow">→</span><div class="hx-node"><b>검사 통과</b><span>다음 구간 연결</span></div><span class="hx-arrow">→</span><div class="hx-node"><b>업로드·알림</b><span>테스트 대상에서 확인</span></div></div><p class="lead hx-takeaway">구간마다 확인하고, 마지막에는 <span class="hi">전체 결과를 다시 확인</span>합니다.</p><p class="foot">설정 자동수정 도구가 모든 업무 오류를 고치지는 않습니다. 데이터 의미·계약 오류는 빌더가 수정합니다.</p></div>
+      <p class="a foot hx-source"><a href="https://github.com/revfactory/harness/blob/cceac68ea1d0ad198ef4b7b906cd238375836387/skills/harness/references/qa-agent-guide.md" target="_blank" rel="noopener noreferrer">harness · qa-agent-guide.md</a></p>
+    </div>
+
+    <!-- 18 [재구성] Harness design -->
+    <div class="slide hx" data-notes="[재구성 · n8n 적용 설계] [65초] “검증 실패, 다시 고쳐”라고만 돌려주면 빌더는 다시 전체를 추측합니다. 그래서 오류 보고서의 형식을 고정합니다. 위치, 기대값, 실제값, 근거, 수정 대상입니다. 이 예시의 기대값은 음수가 아닌 정수인데 실제 입력에는 필드가 없습니다. 정규화 노드가 실패 처리한 것은 잘못이 아니라 검사가 작동한 결과입니다.
+
+그러므로 실패를 없애겠다고 null을 0으로 바꾸면 안 됩니다. 생산자 결과에 데이터가 빠졌는지, 이름이 달라 전달되지 않았는지 확인해야 합니다. 검증자는 원인을 단정하지 않고 관측한 차이와 확인할 대상을 전달합니다. 빌더가 그 범위를 고친 다음 정상 입력과 누락 입력을 모두 다시 검사합니다.
+
+화면은 보고 형식 예시이며 실제 실행 로그가 아닙니다. [전환] 이 왕복이 끝나지 않을 때도 미리 정해야 합니다. [근거] https://github.com/revfactory/harness/blob/cceac68ea1d0ad198ef4b7b906cd238375836387/skills/harness/references/qa-agent-guide.md">
+      <p class="a kicker">04 · 어떻게 만들었나 · n8n 적용 설계</p>
+      <h2 class="a">“다시 고쳐” 대신 수정 가능한 오류를 돌려준다</h2>
+      <div class="content a"><div class="row r2 hx-top"><div><table><thead><tr><th>보고서 필드</th><th>필수 점검 건수 누락 사례</th></tr></thead><tbody><tr><td>위치</td><td>XML 결과 → 정규화 노드</td></tr><tr><td>기대값</td><td><code>approvalDateMissingCount</code><br>음수가 아닌 정수</td></tr><tr><td>실제값</td><td>필드 없음 → <code>null</code></td></tr><tr><td>근거</td><td>누락 입력 샘플에서 계약 불충족</td></tr><tr><td>수정 대상</td><td>생산자 결과 또는 결과 필드 매핑</td></tr></tbody></table></div><div><div class="code-container"><div class="code-header"><span class="code-dot red"></span><span class="code-dot yellow"></span><span class="code-dot green"></span><span class="code-filename">빌더에 돌려주는 수정 지시 · 예시</span></div><pre><code>필수 점검 건수의 누락 원인을 확인한다.
+생산자 결과와 필드 매핑을 수정한다.
+
+누락 값을 임의로 0으로 채우지 않는다.
+정상 / 누락 샘플을 모두 재검증한다.
+수정한 부분과 검사 근거를 제출한다.</code></pre></div></div></div><p class="lead hx-takeaway">오류 위치와 <span class="hi">기대값·실제값·근거</span>가 있어야 수정 범위가 좁아집니다.</p></div>
+      <p class="a foot hx-source"><a href="https://github.com/revfactory/harness/blob/cceac68ea1d0ad198ef4b7b906cd238375836387/skills/harness/references/qa-agent-guide.md" target="_blank" rel="noopener noreferrer">harness · qa-agent-guide.md</a></p>
+    </div>
+
+    <!-- 19 [재구성] Harness design -->
+    <div class="slide hx" data-notes="[재구성 · n8n 적용 설계] [65초] 이 적용 설계에서는 초기 생성 뒤 수정 기회를 최대 두 번 둡니다. 매 수정 뒤 같은 기준으로 재검증하고, 필수 검사가 계속 실패하면 중단해 원인과 남은 작업을 보고합니다. 검사를 못 한 상태도 통과로 바꾸지 않습니다. 두 번은 이 발표에서 선택한 정책이지, 모든 상황의 정답은 아닙니다.
+
+또 하나는 AI가 워크플로우를 수정하는 것과 외부 작업을 다시 실행하는 것을 구분하는 것입니다. 업로드 요청이 시간 초과됐다고 이미 업로드되지 않았다는 뜻은 아닙니다. 반영 여부부터 확인해야 중복 전송을 피할 수 있습니다.
+
+harness 템플릿의 일반 에이전트 장애 재시도와 생성-검증 수정 횟수는 다른 정책입니다. 이 사례에서는 필수 검증 실패를 누락한 채 성공 결과로 진행하지 않습니다. [전환] 실행을 고치는 일과 하네스 자체를 개선하는 일도 나누어 보겠습니다. [근거] https://github.com/revfactory/harness/blob/cceac68ea1d0ad198ef4b7b906cd238375836387/skills/harness/references/orchestrator-template.md">
+      <p class="a kicker">04 · 어떻게 만들었나 · n8n 적용 설계</p>
+      <h2 class="a">재시도 횟수와 멈출 조건도 구현의 일부다</h2>
+      <div class="content a"><div class="hx-flow"><div class="hx-node"><b>검증</b><span>기준과 실제 비교</span></div><span class="hx-arrow">→</span><div class="hx-node"><b>수정 가능</b><span>빌더에게 반환</span></div><span class="hx-arrow">→</span><div class="hx-node"><b>최대 2회 수정</b><span>매번 재검증</span></div><span class="hx-arrow">→</span><div class="hx-node"><b>종료 판정</b><span>통과 또는 실패 보고</span></div></div><table><thead><tr><th>상태</th><th>다음 행동</th></tr></thead><tbody><tr><td>통과</td><td>확인한 범위와 근거를 남기고 완료</td></tr><tr><td>2회 수정 후에도 필수 검증 실패</td><td>자동 수정 중단 → 실패 원인과 남은 작업 보고</td></tr><tr><td>미검증 · 실행 권한 없음</td><td>성공 처리하지 않음 → 필요한 확인 명시</td></tr><tr><td>업로드·전송 응답 불명확</td><td>이미 반영됐는지 확인 → 중복 실행 가능성 판단</td></tr></tbody></table><p class="lead hx-takeaway">AI의 <span class="hi">수정 재시도</span>와 외부 서비스의 <span class="hi">작업 재실행</span>은 따로 관리합니다.</p></div>
+      <p class="a foot hx-source"><a href="https://github.com/revfactory/harness/blob/cceac68ea1d0ad198ef4b7b906cd238375836387/skills/harness/references/orchestrator-template.md" target="_blank" rel="noopener noreferrer">harness · orchestrator-template.md</a></p>
+    </div>
+
+    <!-- 20 [재구성] Harness design -->
+    <div class="slide hx" data-notes="[재구성 · n8n 적용 설계] [70초] 지금 요청의 워크플로우를 고치는 루프와, 다음 요청에서 더 잘하도록 하네스를 고치는 루프는 다릅니다. 앞의 루프는 빌더와 검증자가 돌고, 뒤의 루프는 반복된 실패를 보고 스킬과 검사를 개선하는 과정입니다. 같은 실패가 반복되면 단순히 프롬프트를 길게 붙이기보다, 누락된 판단 기준을 넣거나 반복 작성되는 검사를 스크립트로 묶습니다.
+
+개선 전후에는 같은 요청과 입력으로 비교합니다. 정상 데이터, 필수 건수가 빠진 데이터, 그리고 IF 설명과 분기 추가처럼 비슷하지만 다른 요청을 사용합니다. 결과가 존재한다는 쉬운 기준만으로는 하네스의 가치를 구별할 수 없습니다. 오류를 잡았는지, 정상 결과를 잘못 막지 않았는지, 시간과 재작업은 어땠는지를 함께 봅니다. 화면의 대시는 아직 측정하지 않았다는 뜻입니다.
+
+[전환] 여기까지는 적용 설계와 검사 방법입니다. 이제 이 하네스를 팀원이 어떻게 받아 쓰는지부터 보겠습니다. [근거] https://github.com/revfactory/harness/blob/cceac68ea1d0ad198ef4b7b906cd238375836387/skills/harness/references/skill-testing-guide.md">
+      <p class="a kicker">04 · 어떻게 만들었나 · n8n 적용 설계</p>
+      <h2 class="a">결과물과 하네스를 <br>서로 다른 루프로 개선한다</h2>
+      <div class="content a"><div class="row r2 hx-top"><div><div class="panel"><h3>이번 요청의 결과물을 수정</h3><p class="lead">생성 → 검증 → 부분 수정</p><p>대상: 워크플로우와 연결 데이터<br>종료: 완료 조건 충족 또는 수정 상한</p></div></div><div><div class="panel after"><h3>다음 요청의 수행 방법을 개선</h3><p class="lead">실패 패턴 → 규칙·검사 개선 → 비교</p><p>대상: 스킬 · 역할 정의 · 검증 스크립트<br>반복 작성한 검사는 실행 가능한 코드로 묶기</p></div></div></div><table><thead><tr><th>같은 요청·입력으로 비교</th><th>기존 버전</th><th>개선 버전</th><th>측정할 것</th></tr></thead><tbody><tr><td>정상 점검 데이터</td><td>—</td><td>—</td><td>기대 결과 일치</td></tr><tr><td>필수 건수 누락</td><td>—</td><td>—</td><td>실패 감지 · 성공 오판 방지</td></tr><tr><td>IF 설명 / IF 분기 추가</td><td>—</td><td>—</td><td>일반 응답 / 변경 경로 구분</td></tr></tbody></table><p class="foot">비교 설계 예시 · —는 미측정. 새 스킬은 스킬 없이, 개선 스킬은 수정 전 버전과 비교합니다.</p><p class="lead hx-takeaway">더 길어진 지시문보다 <span class="hi">더 잘 구별하는 검사와 줄어든 재작업</span>을 확인합니다.</p></div>
+      <p class="a foot hx-source"><a href="https://github.com/revfactory/harness/blob/cceac68ea1d0ad198ef4b7b906cd238375836387/skills/harness/references/skill-testing-guide.md" target="_blank" rel="noopener noreferrer">harness · skill-testing-guide.md</a></p>
+    </div>
+
+    <!-- ===== 5. 설치·업데이트와 데모 ===== -->
+
+    <!-- 21 [원안 #35 → 이동·변경] Team plugin install + marketplace auto-update -->
+    <div class="slide" data-notes="[원안 #35 → 이동·변경 · 설치와 자동 업데이트] [섹션 5 · 4분 45초 시작 / 이 장 45초] 이 하네스를 팀원이 어떻게 받아 쓰는지 보겠습니다. 오케스트레이션을 n8n-automation이라는 Claude 플러그인으로 묶어 팀 GitLab에 올렸고, 저장소 주소로 마켓플레이스를 등록한 뒤 플러그인을 설치합니다. [PAUSE] 이런 생각이 드실 수도 있습니다. '이거 설치해도 어차피 업데이트할 때마다 zip 파일 풀어서 다시 넣어줘야 하는 거 아니야?' 하지만 Claude 마켓플레이스로 플러그인을 등록해 두었기 때문에, 마켓플레이스 자동 업데이트를 한 번 켜 두시면 제가 GitLab에 새 버전을 올릴 때마다 최신 버전을 쓰실 수 있습니다. 중앙에서 라이브러리처럼 관리되니, 여러분은 사용만 하시면 됩니다. [전환] 그럼 설치부터 n8n 기동까지 시뮬레이션으로 보겠습니다. 기존 킷 동작의 재현이며 새 검증자·두 번 수정 정책의 실행 증거는 아닙니다. [발표자 참고] 팀 GitLab 같은 서드파티 마켓플레이스는 자동 업데이트가 기본 꺼짐이라 ③을 한 번 켜야 한다(관리자는 managed settings의 extraKnownMarketplaces에 autoUpdate: true로 일괄 설정 가능). 새 버전은 Claude Code 세션 시작 후 백그라운드에서 확인하고, 실행 중인 세션은 기존 버전을 유지하다가 /reload-plugins 또는 다음 실행부터 반영된다. '바로바로'가 실시간 반영으로 들리지 않게 한다. plugin.json에 version이 있으면 올려야 전파되고, 없으면 커밋 SHA 기준. 사내 GitLab이 비공개 HTTPS면 백그라운드 갱신에 SSH 원격이나 토큰 URL 설정이 필요할 수 있다. zip 수동 배치는 readme의 이전 방식. 근거 https://code.claude.com/docs/en/discover-plugins#configure-auto-updates">
+      <p class="a kicker">05 · 설치와 업데이트 · 팀이 함께 쓰는 진입점</p>
+      <h2 class="a">한 번 설치하면,<br><span class="hi">업데이트는 알아서 따라옵니다</span></h2>
+      <p class="a lead">「설치해도 새 버전 나올 때마다 zip 파일 풀어서 다시 넣어야 하는 거 아니야?」</p>
+      <div class="code-container a" style="margin-top:0.6rem;">
+        <div class="code-header"><span class="code-dot red"></span><span class="code-dot yellow"></span><span class="code-dot green"></span><span class="code-filename">Claude Code · n8n-automation 설치 안내</span></div>
+        <pre style="font-size:1rem;white-space:pre-wrap;overflow-wrap:anywhere;"><code style="font-size:1rem;background:none;color:var(--text);"><span class="dim">① 마켓플레이스 등록 — 플러그인 목록 추가</span>
+/plugin marketplace add https://gitlab.hmc.co.kr/infoccs/service/dkc/automation/n8n-automation.git
+<span class="dim">② 플러그인 설치 — n8n-automation 선택</span>
+/plugin install n8n-automation@n8n-automation
+<span class="dim">③ 자동 업데이트 켜기 — 한 번만</span>
+/plugin → Marketplaces → n8n-automation 선택 → <span class="hi">Enable auto-update</span></code></pre>
+      </div>
+      <div class="hx-flow a">
+        <div class="hx-node"><b>GitLab에 새 버전 게시</b><span>중앙에서 한 곳만 관리</span></div><span class="hx-arrow">→</span>
+        <div class="hx-node"><b>Claude Code 시작 후 확인</b><span>백그라운드에서 자동</span></div><span class="hx-arrow">→</span>
+        <div class="hx-node"><b>최신 버전으로 갱신</b><span>zip 받기 · 압축 풀기 없음</span></div><span class="hx-arrow">→</span>
+        <div class="hx-node"><b>팀원은 사용만</b><span>라이브러리처럼</span></div>
+      </div>
+      <p class="a foot">팀 GitLab 같은 서드파티 마켓플레이스는 자동 업데이트가 기본 꺼짐 → ③을 한 번 켜기 · 갱신본은 <code>/reload-plugins</code> 또는 다음 실행부터 적용</p>
+      <p class="a foot hx-source"><a href="https://code.claude.com/docs/en/discover-plugins#configure-auto-updates" target="_blank" rel="noopener noreferrer" style="color:var(--text-secondary);">Claude Code 공식 문서 · 마켓플레이스 등록·설치와 자동 업데이트</a></p>
+    </div>
+
+    <!-- 22 [원안 #26] Demo A — simulation (engine: SIM_DEFS.envA) -->
+    <div class="slide" data-notes="[원안 #26 · 시뮬레이션] [시나리오 A 1분 30초 · 컷 9개] 앞 장에서 본 등록·설치를 실제 순서로 따라가며 사용까지 보여준다. 실제 설치 로그가 아닌 절차 설명용 시뮬레이션이다. → / Space 다음 컷, ← 이전 컷, P 자동 재생. 컷 00 [10초]: 앞 장의 ① 명령으로 팀 GitLab 마켓플레이스를 등록한다. 플러그인은 아직 미설치다. 컷 01 [10초]: ② 명령으로 n8n-automation 플러그인을 설치한다. 활성화 안내와 환경·외부 서비스 연결 설정은 별도로 확인한다. 컷 02 [5초]: 연결 설정을 마친 뒤 “n8n 켜줘”라고 요청한다. 브라우저는 아직 연결 거부다. 컷 03 [10초]: 환경 요청을 n8n-env-setup 스킬과 에이전트로 라우팅한다. 컷 04 [10초]: OS와 포트를 확인한다. 컷 05 [10초]: 플러그인 실행 스크립트를 확인한다. 내부 경로와 설정 저장 위치는 생략한다. 컷 06 [15초]: n8n을 기동하고 localhost:5678과 healthz 200을 확인한다. 컷 07 [10초]: Playwright MCP 연결과 화면 스냅샷을 확인한다. 컷 08 [10초]: 환경 준비 완료를 보고한다. [전환] 이제 원하는 워크플로우를 만드는 요청으로 넘어간다. 설치 절차는 Claude Code 공식 안내, 라우팅·기동은 기존 킷 설명을 바탕으로 한 시뮬레이션이며 실제 출력 문구와 다를 수 있다.">
+      <p class="a kicker">05 · 데모 A · 플러그인 설치부터 환경 기동까지 (시뮬레이션)</p>
+      <div class="cmd a"><span>팀원 ›</span> 마켓플레이스 등록 → 플러그인 설치 → “n8n 켜줘” &nbsp;<span>→ 환경 기동·연결 확인</span></div>
+      <div class="sim a" data-sim="envA" role="region" aria-label="데모 A 시뮬레이션 — 마켓플레이스 등록부터 n8n 기동까지"></div>
+      <p class="a foot">→ / Space 다음 컷 · ← 이전 컷 · P 자동 재생 — 마지막 컷 다음에 다음 슬라이드로 넘어간다.</p>
+    </div>
+
+    <!-- 23 [원안 #27 → 변경] Demo B — build pipeline.json through the kit (engine: SIM_DEFS.buildB) -->
+    <div class="slide" data-notes="[원안 #27 → 변경 · 시뮬레이션] [시나리오 B 2분 30초] 요청은 짧다. '배포 캘린더 스킬을 공용 PC n8n 파이프라인으로 만들어줘'. 트리거도, 실패 처리도, 알림도 말하지 않았다. 결과물은 지금 공용 PC에서 실제로 도는 워크플로우와 같은 노드 18개 구조다. 컷 01 분석: 분석가가 스킬 파일과 스크립트를 직접 읽는다. 3단계, 종료 코드, CALENDAR_RESULT 마커. 컷 02 현황 감사: 기존 워크플로우 목록에서 후보 2개만 structure 모드로 읽고 '참고만'으로 판정. 재사용 가능 후보가 없으니 A/B/C 질문은 생략. 컷 03 요건 명확화 [멈춤]: 신규 워크플로우에 Confluence·Teams 쓰기가 있어 L 등급, 딥 인터뷰. 여기가 하이라이트다. 제가 말 안 한 트리거 시각, 실패 처리, 성공 알림에 점검 건수까지 넣을지를 먼저 물었다. 실패 처리 선택지의 근거가 '기존 워크플로우 2개처럼'이라는 점을 짚는다. 컷 04 요건 확인 [멈춤]: 이해한 내용 다섯 줄을 되묻는다. 승인 전에는 아무것도 바뀌지 않는다. 컷 05 리서치: 출처 3개 병렬. 'n8n 2.0부터 Execute Command 기본 차단', '파일 노드 접근 경로 기본 제한' 같은 사실은 기억으로는 못 잡는다. 컷 06 계획 [멈춤]: todo 8개를 파일로 남기고, 점선 노드 18개 설계도를 승인받는다. 컷 07 실행: MCP 도구로만 만든다. 컷 08 검증: 표현식 앞 = 누락 1건을 잡는다. 컷 09 autofix [멈춤]: 미리보기 → 적용 → 재검증 통과 → 게시. 컷 10 보고 [멈춤]: _workspace_n8n/에 파일 8개, 공용 PC에서 확인할 것 2건까지 남긴다. [전환] '이제 이런 파이프라인을 어디에 활용하는지 보겠습니다.' 주의: 문구·수치는 문서 기술 기준 시뮬레이션이고 웹훅 URL·회사 경로는 가렸다.">
+      <p class="a kicker">05 · 데모 B · 스킬 → 파이프라인 (시뮬레이션)</p>
+      <div class="cmd a"><span>사용자 ›</span> 배포 캘린더 스킬을 공용 PC n8n 파이프라인으로 만들어줘 &nbsp;<span>→ n8n-workflow-manager · L 등급 (신규 워크플로우 · 외부 시스템 쓰기)</span></div>
+      <div class="sim a" data-sim="buildB" role="region" aria-label="데모 B 시뮬레이션 — 배포 캘린더 스킬을 n8n 파이프라인으로"></div>
+      <p class="a foot">주황 테두리 캡션 = 반드시 멈춰서 설명할 컷. 결과물은 실제 운영 중인 <code>pipeline.json</code>과 같은 노드 18개.</p>
+    </div>
+
+    <!-- ===== 6. 실전 활용 · 차별점 ===== -->
+
+    <!-- 24 [신규] Use case: where to use it -->
+    <div class="slide" data-notes="[신규 · 실전 활용] [섹션 6 · 4분 시작] 데모가 끝나면 꼭 나오는 질문, '그러면 이걸 어디다가 써?' [PAUSE] 저희 팀은 기준을 하나만 뒀다. 꼭 해야 하지만 불필요하게 반복되는 작업. 여러분 팀에도 하나쯤 있을 것이다. [청중에게] '매일 손으로 하는 반복 작업, 하나만 떠올려 보세요.' 예전에는 팀원 각자가 자기 Claude 스킬로 직접 돌렸고, 지금은 공용 PC에 n8n을 올리고 그 스킬들을 스크립트화해 n8n 파이프라인으로 바꿨다. 사람이 켜지 않아도 24시간 돈다. [전환] '그럼 다른 방식과 무엇이 다른지 비교해 보겠습니다.'">
+      <p class="a kicker">06 · 실전 활용</p>
+      <h1 class="a">「그러면 이걸 <span class="hi">어디다가</span> 써?」</h1>
+      <p class="a lead">기준은 하나 — <b>꼭 해야 하지만, 불필요하게 반복되는 작업.</b></p>
+      <div class="row r2 a">
+        <div class="panel before">
+          <h3>Before · 각자의 스킬</h3>
+          <ul class="bul">
+            <li>팀원 각자의 Claude 스킬</li>
+            <li>사람이 <strong>직접 켜야</strong> 돈다</li>
+            <li>반복 작업인데 자동화가 아니다</li>
+          </ul>
+        </div>
+        <div class="panel after">
+          <h3>After · 공용 PC의 n8n 파이프라인</h3>
+          <ul class="bul">
+            <li>공용 PC에 n8n</li>
+            <li>스킬 → 스크립트 → <strong>n8n 파이프라인</strong></li>
+            <li><strong>24시간 자동</strong> · 결과는 메시지로</li>
+          </ul>
+        </div>
+      </div>
+      <p class="a foot">차량제어서비스개발팀의 실제 적용 — 다음은 다른 방식과 무엇이 다른지 봅니다.</p>
+    </div>
+
+    <!-- 25 [원안 #29] Comparison of approaches -->
+    <div class="slide" data-notes="[원안 #29] [20분 버전에서는 생략] 순정 Claude Code + n8n-mcp와 이 킷, 두 가지 방식을 비교한다. 각 방식이 커버하는 범위를 설명한다. 벤치마크 수치는 쓰지 않는다. 절차 강제, 도메인 지식, 변경 안전성과 기존 워크플로우 확인을 중심으로 짚는다.">
+      <p class="a kicker">06 · 차별점</p>
+      <h2 class="a">다른 방식과 무엇이 다른가 <span class="dim" style="font-size:0.95rem;font-weight:400;">· 우열이 아니라 커버 범위의 차이</span></h2>
+      <div class="content a">
+        <table class="compact">
+          <thead><tr><th style="width:16%;">항목</th><th style="width:36%;">순정 Claude Code + n8n-mcp</th><th class="hl">이 킷</th></tr></thead>
+          <tbody>
+            <tr><td>절차 강제</td><td>없음. 프롬프트대로 바로 변경</td><td class="hl">7단계 고정. 요건 재확인 · 계획 승인은 필수 게이트</td></tr>
+            <tr><td>n8n 도메인 지식</td><td>n8n-mcp 노드 문서 조회에 의존</td><td class="hl">지식 스킬 7종 내장 — 에러 카탈로그 · 오탐 목록 · 흔한 실수 · 패턴 5종</td></tr>
+            <tr><td>최신 스펙 확인</td><td>사용자가 시킬 때만</td><td class="hl">매 작업 context7 + WebSearch + 로컬 스킬 3출처 교차</td></tr>
+            <tr><td>변경 안전성</td><td>validate를 따로 불러야 함</td><td class="hl">validate → autofix → 보고가 빌더에 내장. 변경은 MCP 도구로만</td></tr>
+            <tr><td>크기별 처리 · 기존 확인</td><td>가볍지만 확인 없음 · 기존 확인 없음</td><td class="hl">S / M / L 분류 → 현황 감사 → 재사용 제안 → L만 딥 인터뷰</td></tr>
+            <tr><td>감사 추적 · 로컬 환경</td><td>대화 기록뿐 · 직접 설치·기동</td><td class="hl"><code>_workspace_n8n/</code> 파일 기록 · Mac / Windows 감지 → n8n + Playwright MCP 기동</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 26 [원안 #30] Token view -->
+    <div class="slide" data-notes="[원안 #30] [20분 버전에서는 생략] '몇 % 절감'은 말하지 않는다. 실측 전이고, 실측 후에도 S 과제에서는 하네스가 더 쓸 수 있다. 말할 것은 구조적 절감 지점 네 가지와 비교 기준이다. ① 작은 작업에 오케스트레이션을 붙이지 않는다. ② 분석가가 읽은 JSON, 리서처가 긁은 문서 본문은 서브에이전트 컨텍스트에 남고 메인에는 요약만 온다. ③ validate → autofix와 3출처 확인으로 '고쳐줘 → 깨짐 → 다시' 왕복이 준다. 이게 총 토큰의 가장 큰 변수다. ④ 현황 감사는 후보 5개만 structure 모드로 가볍게 읽는다. 더 쓰는 곳: 요건 재확인, 계획 승인, 3출처 리서치, validate 호출. 첫 요청 한 번의 토큰은 순정보다 많다. 비교는 '검증 통과까지의 총 토큰'으로. 측정해 본 것: 로컬에 설치된 범용 프레임워크 스킬 37개의 description 합계는 약 1,500토큰 추정으로 세션당 무시할 수준이고, 본문은 호출 시에만 로드된다. 그래서 '컨텍스트 오염'은 토큰 비용이 아니라 관련 없는 스킬이 잘못 호출되는 트리거 판단 혼선으로 말한다. 제품명은 넣지 않는다. [전환] 마지막으로 한 문장만 남기겠습니다.">
+      <p class="a kicker">06 · 토큰 관점</p>
+      <h2 class="a">어디서 아끼고, 어디서 더 쓰는가 <span class="dim" style="font-size:0.95rem;font-weight:400;">· 절감률이 아니라 구조로</span></h2>
+      <div class="row r-3-2">
+        <div class="cards c2 a" style="gap:0.7rem;">
+          <div class="card"><div class="card-num">아끼는 곳 ①</div><h3>작은 작업엔 오케스트레이션 없음</h3><p>S 등급은 분류 → 기존 게이트만. 모든 작업에 계획·검증 대화를 여는 범용과 대비</p></div>
+          <div class="card"><div class="card-num">아끼는 곳 ②</div><h3>서브에이전트 출력 격리</h3><p>워크플로우 JSON · 문서 본문은 서브에이전트에 남고 메인엔 요약만</p></div>
+          <div class="card"><div class="card-num">아끼는 곳 ③</div><h3>재작업 감소</h3><p>validate → autofix + 3출처 typeVersion 확인. 「고쳐줘 → 깨짐 → 다시」 왕복이 총 토큰의 가장 큰 변수</p></div>
+          <div class="card"><div class="card-num">아끼는 곳 ④</div><h3>가볍게 읽기</h3><p>현황 감사는 후보 5개만 structure 모드로. full 모드 금지</p></div>
+          <div class="card warn" style="grid-column: span 2;"><div class="card-num" style="color:var(--orange);">더 쓰는 곳</div><p>요건 재확인 · 계획 승인 · 3출처 리서치 · validate 호출. <b>첫 요청 한 번의 토큰은 순정보다 많다.</b> 비교는 「검증 통과까지의 총 토큰」으로</p></div>
+        </div>
+        <div class="a">
+          <svg class="diagram" viewBox="0 0 520 300" aria-label="토큰 개념 그래프">
+            <text class="lbl" x="12" y="20">개념도 · 수치 축 없음 · 실측 예정 (token-benchmark.md)</text>
+            <path class="ln" d="M40 250 L 500 250"/>
+            <path class="ln" d="M40 250 L 40 40"/>
+            <text class="lbl" x="34" y="50" text-anchor="end" transform="rotate(-90 34 50)" style="font-size:11px;">토큰 →</text>
+            <!-- group 1: first request -->
+            <rect class="bar" x="90" y="170" width="50" height="80" fill="#4a4a4a"/>
+            <rect class="bar" x="150" y="110" width="50" height="140" fill="var(--accent)"/>
+            <text class="lbl" x="145" y="272" text-anchor="middle">첫 요청 1회</text>
+            <text class="lbl" x="175" y="100" text-anchor="middle" style="fill:var(--accent);">↑ 더 쓴다</text>
+            <!-- group 2: total until validated -->
+            <rect class="bar" x="310" y="70" width="50" height="180" fill="#4a4a4a"/>
+            <rect class="bar" x="310" y="70" width="50" height="70" fill="#5a5a5a"/>
+            <text class="lbl" x="335" y="112" text-anchor="middle" style="fill:#bbb;font-size:10px;">재작업</text>
+            <rect class="bar" x="370" y="140" width="50" height="110" fill="var(--accent)"/>
+            <text class="lbl" x="365" y="272" text-anchor="middle">검증 통과까지 총 토큰</text>
+            <text class="lbl" x="395" y="130" text-anchor="middle" style="fill:var(--accent);">↓ 덜 쓴다 (예상)</text>
+            <!-- legend -->
+            <rect x="380" y="10" width="12" height="12" fill="#4a4a4a" rx="2"/><text class="lbl" x="398" y="21">순정</text>
+            <rect x="440" y="10" width="12" height="12" fill="var(--accent)" rx="2"/><text class="lbl" x="458" y="21">하네스</text>
+          </svg>
+          <p class="foot" style="margin-top:0.4rem;">측정해 본 것: 로컬 범용 프레임워크 스킬 37개의 <code>description</code> 합계 ≈ 5,900자 (≈ 1,500토큰 추정). 본문 ≈ 447,000자는 호출 시에만 로드. → 「스킬이 많아 상시 컨텍스트가 무겁다」는 토큰 수로는 작은 논점. 오염은 <b>트리거 판단 혼선</b>의 문제.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 7. 마무리 ===== -->
+
+    <!-- 27 [원안 #36] Closing -->
+    <div class="slide" data-notes="[원안 #36 · 마무리] [섹션 7 · 25초 + Q&amp;A] 명령어 하나를 입력하고, 하고 싶은 일을 적어 주세요. 요구사항에 맞는 자동화는 함께 구체화합니다. [PAUSE] 플러그인 설치 및 환경·연결 설정 후 /n8n-automation:n8n-workflow-manager로 시작한다. 내부 기술을 깊게 몰라도 AI의 질문에 답하고 요건과 계획을 확인하면 된다. 자료 안내와 감사 인사 후 Q&amp;A. 30분 버전이면 Q&amp;A 4분 30초. 예상 질문은 script.md 말미 참조.">
+      <p class="a kicker">07 · 마무리</p>
+      <p class="a quote"><span class="hi">명령어 하나</span>를 입력하고,<br>하고 싶은 일을 적어 주세요.<br>요구사항에 맞는 자동화는 <span class="hi">함께 구체화합니다.</span></p>
+      <h2 class="a" style="font-size:1.6rem;">감사합니다 · Q&amp;A</h2>
+      <div class="contact a">
+        <a href="https://gitlab.hmc.co.kr/infoccs/service/dkc/automation/n8n-automation" target="_blank" rel="noopener noreferrer">팀 GitLab · n8n-automation</a>
+        <a href="#">{이메일}</a>
+        <a href="#">{SNS 핸들}</a>
+      </div>
+      <p class="a foot"><code>/n8n-automation:n8n-workflow-manager</code><br>플러그인 설치 및 환경·연결 설정 후 시작 · 요건 확인 · 계획 승인</p>
+    </div>
+
+  </div>
+  </div>
+
+  <!-- Prism.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markdown.min.js"></script>
+
+  <script>
+    // ===== Demo simulator engine =====
+    // A sim = pipeline steps + cuts. Each cut declares the active step (at / st / note), the terminal lines
+    // it appends, the screen view and a caption. Rendering cut k replays the lines of cuts 0..k, so stepping
+    // backwards restores the exact state. Output wording follows the kit docs and official docs (see
+    // .omc/plans/demo-simulation.md); webhook URLs, company paths and workflow ids are masked on purpose.
+    const SIM = (() => {
+      // ---- terminal line builders ----
+      const U = h => ({ k: 'user', g: '&gt;', h });
+      const S = h => ({ k: 'say', g: '⏺', h });
+      const T = (name, arg) => ({ k: 'tool', g: '⏺', h: `<b>${name}</b>${arg ? `<span class="arg">(${arg})</span>` : ''}` });
+      const O = (h, c) => ({ k: 'out' + (c ? ' ' + c : ''), g: '⎿', h });
+      const N = (h, c) => ({ k: 'out' + (c ? ' ' + c : ''), g: '', h });
+      const Q = (head, qs) => ({ k: 'ask', h: `<div class="ask-h">${head}</div>` + qs.map(([q, sel, alts]) =>
+        `<div class="ask-q">${q} <span class="sel">❯ ${sel}</span>${(alts || []).map(a => ` <span class="alt">· ${a}</span>`).join('')}</div>`).join('') });
+      const D = h => ({ k: 'todo', g: '☐', h });
+      const B = rows => ({ k: 'box', h: rows.join('<br>') });
+      const L = (ts, ic, h, c) => ({ k: 'log' + (c ? ' ' + c : ''), ts, ic, h });
+
+      function lineHTML(l, cls, delay) {
+        const st = delay ? ` style="animation-delay:${delay}ms"` : '';
+        if (l.ts !== undefined) return `<div class="tl ${l.k} ${cls}"${st}><span class="ts">${l.ts}</span><span>${l.ic}</span><span>${l.h}</span></div>`;
+        return `<div class="tl ${l.k} ${cls}"${st}>${l.g ? `<span class="g">${l.g}</span>` : ''}${l.h}</div>`;
+      }
+
+      // ---- screen view builders ----
+      const MARK = { '✓': 'y', '○': 'p', '!': 'w', '✗': 'r', '•': 'y' };
+      const doc = (fn, title, body) => `<div class="sx-doc"><div class="fn">${fn}</div>${title ? `<h4>${title}</h4>` : ''}${body}</div>`;
+      const ck = rows => `<ul class="sx-ck">${rows.map(([m, k, v]) => `<li><span class="${MARK[m] || 'y'}">${m}</span><span class="k">${k}</span><span>${v}</span></li>`).join('')}</ul>`;
+      const src = t => `<span class="sx-src">${t}</span>`;
+      const note = t => `<div class="note">${t}</div>`;
+      const browser = (url, page, pw) => `<div class="sx-br"><div class="sx-url"><span>‹ › ↻</span><span class="pill">${url}</span>${pw ? '<span class="pw">Playwright MCP</span>' : ''}</div><div class="sx-page">${page}</div></div>`;
+      const chromeErr = '<div class="sx-cerr"><div class="ic">:(</div><h4>사이트에 연결할 수 없음</h4><div>localhost에서 연결을 거부했습니다.</div><div class="mono">ERR_CONNECTION_REFUSED</div></div>';
+      const n8nHome = refs => {
+        const r = id => refs ? `<span class="sx-ref">ref=${id}</span>` : '';
+        const hl = refs ? ' sx-hl' : '';
+        return `<div class="sx-n8n"><div class="side"><span class="logo">n8n</span><span class="si on">⌂</span><span class="si">▤</span><span class="si">⚙</span></div>`
+          + `<div class="main"><div class="top"><h4>Overview</h4><span class="btn${hl}">Create Workflow${r('e14')}</span></div>`
+          + `<div class="tabs"><span class="on">Workflows</span><span>Credentials</span><span>Executions</span></div>`
+          + `<div class="empty"><span style="font-size:22px;">👋</span><b>Welcome!</b><span>아직 워크플로우가 없습니다</span><span class="s${hl}">Start from scratch${r('e21')}</span></div></div></div>`;
+      };
+
+      // ---- n8n canvas: the 18 nodes of pipeline.json (names verbatim), laid out on a 7×3 grid ----
+      const CV_NODES = [ // id, label ('|' = line break), icon, col, row, kind
+        ['t1', '매일 08시 트리거', '⏰', 0, 0, 'trg'],
+        ['t2', '수동실행', '🖱️', 0, 1, 'trg'],
+        ['x1', '01 XML 생성', '>_', 1, 0, 'm'],
+        ['r1', '01 XML 결과|파일 읽기', '📄', 2, 0],
+        ['j1', '01 XML 결과|JSON 해석', '📑', 3, 0],
+        ['n1', '01 XML 결과|정규화', '{ }', 4, 0, 'm'],
+        ['i1', 'If step1 결과', 'IF', 5, 0, 'm if'],
+        ['x2', '02 HTML|미리보기 생성', '>_', 1, 1, 'm'],
+        ['n2', '02 HTML|결과 정규화', '{ }', 2, 1, 'm'],
+        ['i2', 'If step2 결과', 'IF', 3, 1, 'm if'],
+        ['x3', '03 Confluence|업로드', '>_', 4, 1, 'm'],
+        ['n3', '03 업로드|결과 정규화', '{ }', 5, 1, 'm'],
+        ['i3', 'If step3 결과', 'IF', 6, 1, 'm if'],
+        ['s1', '성공 메시지|준비', '{ }', 1, 2, 'm'],
+        ['h1', 'Teams 성공|알림 전송', '🌐', 2, 2],
+        ['e1', '오류 메시지|준비', '{ }', 4, 2, 'm'],
+        ['h2', 'Teams 오류|알림 전송', '🌐', 5, 2],
+        ['f1', '단계 실패|종료', '⛔', 6, 2],
+      ];
+      const CV_EDGES = [['t1','x1'],['t2','x1'],['x1','r1'],['r1','j1'],['j1','n1'],['n1','i1'],['i1','x2'],['x2','n2'],['n2','i2'],['i2','x3'],['x3','n3'],['n3','i3'],['i3','s1'],['s1','h1'],['e1','h2'],['h2','f1']];
+      const CX = c => 52 + c * 109, CY = r => 58 + r * 132;
+      const POS = {};
+      CV_NODES.forEach(n => { POS[n[0]] = [CX(n[3]), CY(n[4])]; });
+
+      function edgePath(a, b) {
+        const [ax, ay] = POS[a], [bx, by] = POS[b];
+        if (a === 't2') return `M${ax + 28} ${ay} C${ax + 56} ${ay}, ${bx - 56} ${by}, ${bx - 28} ${by}`;
+        if (a === 'i1' || a === 'i3') { // wrap to the next row, routed between the label rows
+          const vx = ax + (a === 'i1' ? 60 : 46), hy = ay + 66;
+          return `M${ax + 28} ${ay} H${vx - 10} Q${vx} ${ay} ${vx} ${ay + 10} V${hy - 10} Q${vx} ${hy} ${vx - 10} ${hy} H${bx + 10} Q${bx} ${hy} ${bx} ${hy + 10} V${by - 25}`;
+        }
+        return `M${ax + 28} ${ay} L${bx - 28} ${by}`;
+      }
+
+      function nodeSVG(n, stt, pop, delay) {
+        const [id, label, icon, col, row, kind = ''] = n;
+        const cx = CX(col), cy = CY(row), x = cx - 28, y = cy - 25, w = 56, h = 50;
+        const shp = kind.includes('trg')
+          ? `<path class="shp" d="M${x + 25} ${y} H${x + w - 8} Q${x + w} ${y} ${x + w} ${y + 8} V${y + h - 8} Q${x + w} ${y + h} ${x + w - 8} ${y + h} H${x + 25} A25 25 0 0 1 ${x + 25} ${y} Z"/>`
+          : `<rect class="shp" x="${x}" y="${y}" width="${w}" height="${h}" rx="8"/>`;
+        const lbl = label.split('|').map((t, i) => `<text class="lb" x="${cx}" y="${cy + 40 + i * 13}">${t}</text>`).join('');
+        let extra = '';
+        if (stt === 'run') extra += `<circle class="spin" cx="${cx}" cy="${cy}" r="33"/>`;
+        if (stt === 'ok' || stt === 'fixed') extra += `<g class="bdg"><circle cx="${x + w - 2}" cy="${y + 2}" r="7.5" fill="#22c55e"/><text x="${x + w - 2}" y="${y + 2.5}">✓</text></g>`;
+        if (stt === 'err') extra += `<g class="bdg"><circle cx="${x + w - 2}" cy="${y + 2}" r="7.5" fill="#ef4444"/><text x="${x + w - 2}" y="${y + 2.5}">!</text></g><text class="fixlb" x="${cx}" y="${y - 7}" style="fill:#ef4444;">= 누락</text>`;
+        if (stt === 'fixed') extra += `<text class="fixlb" x="${cx}" y="${y - 7}">autofix</text>`;
+        if (kind.includes('if')) extra += `<circle cx="${x + w}" cy="${cy + 14}" r="3.5" fill="#f59e0b"/>`;
+        const cls = `nd ${stt === 'fixed' ? 'ok' : stt}${pop ? ' pop' : ''}`;
+        return `<g class="${cls}"${pop ? ` style="animation-delay:${delay}ms"` : ''}>${shp}<text class="ic${kind.includes('m') ? ' m' : ''}" x="${cx}" y="${cy}">${icon}</text>${lbl}${extra}</g>`;
+      }
+
+      function canvas(o, anim, uid) {
+        const head = `<div class="sx-cvhead"><span class="wf">${o.name}</span>${o.clock ? `<span class="clk">🕗 ${o.clock}</span>` : ''}<span class="sx-pub ${o.pub || ''}">${o.pubText || '비활성'}</span></div>`;
+        const mk = (id, fill) => `<marker id="${id}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="${fill}"/></marker>`;
+        const defs = `<defs>${mk('sxa-' + uid, '#4a4a4a')}${mk('sxg-' + uid, '#22c55e')}${mk('sxo-' + uid, '#f59e0b')}</defs>`;
+        let body;
+        if (o.empty) {
+          body = '<rect class="empty-add" x="340" y="130" width="80" height="80" rx="12"/><text class="empty-t" x="380" y="172" style="font-size:34px;fill:#777;dominant-baseline:central;">+</text><text class="empty-t" x="380" y="240">Add first step…</text>';
+        } else {
+          const st = o.status || {}, base = o.base || 'idle', get = id => st[id] || base;
+          const pop = anim && o.pop;
+          const edges = CV_EDGES.map(([a, b]) => {
+            const ok = /ok|fixed/.test(get(a)) && /ok|fixed|run/.test(get(b));
+            const cls = base === 'planned' ? 'planned' : ok ? 'ok' : '';
+            return `<path class="ed ${cls}" d="${edgePath(a, b)}" marker-end="url(#${ok ? 'sxg-' : 'sxa-'}${uid})"/>`;
+          }).join('');
+          const stub = `<path class="ed" d="M414 322 L456 322" style="stroke:#f59e0b;stroke-dasharray:4 3;" marker-end="url(#sxo-${uid})"/><text class="errlb" x="408" y="326" text-anchor="end">If ✗ ×3</text>`;
+          const nodes = CV_NODES.map((n, i) => nodeSVG(n, get(n[0]), pop, i * 60)).join('');
+          body = `<g${pop ? ' class="edpop"' : ''}>${edges}${stub}</g>${nodes}`;
+        }
+        return `<div class="sx-cv">${head}<svg viewBox="0 0 760 392" preserveAspectRatio="xMidYMid meet" aria-hidden="true">${defs}${body}</svg></div>`;
+      }
+
+      function teams(msgs) {
+        return '<div class="sx-teams"><div class="rail"><span>🔔</span><span>💬</span><span class="on">👥</span><span>📅</span></div>'
+          + '<div class="ch"><div class="chh">차량제어서비스개발팀 <span>› 자동화 알림</span></div><div class="msgs">'
+          + msgs.map(m => `<div class="sx-msg ${m.cls || ''}"><div class="av">⚡</div><div><div class="who">Workflows<span>${m.when}</span></div><div class="bub">${m.body}</div></div></div>`).join('')
+          + '</div></div></div>';
+      }
+
+      // =====================================================================
+      // Demo A — "n8n 켜줘" (readme 빠른 시작 · arch.md 호출 흐름)
+      // =====================================================================
+      const envA = {
+        id: 'A', kick: 'Install → Run', name: 'n8n-automation',
+        term: 'Claude Code — ~/n8n-automation',
+        steps: [
+          { t: '마켓 등록', s: 'GitLab' },
+          { t: '플러그인 설치', s: 'plugin install' },
+          { t: '라우팅', s: 'skill → agent' },
+          { t: 'OS 감지', s: 'Mac / Windows' },
+          { t: '스크립트 확인', s: 'plugin resources' },
+          { t: 'n8n 기동', s: 'localhost:5678' },
+          { t: 'Playwright MCP', s: 'browser_*' },
+        ],
+        cuts: [
+          { at: 0, who: '팀원', win: 'Claude Code · 마켓플레이스 등록', dur: 6000,
+            cap: '팀 GitLab 저장소로 <b>마켓플레이스 등록</b> — 플러그인 목록이 추가되고, 설치는 다음 단계',
+            lines: [U('/plugin marketplace add https://gitlab.hmc.co.kr/infoccs/service/dkc/automation/n8n-automation.git'), O('팀 GitLab 마켓플레이스 목록을 등록했습니다.', 'ok'), O('아직 플러그인을 설치하지 않았습니다.', 'warn')],
+            scr: doc('n8n-automation · 설치 절차 예시', '① 마켓플레이스 등록', ck([
+              ['✓', '저장소', '<span style="overflow-wrap:anywhere;word-break:normal;">gitlab.hmc.co.kr/infoccs/service/dkc/automation/n8n-automation.git</span>'],
+              ['✓', '마켓플레이스', 'n8n-automation · 목록 등록'],
+              ['○', '플러그인', 'n8n-automation · 미설치 → 다음 단계에서 설치'],
+            ]) + note('사내 GitLab 접근 권한이 있는 환경의 절차 예시 · 마켓플레이스: n8n-automation')) },
+          { at: 1, who: '팀원', win: 'Claude Code · n8n-automation 설치', dur: 6000,
+            cap: '목록에서 <b>플러그인 설치</b> — 활성화 안내를 확인하고, 환경·연결 설정 후 대화로 시작',
+            lines: [U('/plugin install n8n-automation@n8n-automation'), O('n8n-automation 설치 완료 · 활성화 안내 확인', 'ok'), S('환경과 외부 서비스 연결 설정을 마친 뒤 원하는 일을 요청합니다.')],
+            scr: doc('n8n-automation · 설치 절차 예시', '② 플러그인 설치', ck([
+              ['✓', '설치 대상', 'n8n-automation@n8n-automation'],
+              ['✓', '설치 단위', 'n8n-automation · 오케스트레이션을 담은 Claude 플러그인'],
+              ['○', '별도 준비', '활성화 안내 확인 · 환경 및 외부 서비스 연결 설정'],
+              ['→', '다음 장면', '연결 설정을 마친 환경에서 “n8n 켜줘”'],
+            ]) + note('플러그인·마켓플레이스 이름: n8n-automation · 화면 출력은 시뮬레이션')) },
+          { at: 1, who: '사용자', win: 'Chrome — localhost:5678',
+            cap: '설치·활성화 및 연결 설정 후, 요청은 한 마디 — 지금은 아무것도 떠 있지 않다 (<code>localhost:5678</code> 연결 거부)',
+            lines: [U('n8n 켜줘')],
+            scr: browser('localhost:5678', chromeErr) },
+          { at: 2, who: 'n8n-env-setup', win: '라우팅 — 요청 유형으로 진입점 선택',
+            cap: '라우팅 — 환경 요청은 7단계 매니저가 아니라 <b>n8n-env-setup</b>으로 (전문가 풀)',
+            lines: [S('로컬 n8n 환경 요청입니다. n8n-env-setup으로 진행합니다.'), T('Skill', 'n8n-automation:n8n-env-setup'), O('OS 감지 → 스크립트 확인 → 기동 절차 로드'), T('n8n-env-setup', '로컬 n8n 환경 기동'), O('agents/n8n-env-setup.md · 실행 중…', 'dim')],
+            scr: doc('라우팅', '「n8n 켜줘」 → 환경 경로',
+              '<div class="sx-route"><div class="br on"><span class="tg">환경</span><b>n8n-env-setup</b> 스킬 → <b>n8n-env-setup</b> 에이전트</div>'
+              + '<div class="br off"><span class="tg">워크플로우</span>n8n-workflow-manager · 7단계<em>호출 안 됨</em></div></div>'
+              + note('설치된 플러그인의 스킬 설명으로 요청을 분류 · 절차 설명용 시뮬레이션')) },
+          { at: 3, who: 'n8n-env-setup agent', win: 'n8n-env-setup · 사전 점검',
+            cap: '① OS 감지 — Mac / Windows를 스스로 판별하고 맞는 스크립트 번들을 고른다',
+            lines: [T('Bash', 'uname -s; node -v; lsof -i :5678'), O('Darwin'), N('v22.x'), N('(5678 포트 사용 중인 프로세스 없음)'), S('macOS 감지 → Mac 스크립트 번들 사용')],
+            scr: doc('n8n-env-setup · 사전 점검', '① OS 감지', ck([
+              ['✓', 'OS', 'macOS (Darwin) → Mac 번들 · Windows면 PowerShell 번들'],
+              ['✓', 'Node.js', `v22 — n8n 요구 범위 20.19 ~ 24.x ${src('docs.n8n.io · npm')}`],
+              ['✓', '포트 5678', '비어 있음 — 기동 가능'],
+              ['○', '스크립트 경로', '<span class="dim">다음 단계에서 탐지</span>'],
+            ])) },
+          { at: 4, who: 'n8n-env-setup agent', win: 'n8n-automation · 실행 스크립트',
+            cap: '② 플러그인에 포함된 실행 스크립트 위치 확인 — 사용자가 파일을 찾아 배치할 필요 없이',
+            lines: [S('설치된 플러그인의 실행 스크립트를 확인합니다.'), O('플러그인 리소스 위치 확인'), O('현재 OS에 맞는 macOS 실행 스크립트 선택'), O('기동 절차에 전달할 스크립트 확인 완료', 'ok')],
+            scr: doc('n8n-automation 리소스 · 절차 예시', '② 실행 스크립트 위치 확인', ck([
+              ['✓', '사전 조건', '플러그인 설치 및 연결 설정 완료'],
+              ['✓', '리소스', '플러그인에 포함된 환경 기동 스크립트'],
+              ['✓', '선택 기준', '앞 단계에서 확인한 OS → macOS 스크립트'],
+              ['→', '다음 단계', '선택한 스크립트로 n8n 기동'],
+            ]) + note('절차 설명용 시뮬레이션 · 플러그인 내부 경로와 설정 저장 위치는 생략')) },
+          { at: 5, who: 'n8n-env-setup agent', win: 'Chrome — localhost:5678',
+            cap: '③ n8n 기동 — 접속 주소가 로그에 찍히고, 브라우저에서 <code>http://localhost:5678</code>이 열린다',
+            lines: [S('확인한 플러그인 실행 스크립트로 n8n을 기동합니다.'), O('백그라운드 실행 (npx n8n)', 'dim'), N('Editor is now accessible via:'), N('http://localhost:5678', 'ok'), T('Bash', 'curl -s -o /dev/null -w "%{http_code}" localhost:5678/healthz'), O('200', 'ok')],
+            scr: browser('localhost:5678/home/workflows', n8nHome(false)) },
+          { at: 6, who: 'n8n-env-setup agent', win: 'Chrome — localhost:5678 · Playwright MCP',
+            cap: '④ Playwright MCP 기동 확인 — 접근성 스냅샷으로 n8n 화면을 읽을 준비까지',
+            lines: [T('Bash', 'claude mcp list'), O('playwright: npx @playwright/mcp@latest - ✓ Connected'), T('playwright - browser_navigate (MCP)', 'url: "http://localhost:5678"'), O('페이지 로드 완료'), T('playwright - browser_snapshot (MCP)'), O('접근성 스냅샷 수신 · 버튼 · 탭을 ref로 식별')],
+            scr: browser('localhost:5678/home/workflows', n8nHome(true), true) },
+          { at: 7, who: 'n8n-env-setup', win: 'n8n-env-setup · 완료 보고', dur: 5200,
+            cap: '한 마디에 환경이 올라왔다 — 섹션 1의 다섯 번째 사고, <b>셋업 삽질</b>이 없어진다',
+            lines: [S('<b>환경 준비 완료</b>'), B(['✓ n8n  http://localhost:5678 · 백그라운드 · healthz 200', '✓ Playwright MCP  Connected', '✓ 플러그인 실행 스크립트 확인'])],
+            scr: doc('n8n-env-setup · 완료 보고', '환경 준비 완료 <span style="color:var(--green);">✓</span>', ck([
+              ['✓', 'OS', 'macOS → Mac 번들'],
+              ['✓', '리소스', '플러그인 실행 스크립트 확인'],
+              ['✓', 'n8n', 'http://localhost:5678 · /healthz 200'],
+              ['✓', 'Playwright MCP', 'Connected · 스냅샷 확인'],
+            ]) + note('「n8n 어떻게 설치하더라」, 「스크립트 어디 있지」 — 사용자는 한 마디만 했다.')) },
+        ],
+      };
+
+      // =====================================================================
+      // Demo B — 배포 캘린더 스킬 → pipeline.json (7단계 · spec-workflow-reuse.md)
+      // =====================================================================
+      const WF = '[차량제어서비스개발팀] 배포 캘린더 자동 갱신';
+      const WS = '_workspace_n8n/deploy-calendar/';
+      const buildB = {
+        id: 'B', kick: 'Pipeline', name: 'n8n-workflow-manager',
+        term: 'Claude Code — 공용 PC n8n 연결',
+        steps: [
+          { t: '분석', s: 'analyst' },
+          { t: '요건 명확화', s: 'manager + reuse' },
+          { t: '요건 확인', s: 'manager', gate: true },
+          { t: '리서치', s: 'researcher' },
+          { t: '계획', s: 'manager', gate: true },
+          { t: '실행', s: 'builder' },
+          { t: '보고', s: 'manager' },
+        ],
+        cuts: [
+          { at: -1, who: '사용자', win: 'n8n — 새 워크플로우',
+            cap: '짧은 요청 하나 — 트리거도, 실패 처리도, 알림도 말하지 않았다',
+            lines: [U('배포 캘린더 스킬을 공용 PC n8n 파이프라인으로 만들어줘')],
+            scr: a => canvas({ name: '새 워크플로우', empty: true }, a, 'B') },
+          { at: 0, note: '스킬 구조 읽기', who: 'n8n-workflow-analyst', win: WS + '01-analysis.md',
+            cap: '1 분석 — 추측하지 않는다. 스킬 파일과 스크립트를 <b>직접 읽어</b> 구조를 잡는다',
+            lines: [T('Skill', 'n8n-automation:n8n-workflow-manager'), O('7단계 시작 · 작업 폴더 ' + WS), T('n8n-workflow-analyst', '배포 캘린더 스킬 구조 분석'), O('Read deploy_calendar/SKILL.md · deploy_calendar.py'), O('Bash python deploy_calendar.py --help → --step {1,2,3} · --result-file'), O('3단계 · 종료 코드로 성공 판정 · 결과 마커 CALENDAR_RESULT=', 'ok')],
+            scr: doc(WS + '01-analysis.md', '1 분석 — 스킬 구조',
+              '<div class="sx-flow">'
+              + '<div class="fb"><span class="m">--step 1</span><b>XML 생성</b>결과 JSON 파일<br>점검 건수 3종</div><i>→</i>'
+              + '<div class="fb"><span class="m">--step 2</span><b>HTML 미리보기</b>stdout<br>CALENDAR_RESULT=</div><i>→</i>'
+              + '<div class="fb"><span class="m">--step 3</span><b>Confluence 업로드</b>stdout<br>CALENDAR_RESULT=</div></div>'
+              + ck([['•', '성공 판정', '단계마다 종료 코드 0'], ['•', '실행 위치', '공용 PC (Windows) · 프로젝트 <code>.venv</code> Python'], ['!', '지금 운영', '사람이 스킬을 켜야 돈다']])) },
+          { at: 0, note: '현황 감사', who: 'n8n-workflow-analyst', win: WS + '01b-audit.md',
+            cap: '1 분석 · 현황 감사 — 만들기 전에 <b>이미 있는 워크플로우</b>부터 본다 (후보 ≤ 5 · structure 모드만)',
+            lines: [T('n8n_list_workflows', 'active: true'), O('이름 · 태그 겹침 후보 2'), T('n8n_get_workflow', 'mode: "structure" ×2'), O('판정: 재사용 가능 0 · 참고만 2 → A/B/C 질문 생략')],
+            scr: doc(WS + '01b-audit.md', '1-b 현황 감사 — 후보 판정',
+              '<div class="sx-grid"><span class="h">후보</span><span class="h">판정</span><span class="h">근거 (노드 타입)</span>'
+              + '<span class="nm">Jira due date 납기 알림</span><span style="color:var(--orange);">참고만</span><span>scheduleTrigger · httpRequest(Teams 웹훅) 공통 / 핵심 처리 다름</span>'
+              + '<span class="nm">ITOM EOS 현황 리포트</span><span style="color:var(--orange);">참고만</span><span>httpRequest(Teams 웹훅) 공통 / 트리거 · 처리 다름</span></div>'
+              + note('재사용 가능 = 트리거 · 핵심 노드 · 출력 3조건 모두 충족일 때만. 0건이므로 인터뷰 선택지의 근거로만 쓴다.')) },
+          { at: 1, note: 'L 등급 · 딥 인터뷰', who: 'manager + n8n-workflow-reuse', key: true, dur: 7000, win: WS + '02b-interview.md',
+            cap: '2 요건 명확화 — L 등급이라 딥 인터뷰. <b>말하지 않은</b> 트리거 · 실패 처리 · 알림 내용을 먼저 묻는다',
+            lines: [S('작업 크기 <b>L</b> — 신규 워크플로우 + 외부 시스템 쓰기 (Confluence · Teams)'), T('AskUserQuestion', '딥 인터뷰 · 라운드 1/3'),
+              Q('질문 3 · 기존 워크플로우에서 확인한 사실을 선택지로', [
+                ['트리거?', '매일 08:00 (Asia/Seoul) + 수동 실행', ['평일만', '수동만']],
+                ['실패하면?', '기존 2개처럼 Teams 오류 알림 → 실패로 종료', ['로그만']],
+                ['성공 알림?', '점검 건수 3종 + 업로드 결과', ['완료 여부만']],
+              ])],
+            scr: doc(WS + '02b-interview.md', '2-b 딥 인터뷰 — 체크리스트 6/6', ck([
+              ['✓', '트리거', '매일 08:00 (Asia/Seoul) + 수동 실행'],
+              ['✓', '입력', '스크립트 3단계 결과 — 종료 코드 · CALENDAR_RESULT'],
+              ['✓', '성공 조건', '단계마다 exitCode = 0'],
+              ['✓', '실패 처리', 'Teams 오류 알림 → 실행 실패 종료 <span class="dim">(기존 2개와 같은 패턴)</span>'],
+              ['✓', '부수효과', 'Confluence 페이지 갱신 · Teams 발송'],
+              ['✓', '자격증명', '기존 Teams 웹훅 사용 · 신규 생성 없음'],
+            ]) + note('종료 사유: 체크리스트 충족 · 라운드 1/3 · 질문 3/3')) },
+          { at: 2, st: 'gate', note: '👤 승인 대기', who: 'n8n-workflow-manager', key: true, dur: 7000, win: '게이트 1/2 — 요건 확인',
+            cap: '3 요건 확인 👤 — 이해한 내용을 요약해 되묻는다. <b>승인 전에는 아무것도 바뀌지 않는다</b>',
+            lines: [S('이해한 내용을 확인합니다.'), B(['① 매일 08:00 KST + 수동 → 스크립트 3단계 순차 실행', '② 단계마다 exitCode = 0 이어야 다음 단계', '③ 성공: Teams에 점검 건수 3종 + 업로드 결과', '④ 실패: 단계 · 종료 코드 · 출력 600자 → Teams → 실패 종료', '⑤ L 등급 · 재사용 후보 없음 (참고만 2)']),
+              T('AskUserQuestion', '요건 확인'), Q('필수 게이트', [['이대로 진행할까요?', '네, 진행', ['수정할 부분 있음']]]), O('승인 · 03-requirements.md 기록', 'ok')],
+            scr: `<div class="sx-gatev"><div class="big">👤<span>GATE 1/2</span></div><div class="sx-doc" style="position:static;padding:0;">`
+              + `<div class="fn">${WS}03-requirements.md</div><h4>사람이 확인하는 첫 번째 게이트</h4>`
+              + ck([['✓', '트리거', '매일 08:00 KST + 수동'], ['✓', '성공 조건', '단계별 exitCode = 0'], ['✓', '성공 알림', '점검 건수 3종 + 업로드 결과'], ['✓', '실패 처리', 'Teams 오류 알림 → 실패 종료'], ['✓', '등급', 'L · 재사용 후보 없음']])
+              + '<span class="sx-ok">✓ 승인됨 — 사용자</span></div></div>' },
+          { at: 3, note: '출처 3개 병렬', who: 'n8n-workflow-researcher', dur: 7000, win: WS + '04-research.md',
+            cap: '4 리서치 — 출처 3개 병렬. 「2.0부터 Execute Command 기본 차단」처럼 <b>기억으로는 못 잡는 사실</b>',
+            lines: [T('n8n-workflow-researcher ×3', '출처별 백그라운드 병렬'), O('context7  resolve-library-id → query-docs (Execute Command · Read/Write Files)'), O('WebSearch  "n8n 2.0 Execute Command disabled by default"'), O('지식 스킬  n8n-node-configuration · n8n-code-javascript'), S('통합 · 교차 확인 — 근거 5건, <span style="color:var(--orange);">주의 2건</span>')],
+            scr: doc(WS + '04-research.md', '4 리서치 — 근거 5건 (공식 문서)', ck([
+              ['•', 'Execute Command', `Windows에서는 cmd로 실행 → <code>cd /d</code> ${src('Execute Command')}`],
+              ['!', '2.0 기본 차단', `기본 <code>NODES_EXCLUDE</code>에 executeCommand 포함 → 공용 PC 설정 확인 ${src('Nodes env vars')}`],
+              ['!', '파일 접근', `2.0부터 <code>N8N_RESTRICT_FILE_ACCESS_TO</code> 기본 ~/.n8n-files → 결과 폴더 허용 ${src('Read/Write Files')}`],
+              ['•', 'Schedule', `게시된 워크플로우만 실행 · 워크플로우 timezone 적용 ${src('Schedule Trigger')}`],
+              ['•', 'Code 노드', `파일 · HTTP 접근 불가 → Read/Write Files · HTTP Request 노드로 ${src('Code')}`],
+            ]) + note('출처는 docs.n8n.io 노드 문서 · 환경변수 문서. 링크는 파일에 기록.')) },
+          { at: 4, st: 'gate', note: '👤 승인 대기', who: 'n8n-workflow-manager', key: true, dur: 7000, win: 'n8n — 설계 미리보기 (05-plan.md)',
+            cap: '5 계획 👤 — todo를 파일로 남기고 두 번째 게이트. <b>노드 18개 설계도</b>를 승인받은 뒤에야 실행',
+            lines: [T('Write', WS + '05-plan.md'), D('트리거 2 · Schedule <code>0 8 * * *</code> + Manual'), D('01 XML 생성 · Execute Command <code>--step 1 --result-file</code>'), D('결과 파일 읽기 → JSON 해석 → 정규화 (Code)'), D('02 HTML · 03 Confluence · stdout 마커 정규화'), D('단계마다 If exitCode = 0 · 아니면 오류 경로'), D('성공/오류 메시지 (Code) → Teams (HTTP Request)'), D('오류 경로 끝 Stop and Error → 실패로 기록'), D('validate → autofix → 게시 · timezone Asia/Seoul'),
+              Q('필수 게이트', [['이 계획으로 실행할까요?', '승인', ['수정']]]), O('승인', 'ok')],
+            scr: a => canvas({ name: WF, base: 'planned', pub: 'plan', pubText: '설계 · 승인 대기' }, a, 'B') },
+          { at: 5, note: 'n8n_create_workflow', who: 'n8n-workflow-builder', win: 'n8n — 편집기',
+            cap: '6 실행 — <b>MCP 도구로만</b> 만든다. UI 수동 조작 · JSON 직접 편집 없음',
+            lines: [T('n8n-workflow-builder', '05-plan.md 실행'), T('n8n_create_workflow', `name: "${WF}", nodes: 18`), O('생성 완료 · id ●●●●●● · settings.timezone "Asia/Seoul"', 'ok')],
+            scr: a => canvas({ name: WF, pop: true }, a, 'B') },
+          { at: 5, st: 'fix', note: 'validate → 에러 1', who: 'n8n-workflow-builder', win: 'n8n — 편집기',
+            cap: '6 실행 · 검증 — 만든 직후 자동 검증. 표현식 앞 <code>=</code> 누락 1건을 잡았다',
+            lines: [T('n8n_validate_workflow', 'id: ●●●●●●'), O('valid: false · errors: 1', 'err'), N('If step2 결과 · leftValue "{{ $json.exitCode }}" — 표현식 = 접두사 누락', 'err')],
+            scr: a => canvas({ name: WF, status: { i2: 'err' } }, a, 'B') },
+          { at: 5, note: 'autofix → 재검증 ✓', who: 'n8n-workflow-builder', key: true, dur: 7000, win: 'n8n — 편집기',
+            cap: '6 실행 · autofix → 재검증 통과 → 게시. <b>「고쳐놓고 깨진」</b> 상태로 넘어오지 않는다',
+            lines: [T('n8n_autofix_workflow', 'applyFixes: false'), O('미리보기 · expression-format 1건'), T('n8n_autofix_workflow', 'applyFixes: true'), O('적용 → "={{ $json.exitCode }}"'), T('n8n_validate_workflow'), O('valid: true · errors: 0', 'ok'), T('n8n_update_partial_workflow', 'activateWorkflow'), O('게시됨 · 매일 08:00 (Asia/Seoul)', 'ok')],
+            scr: a => canvas({ name: WF, status: { i2: 'fixed' }, pub: 'on', pubText: '● 게시됨' }, a, 'B') },
+          { at: 7, who: 'n8n-workflow-manager', key: true, dur: 7000, win: WS,
+            cap: '7 보고 — 분석 · 요건 · 리서치 · 계획 · 결과가 <b>파일로 남는다</b>. 두 장 뒤에서 이 파이프라인이 실제로 돈다',
+            lines: [S('<b>완료 8/8</b> — 워크플로우 게시됨'), O('공용 PC에서 확인할 것 2건', 'warn'), N('· NODES_EXCLUDE에서 executeCommand 제외 여부 (2.0 기본 차단)', 'warn'), N('· N8N_RESTRICT_FILE_ACCESS_TO에 결과 파일 폴더 포함', 'warn'), S('피드백 주시면 다음 작업에 반영합니다.')],
+            scr: doc(WS, '7 보고 — 산출물 8개', '<div class="sx-tree">' + [
+              ['01-analysis.md', '스킬 구조 · 3단계 · 결과 마커'],
+              ['01b-audit.md', '후보 2 · 참고만'],
+              ['02b-interview.md', '체크리스트 6/6 · 라운드 1'],
+              ['03-requirements.md', '요약 · 승인 기록'],
+              ['04-research.md', '근거 5 · 출처 링크'],
+              ['05-plan.md', 'todo 8 · 승인 기록'],
+              ['06-execution.md', 'create → validate → autofix → 게시'],
+              ['07-report.md', '완료 · 확인 필요 2'],
+            ].map(([f, d]) => `<div><b>${f}</b><span>${d}</span></div>`).join('') + '</div>'
+              + note('무엇을 · 왜 바꿨는지가 남는다 — 섹션 1의 「무기록」 사고가 없어지는 지점.')) },
+        ],
+      };
+
+      // =====================================================================
+      // Slide 30 — 공용 PC에서 pipeline.json이 매일 08:00에 도는 모습 (시각 · 건수는 시뮬레이션 값)
+      // =====================================================================
+      const RUN = [['t1'], ['x1'], ['r1', 'j1', 'n1', 'i1'], ['x2', 'n2', 'i2'], ['x3', 'n3', 'i3'], ['s1'], ['h1']];
+      const runStatus = upto => {
+        const st = {};
+        if (upto > 0) st.t2 = 'skip';
+        RUN.slice(0, upto).flat().forEach(id => { st[id] = 'ok'; });
+        if (upto > 0 && RUN[upto]) st[RUN[upto][0]] = 'run';
+        if (upto >= RUN.length) ['e1', 'h2', 'f1'].forEach(id => { st[id] = 'skip'; });
+        return st;
+      };
+      const runCv = (upto, clock) => a => canvas({ name: WF, clock, status: runStatus(upto), pub: 'on', pubText: '● 게시됨' }, a, 'R');
+      const TEAMS_OK = '<b>✅ 팀 배포 캘린더 현황 자동화 완료</b>\n실행 완료: 2026. 9. 14. 오전 8:00:40\n[수행 단계]\n1. XML 생성\n2. HTML 미리보기 생성\n3. Confluence 업로드\n[점검 결과]\n- 배포완료 미확인: 2건\n- 승인일 미기재: 1건\n- GlobalCM 팀장 승인 댓글 없음: 0건\n[업로드 결과]\nConfluence 업로드가 정상 완료되었습니다.';
+      const run30 = {
+        id: 'R', kick: 'Execution', name: '배포 캘린더 · 매일 08:00',
+        term: '공용 PC · n8n 실행 로그',
+        tabs: ['n8n · 배포 캘린더 자동 갱신', 'Teams · 자동화 알림'],
+        steps: [
+          { t: '트리거', s: '08:00 KST' },
+          { t: '01 XML 생성', s: 'executeCommand' },
+          { t: '결과 해석', s: 'file → code → if' },
+          { t: '02 HTML', s: 'executeCommand' },
+          { t: '03 Confluence', s: 'executeCommand' },
+          { t: '메시지 준비', s: 'code' },
+          { t: 'Teams 알림', s: 'httpRequest' },
+        ],
+        cuts: [
+          { at: -1, who: '사람 없음',
+            cap: '07:59 — 공용 PC의 n8n이 시간을 기다린다. <b>자리에 앉은 사람은 없다</b>',
+            lines: [L('—', '●', '게시됨 · cron <code>0 8 * * *</code> · timezone Asia/Seoul', 'dim'), L('07:59:58', '⏳', '대기 — 다음 실행 08:00:00', 'dim')],
+            scr: runCv(0, '07:59:58') },
+          { at: 0, who: 'Schedule Trigger',
+            cap: '08:00 — Schedule Trigger 발화. 수동실행 노드는 사람이 원할 때만 쓴다',
+            lines: [L('08:00:00.0', '⏰', '<b>매일 08시 트리거</b> · 실행 시작 (mode: trigger)', 'ok'), L('08:00:00.1', '▸', '<b>01 XML 생성</b> · deploy_calendar.py --step 1 --result-file …\\step1-{실행ID}.json')],
+            scr: runCv(1, '08:00:00') },
+          { at: 1, who: 'Execute Command',
+            cap: '01 XML 생성 — 스크립트를 cmd로 실행하고, 결과는 실행 ID별 JSON 파일로 남긴다',
+            lines: [L('08:00:17.9', '✓', '<b>01 XML 생성</b> · exitCode 0 · 17.8s', 'ok'), L('08:00:18.0', '▸', '<b>01 XML 결과 파일 읽기</b> · step1-●●●●.json')],
+            scr: runCv(2, '08:00:17') },
+          { at: 2, who: 'Read/Write Files · Code · If',
+            cap: '결과 해석 — 파일을 읽어 점검 건수 3종을 정규화하고, If가 <code>exitCode = 0</code>을 확인한다',
+            lines: [L('08:00:18.1', '✓', '결과 파일 읽기 → JSON 해석 → 정규화', 'ok'), L('', '', '배포완료 미확인 2 · 승인일 미기재 1 · GlobalCM 승인 댓글 없음 0', 'dim'), L('08:00:18.2', '✓', '<b>If step1 결과</b> → true', 'ok'), L('08:00:18.2', '▸', '<b>02 HTML 미리보기 생성</b> · --step 2')],
+            scr: runCv(3, '08:00:18') },
+          { at: 3, who: 'Execute Command · If',
+            cap: '02 HTML 미리보기 — stdout의 <code>CALENDAR_RESULT=</code>를 파싱하고 다시 종료 코드 확인',
+            lines: [L('08:00:26.4', '✓', '<b>02 HTML 미리보기 생성</b> · exitCode 0 · CALENDAR_RESULT 파싱', 'ok'), L('08:00:26.5', '✓', '<b>If step2 결과</b> → true', 'ok'), L('08:00:26.5', '▸', '<b>03 Confluence 업로드</b> · --step 3')],
+            scr: runCv(4, '08:00:26') },
+          { at: 4, who: 'Execute Command · If',
+            cap: '03 Confluence 업로드 — 실패했다면 여기서 오류 경로로 빠진다 (If → 오류 메시지 → Teams → 실패 종료)',
+            lines: [L('08:00:39.7', '✓', '<b>03 Confluence 업로드</b> · exitCode 0', 'ok'), L('08:00:39.8', '✓', '<b>If step3 결과</b> → true', 'ok'), L('08:00:39.8', '▸', '<b>성공 메시지 준비</b>')],
+            scr: runCv(5, '08:00:39') },
+          { at: 5, who: 'Code',
+            cap: '메시지 준비 — 점검 건수 3종과 업로드 결과로 Teams에 보낼 메시지를 만든다',
+            lines: [L('08:00:39.9', '✓', '<b>성공 메시지 준비</b> · 제목 · 수행 단계 · 점검 결과 · 업로드 결과', 'ok'), L('08:00:39.9', '▸', '<b>Teams 성공 알림 전송</b> · POST · timeout 30s')],
+            scr: runCv(6, '08:00:39') },
+          { at: 6, who: 'HTTP Request',
+            cap: 'Teams 웹훅으로 POST — 한 번도 안 탄 <b>오류 경로 3개</b>는 회색으로 남는다',
+            lines: [L('08:00:40.6', '✓', '<b>Teams 성공 알림 전송</b> · HTTP 202', 'ok'), L('08:00:40.6', '●', '<b>실행 성공</b> · 40.6s', 'ok')],
+            scr: runCv(7, '08:00:40') },
+          { at: 7, who: 'Microsoft Teams', tab: 1, dur: 6000,
+            cap: '08:00:41 — 팀 채널에 도착. <b>켜는 사람은 없고, 사람은 읽는 쪽</b>이다',
+            lines: [L('08:00:41', '💬', '팀 채널에 도착 — 내일 08:00 다시 실행', 'dim')],
+            scr: teams([{ cls: 'old', when: '어제 오전 8:00', body: '<b>✅ 팀 배포 캘린더 현황 자동화 완료</b>' }, { cls: 'new', when: '오전 8:00', body: TEAMS_OK }]) },
+        ],
+      };
+
+      // ---- mount ----
+      const pad = n => String(n).padStart(2, '0');
+      function mount(root, def) {
+        const steps = def.steps, last = def.cuts.length - 1;
+        root.innerHTML =
+          `<div class="sx-pipe"><div class="sx-pipe-title">${def.kick}<b>${def.name}</b></div><div class="sx-steps">`
+          + steps.map((s, i) => `<div class="sx-st"><div class="sx-dot">${i + 1}</div>${s.gate ? '<span class="sx-gate">👤</span>' : ''}<div class="sx-lbl">${s.t}</div><div class="sx-sub">${s.s}</div></div>`).join('')
+          + '</div><div class="sx-bar"></div></div>'
+          + '<div class="sx-body">'
+          + `<div class="sx-win"><div class="sx-winbar"><i></i><i></i><i></i><span class="sx-wintitle">${def.term}</span><span class="sx-simtag">SIMULATION</span></div><div class="sx-term"></div></div>`
+          + '<div class="sx-win"><div class="sx-winbar"><i></i><i></i><i></i><span class="sx-scrtitle" style="display:contents;"></span></div><div class="sx-screen"></div></div>'
+          + '</div>'
+          + '<div class="sx-cap"><span class="sx-cut"></span><span class="sx-stop" hidden>멈춤</span><span class="sx-captext" aria-live="polite"></span><span class="sx-owner"></span>'
+          + '<span class="sx-ctl"><button class="sx-btn prev" type="button" aria-label="이전 컷">&#x25C0;&#xFE0E;</button><button class="sx-btn next" type="button" aria-label="다음 컷">&#x25B6;&#xFE0E;</button><button class="sx-btn play" type="button" aria-label="자동 재생 (P)"></button></span></div>';
+        const q = sel => root.querySelector(sel);
+        const el = { st: [...root.querySelectorAll('.sx-st')], bar: q('.sx-bar'), term: q('.sx-term'), scr: q('.sx-screen'), scrTitle: q('.sx-scrtitle'),
+          cut: q('.sx-cut'), stop: q('.sx-stop'), cap: q('.sx-captext'), who: q('.sx-owner'), capBox: q('.sx-cap'), prev: q('.prev'), next: q('.next'), play: q('.play') };
+        let k = 0, timer = null, lastTitle = null;
+
+        function screenTitle(c) {
+          if (def.tabs) return def.tabs.map((t, i) => `<span class="sx-tab${i === (c.tab || 0) ? ' on' : ''}">${t}</span>`).join('');
+          return `<span class="sx-wintitle">${c.win || ''}</span>`;
+        }
+
+        function render(n, animate) {
+          k = Math.max(0, Math.min(last, n));
+          const c = def.cuts[k], at = c.at === undefined ? -1 : c.at;
+          el.st.forEach((node, i) => {
+            const state = i < at ? 'done' : i === at ? (c.st || 'run') : 'todo';
+            node.className = 'sx-st ' + state;
+            node.querySelector('.sx-dot').textContent = state === 'done' ? '✓' : String(i + 1);
+            node.querySelector('.sx-sub').textContent = i === at && c.note ? c.note : steps[i].s;
+          });
+          el.bar.style.width = (k / last * 100) + '%';
+
+          let html = '';
+          for (let ci = 0; ci <= k; ci++) {
+            (def.cuts[ci].lines || []).forEach((l, li) => {
+              const fresh = ci === k;
+              html += lineHTML(l, fresh ? (animate ? 'new' : '') : 'old', fresh && animate ? 100 + li * 130 : 0);
+            });
+          }
+          el.term.innerHTML = html;
+          el.term.scrollTop = el.term.scrollHeight;
+          el.term.classList.toggle('scrolled', el.term.scrollTop > 0);
+
+          const title = screenTitle(c);
+          const swap = animate && title !== lastTitle;
+          lastTitle = title;
+          el.scrTitle.innerHTML = title;
+          el.scr.innerHTML = `<div class="sx-view${swap ? ' swap' : ''}">${typeof c.scr === 'function' ? c.scr(animate) : c.scr}</div>`;
+
+          el.cut.textContent = `컷 ${pad(k)} / ${pad(last)}`;
+          el.stop.hidden = !c.key;
+          el.capBox.classList.toggle('key', !!c.key);
+          el.cap.innerHTML = c.cap;
+          el.who.textContent = c.who || '';
+          el.prev.disabled = k === 0;
+          el.next.disabled = k === last;
+        }
+
+        function stop() {
+          clearTimeout(timer); timer = null;
+          el.play.classList.remove('on');
+          el.play.innerHTML = '&#x25B6;&#xFE0E; 자동 재생';
+        }
+        function schedule() {
+          timer = setTimeout(() => {
+            render(k + 1, true);
+            if (k >= last) stop(); else schedule();
+          }, def.cuts[k].dur || 4200);
+        }
+        function play() {
+          if (timer) { stop(); return; }
+          if (k >= last) render(0, true);
+          el.play.classList.add('on');
+          el.play.innerHTML = '&#x275A;&#x275A; 일시정지';
+          schedule();
+        }
+        function step(d) {
+          const n = k + d;
+          stop();
+          if (n < 0 || n > last) return false;
+          render(n, d > 0);
+          return true;
+        }
+
+        const btn = (b, fn) => b.addEventListener('click', e => { e.currentTarget.blur(); fn(); });
+        btn(el.prev, () => step(-1));
+        btn(el.next, () => step(1));
+        btn(el.play, play);
+        stop();
+        render(0, false);
+        if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { el.term.scrollTop = el.term.scrollHeight; el.term.classList.toggle('scrolled', el.term.scrollTop > 0); });
+
+        return {
+          step, play, stop,
+          enter(where) { stop(); render(where === 'end' ? last : 0, where !== 'end'); },
+          finish() { stop(); render(last, false); },
+        };
+      }
+
+      return { mount, DEFS: { envA, buildB, run30 } };
+    })();
+  </script>
+
+  <script>
+    // ===== Slide navigation (make-slide core-features) =====
+    const slides = [...document.querySelectorAll('.slide')];
+    let current = 0;
+
+    // Demo simulators: forward keys step through cuts first, then leave the slide.
+    document.querySelectorAll('.sim[data-sim]').forEach((root) => {
+      const def = SIM.DEFS[root.dataset.sim];
+      if (def) root.closest('.slide').__sim = SIM.mount(root, def);
+    });
+    const simOf = (i) => slides[i] && slides[i].__sim;
+
+    // One cancellable clock owns the intro and each scene. Scenes never advance themselves.
+    // MDN: requestAnimationFrame timestamps, cancelAnimationFrame, prefers-reduced-motion.
+    function mountChatFlow(root) {
+      const command = root.querySelector('[data-chat-command]');
+      const request = root.querySelector('[data-chat-request]');
+      const commandText = command.textContent, requestText = request.textContent;
+      const commandChars = Array.from(commandText), requestChars = Array.from(requestText);
+      const commandCaret = root.querySelector('[data-command-caret]');
+      const requestCaret = root.querySelector('[data-request-caret]');
+      const composer = root.querySelector('.chat-window');
+      const work = root.querySelector('.chat-work');
+      const scenes = [...root.querySelectorAll('.work-scene')];
+      const markers = [...root.querySelectorAll('.work-progress li')];
+      const beats = scenes.map(scene => [...scene.querySelectorAll('[data-at]')]);
+      const status = root.querySelector('[data-chat-status]');
+      const hint = root.querySelector('[data-chat-hint]');
+      const announcement = root.querySelector('[data-chat-announcement]');
+      const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+      const requestStart = 550 + commandChars.length * 32 + 280;
+      const liftStart = requestStart + requestChars.length * 55 + 620;
+      const introEnd = liftStart + 1050;
+      const duration = 6200; // Finish the current scene, then wait for presenter input.
+      let frame = null, lastTime = null, elapsed = 0, playing = false, sceneIndex = -1;
+      let mode = 'request';
+
+      function cancelFrame() {
+        if (frame !== null) cancelAnimationFrame(frame);
+        frame = null; lastTime = null;
+      }
+      function stop() { cancelFrame(); playing = false; }
+      function setHint() {
+        hint.textContent = playing ? '→ 현재 장면 완성' : sceneIndex === 6 ? '→ 다음 슬라이드' : '→ 다음 단계';
+        root.dataset.chatPlaying = String(playing);
+      }
+      function sceneBeats(time, instant = false) {
+        root.classList.toggle('chat-instant', instant);
+        beats[sceneIndex].forEach(el => {
+          el.classList.toggle('shown', time >= Number(el.dataset.at));
+          el.classList.toggle('expired', !!el.dataset.until && time >= Number(el.dataset.until));
+          el.setAttribute('aria-hidden', String(time < Number(el.dataset.at) || el.classList.contains('expired')));
+        });
+      }
+      function finishScene() {
+        stop(); elapsed = duration; sceneBeats(duration, true); setHint();
+        announcement.textContent = `${scenes[sceneIndex].getAttribute('aria-label')} 완료. 다음 입력을 기다립니다.`;
+      }
+      function selectScene(index, complete = false) {
+        stop(); mode = 'scene'; sceneIndex = index; elapsed = 0;
+        root.dataset.chatPhase = 'scene'; root.dataset.chatStep = String(index + 1);
+        composer.setAttribute('aria-hidden', 'true'); work.setAttribute('aria-hidden', 'false');
+        scenes.forEach((scene, i) => { scene.classList.toggle('active', i === index); scene.setAttribute('aria-hidden', String(i !== index)); });
+        markers.forEach((mark, i) => { mark.classList.toggle('passed', i < index); if (i === index) mark.setAttribute('aria-current', 'step'); else mark.removeAttribute('aria-current'); });
+        sceneBeats(-1, true);
+        void root.offsetWidth;
+        if (complete || reducedMotion.matches) { finishScene(); return; }
+        root.classList.remove('chat-instant'); playing = true; setHint();
+        announcement.textContent = scenes[index].getAttribute('aria-label'); schedule();
+      }
+      function showRequest() {
+        stop(); mode = 'request'; sceneIndex = -1;
+        root.classList.add('chat-instant'); root.dataset.chatPhase = 'request'; root.dataset.chatStep = '0';
+        composer.setAttribute('aria-hidden', 'false'); work.setAttribute('aria-hidden', 'true');
+        command.textContent = commandText; request.textContent = requestText;
+        commandCaret.hidden = requestCaret.hidden = true;
+        status.textContent = '요청 입력 완료 · 다음으로 작업 과정을 봅니다'; setHint();
+        announcement.textContent = '요청 입력 완료. 다음 입력으로 분석을 시작합니다.';
+      }
+      function renderIntro() {
+        const cc = Math.max(0, Math.min(commandChars.length, Math.floor((elapsed - 550) / 32)));
+        const rc = Math.max(0, Math.min(requestChars.length, Math.floor((elapsed - requestStart) / 55)));
+        command.textContent = commandChars.slice(0, cc).join(''); request.textContent = requestChars.slice(0, rc).join('');
+        commandCaret.hidden = elapsed >= requestStart; requestCaret.hidden = elapsed < requestStart;
+        root.dataset.chatPhase = elapsed >= liftStart ? 'lifting' : 'typing';
+        status.textContent = elapsed >= liftStart ? '요청 입력 완료' : '하고 싶은 일을 적어 주세요';
+      }
+      function schedule() { if (playing && !document.hidden && frame === null) frame = requestAnimationFrame(tick); }
+      function tick(timestamp) {
+        frame = null;
+        if (!playing) return;
+        if (lastTime !== null) elapsed += timestamp - lastTime;
+        lastTime = timestamp;
+        if (mode === 'intro') {
+          renderIntro();
+          if (elapsed >= introEnd) { selectScene(0); return; }
+        } else {
+          if (elapsed >= duration) { finishScene(); return; }
+          sceneBeats(elapsed);
+        }
+        schedule();
+      }
+      function start() {
+        showRequest();
+        if (reducedMotion.matches) { selectScene(0, true); return; }
+        mode = 'intro'; elapsed = 0; playing = true;
+        renderIntro(); void root.offsetWidth;
+        root.classList.remove('chat-instant'); setHint(); announcement.textContent = ''; schedule();
+      }
+      function step(dir) {
+        if (dir < 0) {
+          if (mode === 'scene') { sceneIndex > 0 ? selectScene(sceneIndex - 1, true) : showRequest(); return true; }
+          return false;
+        }
+        if (mode === 'intro') { selectScene(0, true); return true; }
+        if (mode === 'request') { selectScene(0); return true; }
+        if (playing) { finishScene(); return true; }
+        if (sceneIndex < scenes.length - 1) { selectScene(sceneIndex + 1); return true; }
+        return false;
+      }
+      root.querySelector('.chat-replay').addEventListener('click', start);
+      root.querySelector('[data-chat-prev]').addEventListener('click', () => advance(-1));
+      root.querySelector('[data-chat-next]').addEventListener('click', () => advance(1));
+      reducedMotion.addEventListener('change', () => {
+        if (reducedMotion.matches && playing) mode === 'intro' ? selectScene(0, true) : finishScene();
+      });
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) cancelFrame(); else schedule();
+      });
+      return { stop, finish() { selectScene(6, true); }, enter(where) { where === 'end' ? selectScene(6, true) : start(); }, step };
+    }
+    document.querySelectorAll('[data-chat-flow]').forEach(root => { root.__chatFlow = mountChatFlow(root); });
+    const chatOf = i => slides[i] && slides[i].__chatFlow;
+
+
+    function mountContextMorph(root) {
+      const frames = [...root.querySelectorAll('.context-frame')];
+      const count = root.querySelector('[data-context-count]');
+      const hint = root.querySelector('[data-context-hint]');
+      const announcement = root.querySelector('[data-context-announcement]');
+      let index = 0;
+      function show(next, instant = false) {
+        root.classList.toggle('context-instant', instant);
+        index = next; root.dataset.contextStep = String(index + 1);
+        frames.forEach((frame, i) => { frame.classList.toggle('active', i === index); frame.setAttribute('aria-hidden', String(i !== index)); });
+        count.textContent = `${String(index + 1).padStart(2, '0')} / 06`;
+        hint.textContent = index === frames.length - 1 ? '→ 다음 슬라이드' : '→ 다음 장면';
+        announcement.textContent = frames[index].getAttribute('aria-label');
+      }
+      root.querySelector('[data-context-prev]').addEventListener('click', () => advance(-1));
+      root.querySelector('[data-context-next]').addEventListener('click', () => advance(1));
+      root.querySelector('[data-context-restart]').addEventListener('click', () => show(0));
+      return {
+        enter(where) { show(where === 'end' ? frames.length - 1 : 0, true); },
+        step(dir) {
+          const next = index + dir;
+          if (next < 0 || next >= frames.length) return false;
+          show(next); return true;
+        }
+      };
+    }
+    document.querySelectorAll('[data-context-morph]').forEach(root => { root.__contextMorph = mountContextMorph(root); });
+    const contextOf = i => slides[i] && slides[i].__contextMorph;
+
+    // Reveal builds: show .reveal items one at a time, and hide them again on the way back.
+    const revealsOf = (i) => (slides[i] ? [...slides[i].querySelectorAll('.reveal')] : []);
+    function revealBuild(dir) {
+      const items = revealsOf(current);
+      const shown = items.filter((el) => el.classList.contains('shown')).length;
+      if (dir > 0 && shown < items.length) { items[shown].classList.add('shown'); return true; }
+      if (dir < 0 && shown > 0) { items[shown - 1].classList.remove('shown'); return true; }
+      return false;
+    }
+    function advance(dir) {
+      if (contextOf(current) && contextOf(current).step(dir)) return;
+      if (chatOf(current) && chatOf(current).step(dir)) return;
+      const sim = simOf(current);
+      if (sim && sim.step(dir)) return;
+      if (revealBuild(dir)) return;
+      goTo(current + dir);
+    }
+
+    function goTo(index) {
+      if (index < 0 || index >= slides.length) return;
+      const from = current;
+      if (simOf(from)) simOf(from).stop();
+      if (chatOf(from)) chatOf(from).stop();
+      slides[current].classList.remove('active');
+      slides[index].classList.add('active');
+      current = index;
+      // Entering backwards shows the last cut, so ← keeps rewinding the demo naturally.
+      if (simOf(index)) simOf(index).enter(index < from ? 'end' : 'start');
+      if (chatOf(index)) chatOf(index).enter(index < from ? 'end' : 'start');
+      if (contextOf(index)) contextOf(index).enter(index < from ? 'end' : 'start');
+      revealsOf(index).forEach((el) => el.classList.toggle('shown', index < from));
+      updateProgress();
+      updateCounter();
+      updateNotes();
+      try { history.replaceState(null, '', '#' + (current + 1)); } catch (e) {}
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.target.closest('.chat-controls button, .context-controls button') && (e.key === ' ' || e.key === 'Enter')) return;
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'ArrowDown' || e.key === 'PageDown') { e.preventDefault(); advance(1); }
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowUp' || e.key === 'PageUp') { e.preventDefault(); advance(-1); }
+      if (e.key === 'Home') { e.preventDefault(); goTo(0); }
+      if (e.key === 'End') { e.preventDefault(); goTo(slides.length - 1); }
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      // Use the physical key code so the shortcuts work under a Korean/Japanese IME
+      // (where e.key arrives as 'ㄴ' / 'ㄹ' / 'Process' instead of 's' / 'f').
+      const code = e.code || '';
+      const key = (e.key || '').toLowerCase();
+      if (code === 'KeyF' || key === 'f' || key === 'ㄹ') { e.preventDefault(); toggleFullscreen(); }
+      if (code === 'KeyS' || key === 's' || key === 'ㄴ') { e.preventDefault(); toggleNotes(); }
+      if ((code === 'KeyP' || key === 'p' || key === 'ㅔ') && simOf(current)) { e.preventDefault(); simOf(current).play(); }
+    });
+
+    // Click navigation (left third = prev, rest = next)
+    document.querySelector('.deck').addEventListener('click', (e) => {
+      if (e.target.closest('a, button, .code-container, table')) return;
+      e.clientX < window.innerWidth / 3 ? advance(-1) : advance(1);
+    });
+
+    // Touch / swipe
+    let touchStartX = 0, touchStartY = 0;
+    document.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; touchStartY = e.touches[0].clientY; }, { passive: true });
+    document.addEventListener('touchend', (e) => {
+      const diff = touchStartX - e.changedTouches[0].clientX;
+      const diffY = touchStartY - e.changedTouches[0].clientY;
+      if (Math.abs(diff) > 50 && Math.abs(diff) > Math.abs(diffY)) diff > 0 ? advance(1) : advance(-1);
+    }, { passive: true });
+
+    function updateProgress() {
+      document.getElementById('progress').style.width = (current / (slides.length - 1) * 100) + '%';
+    }
+    function updateCounter() {
+      document.getElementById('counter').textContent = (current + 1) + ' / ' + slides.length;
+    }
+    function toggleFullscreen() {
+      const el = document.documentElement;
+      const active = document.fullscreenElement || document.webkitFullscreenElement;
+      if (!active) {
+        const req = el.requestFullscreen || el.webkitRequestFullscreen;
+        if (req) { try { const p = req.call(el); if (p && p.catch) p.catch(() => {}); } catch (e) {} }
+      } else {
+        const exit = document.exitFullscreen || document.webkitExitFullscreen;
+        if (exit) { try { const p = exit.call(document); if (p && p.catch) p.catch(() => {}); } catch (e) {} }
+      }
+    }
+
+    // ===== Speaker notes — separate popup window =====
+    let notesWindow = null;
+
+    function toggleNotes() {
+      if (notesWindow && !notesWindow.closed) { notesWindow.close(); notesWindow = null; return; }
+      notesWindow = window.open('', 'SpeakerNotes', 'width=560,height=480,top=80,left=80');
+      if (!notesWindow) { alert('팝업이 차단되었습니다. 이 페이지의 팝업을 허용한 뒤 S 키를 다시 누르세요.'); return; }
+      notesWindow.document.write(`<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8"><title>Speaker Notes</title><style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Pretendard', sans-serif;
+         background: #1a1a1a; color: #e0e0e0; padding: 24px; word-break: keep-all; }
+  .slide-num { font-size: 12px; color: #888; margin-bottom: 12px; font-family: monospace; }
+  .label { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #666; margin-bottom: 8px; }
+  .notes { font-size: 17px; line-height: 1.8; color: #ddd; white-space: pre-wrap; }
+  .next { margin-top: 22px; padding-top: 14px; border-top: 1px solid #333; font-size: 13px; color: #888; }
+  .next b { color: #3b82f6; }
+</style></head><body>
+  <div class="slide-num" id="sn"></div>
+  <div class="label">Speaker Notes</div>
+  <div class="notes" id="nt"></div>
+  <div class="next"><b>Next</b> · <span id="nx"></span></div>
+</body></html>`);
+      notesWindow.document.close();
+      updateNotes();
+    }
+
+    function updateNotes() {
+      if (!notesWindow || notesWindow.closed) return;
+      try {
+        const note = slides[current].dataset.notes || '(No notes)';
+        notesWindow.document.getElementById('nt').textContent = note;
+        notesWindow.document.getElementById('sn').textContent = 'Slide ' + (current + 1) + ' / ' + slides.length;
+        const nextSlide = slides[current + 1];
+        const nextTitle = nextSlide ? (nextSlide.querySelector('h1, h2, .cmd') || {}).textContent : '(End of presentation)';
+        notesWindow.document.getElementById('nx').textContent = (nextTitle || '').trim().replace(/\s+/g, ' ');
+      } catch (e) {}
+    }
+
+    // ===== Fit the 1600x900 stage into the viewport (letterboxed, never cropped) =====
+    function fitStage() {
+      const s = Math.min(window.innerWidth / 1600, window.innerHeight / 900);
+      document.documentElement.style.setProperty('--fit', s.toFixed(4));
+    }
+    window.addEventListener('resize', fitStage);
+    document.addEventListener('fullscreenchange', fitStage);
+    fitStage();
+
+    window.addEventListener('beforeprint', () => slides.forEach((s) => {
+      if (s.__sim) s.__sim.finish();
+      if (s.__chatFlow) s.__chatFlow.finish();
+    }));
+
+    // ===== Init (support #N deep link) =====
+    (function init() {
+      const n = parseInt((location.hash || '').replace('#', ''), 10);
+      if (n >= 1 && n <= slides.length && n - 1 !== current) {
+        slides[current].classList.remove('active');
+        current = n - 1;
+        slides[current].classList.add('active');
+      }
+      updateProgress();
+      updateCounter();
+      if (simOf(current)) simOf(current).enter('start');
+      if (chatOf(current)) chatOf(current).enter('start');
+      if (contextOf(current)) contextOf(current).enter('start');
+      if (typeof Prism !== 'undefined') Prism.highlightAll();
+    })();
+  </script>
+</body>
+</html>
