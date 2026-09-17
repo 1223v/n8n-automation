@@ -310,6 +310,10 @@
     .contact { display: flex; gap: 1rem; margin-top: 1rem; flex-wrap: wrap; }
     .contact a { font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent); text-decoration: none; padding: 0.5rem 1.1rem; border: 1px solid var(--border); border-radius: 8px; transition: all 0.2s ease; }
     .contact a:hover { border-color: var(--accent); background: var(--accent-soft); }
+    /* Slide 23: closing text beside the harness footnote capture */
+    .closing-figure { margin: 0; }
+    .closing-figure img { display: block; width: 100%; height: auto; border: 1px solid var(--border); border-radius: 12px; }
+    .closing-figure figcaption { margin-top: 0.6rem; font-size: 0.8rem; color: var(--muted); }
 
     /* ===== Demo simulator (.sim) — pipeline stepper + terminal + screen + caption ===== */
     .chip.on { border-color: var(--accent); color: var(--text); background: var(--accent-soft); }
@@ -1415,12 +1419,20 @@ const message = errorCount === null
 
 [→ 요약 표를 띄워 두고 질문 받기]">
       <p class="a kicker">07 · 마무리</p>
-      <p class="a quote"><span class="hi">명령어 하나</span>를 입력하고,<br>하고 싶은 일을 적어 주세요.<br>요구사항에 맞는 자동화는 <span class="hi">함께 구체화합니다.</span></p>
-      <h2 class="a" style="font-size:1.6rem;">감사합니다 · Q&amp;A</h2>
-      <div class="contact a">
-        <a href="https://gitlab.hmc.co.kr/infoccs/service/dkc/automation/n8n-automation" target="_blank" rel="noopener noreferrer">팀 GitLab · n8n-automation</a>
+      <div class="row r2">
+        <div>
+          <p class="a quote"><span class="hi">명령어 하나</span>를 입력하고,<br>하고 싶은 일을 적어 주세요.<br>요구사항에 맞는 자동화는 <span class="hi">함께 구체화합니다.</span></p>
+          <h2 class="a" style="font-size:1.6rem;">감사합니다 · Q&amp;A</h2>
+          <div class="contact a">
+            <a href="https://gitlab.hmc.co.kr/infoccs/service/dkc/automation/n8n-automation" target="_blank" rel="noopener noreferrer">팀 GitLab · n8n-automation</a>
+          </div>
+          <p class="a foot"><code>/n8n-automation:n8n-workflow-manager</code><br>플러그인 설치 및 환경·연결 설정 후 시작 · 요건 확인 · 계획 승인</p>
+        </div>
+        <figure class="a closing-figure">
+          <img src="assets/harness-footnote.png" alt="모델 발표 각주 캡처: ARC-AGI-3를 자체 responses API 하네스로 실행했다는 각주와 ‘실은 기존과 다른 하네스를 썼음’ 자막" width="1404" height="648">
+          <figcaption>모델 발표 페이지 각주 캡처 · 벤치마크를 기존과 다른 하네스로 실행</figcaption>
+        </figure>
       </div>
-      <p class="a foot"><code>/n8n-automation:n8n-workflow-manager</code><br>플러그인 설치 및 환경·연결 설정 후 시작 · 요건 확인 · 계획 승인</p>
     </div>
 
     <!-- 24 [원안 #29 → 이동·변경] Summary: comparison of approaches, left on screen during Q&A -->
