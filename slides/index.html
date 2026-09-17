@@ -315,6 +315,9 @@
     .chip.on { border-color: var(--accent); color: var(--text); background: var(--accent-soft); }
     .chip.on em { font-style: normal; color: var(--accent-hover); font-size: 0.75rem; margin-left: 0.3rem; }
     .sim { width: 100%; height: 630px; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: 10px; font-family: var(--font-body); }
+    /* Slides 19–20: no caption bar, the windows take its space. Keys and P still step and play the cuts. */
+    .sim.sim-nocap { grid-template-rows: auto minmax(0, 1fr); }
+    .sim.sim-nocap .sx-cap { display: none; }
 
     .sx-pipe { position: relative; display: grid; grid-template-columns: 9.2rem 1fr; align-items: center; gap: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px 16px 15px; overflow: hidden; }
     .sx-pipe-title { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); line-height: 1.5; }
@@ -576,14 +579,31 @@
     .content:has(.pc-takeaway.shown) .pc-row:not(.pc-head) .pc-cell:not(.pc-verdict) { opacity: .32; }
     .content:has(.pc-takeaway.shown) .pc-design .pc-verdict { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
     .content:has(.pc-takeaway.shown) .pc-head span:last-child { color: var(--accent-hover); font-weight: 700; }
-    /* Slide 19: title + question first, then the code pad and each update box on its own key.
-       An arrow follows the box it points to; the auto-update note follows the last box. */
-    .install-steps .hx-arrow, .install-build .install-note { transition: opacity 0.45s ease, transform 0.45s ease; }
-    .install-steps .hx-arrow:has(+ .hx-node:not(.shown)) { opacity: 0; }
-    .install-build:has(.install-steps .hx-node:last-child:not(.shown)) .install-note { opacity: 0; transform: translateY(16px); }
-    @media (prefers-reduced-motion: reduce) { .install-steps .hx-arrow, .install-build .install-note { transition: none; } }
-    @media print { .install-steps .hx-arrow, .install-build .install-note { opacity: 1 !important; transform: none !important; } }
-    /* Slides 15-19: one-line contrast with Plan mode + n8n-mcp; the design row reveals on the first key. */
+    /* Slide 18: title + question first, then the code pad, then the whole update flow on one key.
+       The auto-update note appears together with the flow. */
+    .install-build .install-note { transition: opacity 0.45s ease, transform 0.45s ease; }
+    .install-build:has(.install-steps:not(.shown)) .install-note { opacity: 0; transform: translateY(16px); }
+    @media (prefers-reduced-motion: reduce) { .install-build .install-note { transition: none; } }
+    @media print { .install-build .install-note { opacity: 1 !important; transform: none !important; } }
+    /* Slide 24: rough per-task token estimate under the summary table */
+    .token-est { width: 100%; margin-top: 1.1rem; }
+    .token-est-title { font-size: 0.9rem; font-weight: 600; color: var(--text); margin-bottom: 0.55rem; }
+    .token-est-title .dim { font-size: 0.8rem; font-weight: 400; margin-left: 0.4rem; }
+    .token-est .cards { gap: 0.7rem; }
+    .token-est .card { padding: 0.75rem 0.95rem; }
+    .token-est .card-num { margin-bottom: 0.3rem; }
+    .token-est-num { font-size: 1.2rem; font-weight: 700; color: var(--accent-hover); margin-bottom: 0.2rem; }
+    .token-est .card p { font-size: 0.78rem; }
+    .token-est .card.focus .token-est-num { font-size: 1.45rem; }
+    .token-est .card.focus p b { color: var(--text); }
+    .token-est .foot { margin-top: 0.55rem; font-size: 0.72rem; }
+    /* Share of total tokens: cache read 92~96% · cache write 3~6% · output 1~2% (bar uses the midpoints) */
+    .token-mix { display: flex; height: 8px; border-radius: 4px; overflow: hidden; margin: 0.3rem 0 0.45rem; }
+    .token-mix i { display: block; height: 100%; }
+    .token-mix .read { width: 94%; background: #5a5a5a; }
+    .token-mix .write { width: 4%; background: #9a9a9a; }
+    .token-mix .out { width: 2%; background: var(--accent); }
+    /* Slides 15-18: one-line contrast with Plan mode + n8n-mcp; the design row reveals on the first key. */
     .pm-contrast { display: flex; flex-direction: column; gap: .35rem; width: 100%; margin: -.55rem 0 .9rem; }
     .pm-row { display: grid; grid-template-columns: 12rem 1fr; align-items: center; gap: .8rem; padding: .45rem .9rem;
       border-left: 3px solid; border-radius: 0 8px 8px 0; background: var(--surface); font-size: 1rem; line-height: 1.45; color: #d7dde5; }
@@ -693,47 +713,51 @@
       .chat-flow *, .chat-flow *::before, .chat-flow *::after { animation: none !important; transition: none !important; }
     }
 
-    /* Slide 13: one persistent card morphs between six focused explanations. */
+    /* Slide 16: a plain-language error example. */
+    .error-location { margin: 0 0 16px; color: #9dacbf; font-size: 18px; }
+    .error-location b { color: #d6e2f2; font-weight: 500; }
+    .error-cards .card { padding: 26px 30px; }
+    .error-cards .error-label { margin-bottom: 22px; color: #90accd; font-size: 17px; }
+    .error-cards h3 { font-size: 32px; margin-bottom: 13px; }
+    .error-cards .card > p:last-child { font-size: 18px; }
+    .error-cards .error-actual { border-color: #ad6666; background: #261b20; }
+    .error-cards .error-actual h3 { color: #f5a5a5; }    .error-request { display: flex; align-items: center; gap: 36px; margin-top: 26px; padding: 26px 32px; border: 1px solid #3b536f; border-radius: 14px; background: #151b24; }
+    .error-request > span { color: #90accd; font-size: 18px; white-space: nowrap; }
+    .error-request p { font-size: 27px; line-height: 1.5; color: #edf3fc; }
+    .error-request strong { color: #93c5fd; font-weight: 600; }
+
+    /* Slides 12–13: grow persistent trees, one branch per forward input. */
     .context-player { width: 100%; }
-    .context-stage { height: 470px; display: flex; justify-content: center; align-items: center; }
-    .context-card { position: relative; width: 1100px; height: 420px; border: 1px solid #3b536f; border-radius: 24px;
-      background: #151b24; transition: width .6s ease, height .6s ease, border-color .6s ease, border-radius .6s ease; }
-    .context-morph[data-context-step="4"] .context-card { width: 1340px; height: 390px; border-radius: 16px; border-color: #7e6baf; }
-    .context-morph:is([data-context-step="5"],[data-context-step="6"]) .context-card { width: 1200px; height: 410px; border-radius: 32px; border-color: #579583; }
-    .context-count { position: absolute; left: 38px; top: 28px; font: 15px var(--font-mono); color: #90accd; }
-    .context-frame { position: absolute; inset: 62px 38px 30px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 25px;
-      opacity: 0; visibility: hidden; transform: translateY(18px); transition: opacity .45s ease, transform .55s ease, visibility .45s; text-align: center; }
-    .context-frame.active { opacity: 1; visibility: visible; transform: none; }
-    .context-frame h3 { font-size: 40px; margin: 0; color: #edf3fc; }
-    .context-frame .context-main { font-size: 30px; line-height: 1.6; color: #bed7f6; }
-    .context-frame .context-sub { font-size: 21px; color: #9dacbf; }
-    .context-frame strong { color: #93c5fd; font-weight: 600; }
-    .context-path { display: flex; align-items: center; gap: 22px; font-size: 29px; color: #bed7f6; }
-    .context-path i { font-style: normal; font-size: 23px; color: #6d849f; }
-    .context-controls { display: flex; justify-content: flex-end; align-items: center; gap: 12px; font-size: 14px; color: #90a0b4; }
+    .context-stage { width: 100%; height: 540px; }
+    .context-tree { display: block; width: 100%; height: 100%; overflow: visible; }
+    .context-frame { opacity: 0; visibility: hidden; transition: opacity .25s ease, visibility .25s; }
+    .context-frame.active { opacity: 1; visibility: visible; }
+    .context-edge { fill: none; stroke: #506b8d; stroke-width: 2.5; stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset .55s ease; }
+    .context-frame.active .context-edge { stroke-dashoffset: 0; }
+    .context-node { opacity: 0; transform: translateY(-10px); transition: opacity .4s ease .25s, transform .4s ease .25s; }
+    .context-frame.active .context-node { opacity: 1; transform: none; }
+    .context-node rect { fill: #151b24; stroke: #3b536f; stroke-width: 1.5; transition: stroke .3s, fill .3s; }
+    .context-frame.current .context-node rect { fill: #17263b; stroke: #93c5fd; stroke-width: 2; }
+    .context-node text { text-anchor: middle; fill: #a8bbd2; font: 20px var(--font-body); }
+    .context-node .tree-title { fill: #edf3fc; font-size: 26px; font-weight: 650; }
+    .context-node .tree-tag { fill: #93c5fd; font-size: 16px; }
+    .context-controls { display: flex; justify-content: flex-end; align-items: center; gap: 12px; font-size: 14px; color: #90a0b4; margin-top: 8px; }
+    .context-count { margin-right: auto; font: 15px var(--font-mono); color: #90accd; }
     .context-controls button { background: #161b23; color: var(--text); border: 1px solid #3d4858; border-radius: 8px; padding: 9px 15px; font: inherit; cursor: pointer; }
     .context-controls button:hover { border-color: #93c5fd; }
     .context-controls button:focus-visible { outline: 2px solid #93c5fd; outline-offset: 3px; }
-    .context-print { display: none; }
-    .context-instant .context-card, .context-instant .context-frame { transition: none !important; }
-    @media (prefers-reduced-motion: reduce) { .context-card, .context-frame { transition: none !important; } }
-    @media print {
-      .context-player { display: none !important; }
-      .context-print { display: block; width: 100%; }
-      .context-print ol { padding-left: 28px; }
-      .context-print li { padding: 13px 0; font-size: 22px; line-height: 1.6; }
-      .context-print b { color: #93c5fd; }
-    }
-    /* Slide 12: graph first, then three presenter-controlled explanation cards. */
-    .dependency-flow.active .hx-graph.a { animation: staggerIn .95s cubic-bezier(.22,1,.36,1) .12s forwards; }
-    .dependency-flow .hx-takeaway { opacity: 0; transform: translateY(16px); transition: opacity .5s ease, transform .5s ease; }
-    .dependency-flow:has(.cards .card:last-child.shown) .hx-takeaway { opacity: 1; transform: none; }
+    .context-instant .context-frame, .context-instant .context-node, .context-instant .context-edge { transition: none !important; }
     @media (prefers-reduced-motion: reduce) {
-      .dependency-flow.active .hx-graph.a { animation: none; opacity: 1; transform: none; }
-      .dependency-flow .reveal, .dependency-flow .hx-takeaway { transition: none; }
+      .context-frame, .context-node, .context-edge { transition: none !important; }
     }
     @media print {
-      .dependency-flow .hx-graph.a, .dependency-flow .hx-takeaway { animation: none !important; opacity: 1 !important; transform: none !important; }
+      .context-controls { display: none !important; }
+      .context-frame, .context-node { opacity: 1 !important; visibility: visible !important; transform: none !important; transition: none !important; }
+      .context-edge { stroke-dashoffset: 0 !important; transition: none !important; }
+    }
+    /* Slide 11: graph, explanation cards, and takeaway enter together. */
+    @media (prefers-reduced-motion: reduce) {
+      .dependency-flow.active .content.a { animation: none; opacity: 1; transform: none; }
     }
     /* Directional highlights travel over the fixed arrow paths. */
     .dependency-stream { display: none; pointer-events: none; }
@@ -784,9 +808,7 @@
 
 팀원들에게 제가 한 말은 하나였어요. “명령어 하나 입력하고, 하고 싶은 일만 적어 주세요.” 빠진 조건은 AI가 물어보면서 채웁니다.
 
-오늘은 그 뒤에 숨은 설계를, 시뮬레이션 데모와 함께 보여드리겠습니다.
-
-참고: 제목 아래에 “30분 · 데모는 시뮬레이션” 표기가 있습니다. 배경의 흐린 글자는 킷의 7단계 이름입니다.">
+오늘은 그 뒤에 숨은 설계를, 시뮬레이션 데모와 함께 보여드리겠습니다.">
       <div class="bg-flow">분석 → 요건 명확화 → 요건 확인 → 리서치 → 계획 → 실행 → 보고</div>
       <span class="a tag">n8n × Claude Code · 밋업 발표</span>
       <h1 class="a">잔말말고<br><span class="hi">n8n 오케스트레이션</span>으로</h1>
@@ -796,9 +818,7 @@
 
     <!-- 2 [원안 #2] Speaker -->
     <div class="slide" data-notes="[2장 · 섹션 0 타이틀·발표자·목차 · 이 장 15초]
-저는 차량제어서비스개발팀 조현식 책임입니다. 팀 배포 캘린더, ITOM EOS 현황, Jira 납기 알림 같은 반복 작업을 공용 PC의 n8n으로 24시간 돌리고 있습니다.
-
-참고: 화면에는 배포 후 시뮬레이터 E2E 리포트까지 네 가지가 있습니다. 다 읽지 않습니다.">
+저는 차량제어서비스개발팀 조현식 책임입니다. 팀 배포 캘린더, ITOM EOS 현황, Jira 납기 알림 같은 반복 작업을 공용 PC의 n8n으로 24시간 돌리고 있습니다.">
       <div class="row r-3-2">
         <div>
           <p class="a kicker">Speaker</p>
@@ -821,9 +841,9 @@
         <li class="a"><span class="toc-num">01</span> 문제: 번잡한 제작 과정과 AI에게 맡겼을 때 생기는 일 <span class="toc-min">2분 25초</span></li>
         <li class="a"><span class="toc-num">02</span> 제작 원칙과 쉬운 사용 경험 <span class="toc-min">1분 45초</span></li>
         <li class="a"><span class="toc-num">03</span> 어떻게 사고하나 · AI에게 맡길 일의 설계 <span class="toc-min">3분</span></li>
-        <li class="a"><span class="toc-num">04</span> 어떻게 검증하나 · 확인하고 고치는 구조 설계 <span class="toc-min">6분 15초</span></li>
+        <li class="a"><span class="toc-num">04</span> 어떻게 검증하나 · 확인하고 고치는 구조 설계 <span class="toc-min">5분 5초</span></li>
         <li class="a"><span class="toc-num">05</span> 설치·업데이트와 데모 · 시뮬레이션 <span class="toc-min">4분 45초</span></li>
-        <li class="a"><span class="toc-num">06</span> 실전 활용 · 차별점 <span class="toc-min">2분</span></li>
+        <li class="a"><span class="toc-num">06</span> 실전 활용 · 차별점 <span class="toc-min">1분 20초</span></li>
         <li class="a"><span class="toc-num">07</span> 마무리 &amp; Q&amp;A <span class="toc-min">25초 +</span></li>
       </ol>
     </div>
@@ -834,9 +854,7 @@
     <div class="slide" data-notes="[4장 · 섹션 1 문제 시작 · 섹션 2분 25초 / 이 장 25초]
 n8n 워크플로우는 노드를 선으로 이어 만드는 자동화 흐름입니다.
 
-그런데 하나 만들려면 노드를 찾고, 설정해서 잇고, Claude에게 수정을 부탁하고, 실행하고, 또 고치고, 배포까지 해야 하죠. (가리키기: 카드 01~06)
-
-자동화하려고 시작했는데 만드는 과정부터 부담이 되니, 결국 익숙한 수작업으로 돌아가게 됩니다.">
+그런데 하나 만들려면 노드를 찾고, 설정해서 잇고, Claude에게 수정을 부탁하고, 실행하고, 또 고치고, 배포까지 해야 하죠. 자동화하려고 시작했는데 만드는 과정부터 부담이 되니, 결국 익숙한 수작업으로 돌아가게 됩니다.">
       <p class="a kicker">01 · 문제 · 만드는 과정의 부담</p>
       <h2 class="a">자동화 하나 만들려는데,<br><span class="hi">거쳐야 할 일이 너무 많습니다</span></h2>
       <div class="cards" style="grid-template-columns:repeat(6,1fr);">
@@ -855,11 +873,7 @@ n8n 워크플로우는 노드를 선으로 이어 만드는 자동화 흐름입�
     <div class="slide" data-notes="[5장 · 섹션 1 문제 · 이 장 30초]
 특히 세 번째, Claude에게 수정을 부탁하는 단계에서 이런 일이 있었습니다.
 
-“이렇게 고쳐줘” 한 마디를 던지고 잠깐 자리를 비웠는데, 돌아와 보니 워크플로우가 제 말과 다르게 이미 바뀌어 있더라고요.
-
-[PAUSE]
-
-[청중] 비슷한 경험 있으신 분, 손 한번 들어 주시겠어요? 네, 저만 그런 게 아니었네요.">
+“이렇게 고쳐줘” 한 마디를 던지고 잠깐 자리를 비웠는데, 돌아와 보니 워크플로우가 제 말과 다르게 이미 바뀌어 있더라고요.">
       <p class="a kicker">01 · 문제</p>
       <h1 class="a">「이렇게 고쳐줘」<br>한 마디의 <span class="hi">결말</span></h1>
       <p class="a lead">요구사항을 다르게 이해한 채, 워크플로우가 <b>바로</b> 바뀐다.</p>
@@ -869,25 +883,23 @@ n8n 워크플로우는 노드를 선으로 이어 만드는 자동화 흐름입�
     <div class="slide" data-notes="[6장 · 섹션 1 문제 · 이 장 60초]
 정리해 보니 같은 문제가 다섯 가지로 반복됐습니다.
 
-[→ 카드 1 · 요구사항 오해] 첫째, 요구사항 오해. “알림 추가해줘” 했더니 확인 한 번 없이 엉뚱한 조건에 알림이 붙어 있습니다.
+[카드 1 · 요구사항 오해] 첫째, 요구사항 오해. “알림 추가해줘” 했더니 확인 한 번 없이 엉뚱한 조건에 알림이 붙어 있습니다.
 
-[→ 카드 2 · 구식 문법] 둘째, 구식 문법. AI가 기억에 의존하다 보니 예전 노드 파라미터나 오래된 typeVersion을 씁니다. 실행해 봐야 그제야 깨지죠.
+[카드 2 · 구식 문법] 둘째, 구식 문법. AI가 기억에 의존하다 보니 예전 노드 파라미터나 오래된 typeVersion을 씁니다. 실행해 봐야 그제야 깨지죠.
 
-[→ 카드 3 · 무검증] 셋째, 무검증. UI에서 손으로 고쳐도, AI가 고쳐도 검증을 따로 안 부르면 실수가 그대로 넘어갑니다.
+[카드 3 · 무검증] 셋째, 무검증. UI에서 손으로 고쳐도, AI가 고쳐도 검증을 따로 안 부르면 실수가 그대로 넘어갑니다.
 
-[→ 카드 4 · 무기록] 넷째, 무기록. 무엇을 왜 바꿨는지 남지 않아서, 일주일 뒤엔 “이거 누가 왜 바꿨지?”가 됩니다.
+[카드 4 · 무기록] 넷째, 무기록. 무엇을 왜 바꿨는지 남지 않아서, 일주일 뒤엔 “이거 누가 왜 바꿨지?”가 됩니다.
 
-[→ 카드 5 · 셋업 삽질] 다섯째, 셋업 삽질. “n8n 설치 어떻게 했더라, 스크립트 어디 있지?” 게다가 스크립트엔 제 PC 절대 경로가 박혀 있어서 다른 PC에선 돌지도 않았습니다.
-
-참고: 진입하면 제목만 보입니다. 카드 다섯 장이 다 나온 뒤 한 번 더 누르면 7장입니다. ←는 카드를 하나씩 되돌립니다.">
+[카드 5 · 셋업 삽질] 다섯째, 셋업 삽질. “n8n 설치 어떻게 했더라, 스크립트 어디 있지?” 게다가 스크립트엔 제 PC 절대 경로가 박혀 있어서 다른 PC에선 돌지도 않았습니다.">
       <p class="a kicker">01 · 문제</p>
       <h2 class="a">다섯 가지 반복되는 문제</h2>
-      <div class="cards c5">
-        <div class="card reveal"><span class="card-icon">🤔</span><h3>요구사항 오해</h3><p>확인 없이 즉시 변경. 내가 말한 것과 다른 워크플로우가 된다.</p></div>
-        <div class="card reveal"><span class="card-icon">🕰️</span><h3>구식 문법</h3><p>기억·학습 데이터 기반이라 오래된 노드 파라미터 / <code>typeVersion</code> 사용.</p></div>
-        <div class="card reveal"><span class="card-icon">🙈</span><h3>무검증</h3><p>UI에서 손으로 고치면 실수를 바로 알기 어렵다.</p></div>
-        <div class="card reveal"><span class="card-icon">📭</span><h3>무기록</h3><p>무엇을, 왜 바꿨는지 남지 않는다.</p></div>
-        <div class="card reveal"><span class="card-icon">🔧</span><h3>셋업 삽질</h3><p>「설치 어떻게 했더라」가 매번 반복. 개인 PC 절대 경로가 박힌 스크립트.</p></div>
+      <div class="cards c5 a">
+        <div class="card"><span class="card-icon">🤔</span><h3>요구사항 오해</h3><p>확인 없이 즉시 변경. 내가 말한 것과 다른 워크플로우가 된다.</p></div>
+        <div class="card"><span class="card-icon">🕰️</span><h3>구식 문법</h3><p>기억·학습 데이터 기반이라 오래된 노드 파라미터 / <code>typeVersion</code> 사용.</p></div>
+        <div class="card"><span class="card-icon">🙈</span><h3>무검증</h3><p>UI에서 손으로 고치면 실수를 바로 알기 어렵다.</p></div>
+        <div class="card"><span class="card-icon">📭</span><h3>무기록</h3><p>무엇을, 왜 바꿨는지 남지 않는다.</p></div>
+        <div class="card"><span class="card-icon">🔧</span><h3>셋업 삽질</h3><p>「설치 어떻게 했더라」가 매번 반복. 개인 PC 절대 경로가 박힌 스크립트.</p></div>
       </div>
     </div>
 
@@ -929,11 +941,8 @@ n8n 워크플로우는 노드를 선으로 이어 만드는 자동화 흐름입�
 
     <!-- 9 [원안 #11·#8 통합] Typed request reveals seven-step flow -->
     <div class="slide chat-flow" data-chat-flow data-chat-phase="request" data-notes="[9장 · 섹션 2 제작 원칙과 쉬운 사용 경험 · 이 장 60초]
-(진입하면 명령어와 요청이 자동으로 타이핑됩니다)
 
 설치와 설정을 마쳤다면, 명령어 하나와 하고 싶은 일 한 줄이면 됩니다. “매일 아침 배포 캘린더를 갱신하고 팀 채널에 알려줘.”
-
-(입력창이 사라지고 1단계 분석이 자동으로 재생됩니다)
 
 먼저 파일을 읽고, 데이터가 어디서 어디로 흐르는지 파악합니다.
 
@@ -947,9 +956,7 @@ n8n 워크플로우는 노드를 선으로 이어 만드는 자동화 흐름입�
 
 [→ 6 실행] 승인한 범위만 구성·연결하고, 필수 데이터와 실패 분기까지 검증합니다.
 
-[→ 7 보고] 이 모든 과정이 _workspace_n8n 폴더에 기록으로 남습니다. 그래서 만든 사람이 아니어도 기록을 읽고 이어서 고칠 수 있죠.
-
-참고: 장면이 움직이는 중에 누르면 그 장면이 바로 완성되고, 한 번 더 눌러야 다음 단계로 갑니다. 타이핑 중에 누르면 1단계 완성 화면으로 건너뜁니다. 7단계 다음 입력은 10장입니다. 화면의 질문·답변·승인은 설명용 예시입니다.">
+[→ 7 보고] 이 모든 과정이 _workspace_n8n 폴더에 기록으로 남습니다. 그래서 만든 사람이 아니어도 기록을 읽고 이어서 고칠 수 있죠.">
       <p class="kicker">02 · 해결 아이디어 · 요청은 대화로, 실행은 절차로</p>
       <h2><span class="hi">대화 하나로,</span> 자동화를 만듭니다</h2>
       <div class="chat-stage">
@@ -1007,11 +1014,7 @@ n8n 워크플로우는 노드를 선으로 이어 만드는 자동화 흐름입�
     <div class="slide" data-notes="[10장 · 섹션 2 제작 원칙과 쉬운 사용 경험 · 이 장 20초]
 이 중 사람이 꼭 확인하는 곳이 두 군데입니다. 3단계 요건 확인, 그리고 5단계 계획 승인.
 
-둘 다 Claude Code의 AskUserQuestion 도구로 선택지를 보여 주고, 답을 받아야만 진행됩니다.
-
-[청중] 여러분이라면 어느 순간에 확인하고 싶으세요?
-
-참고: 답을 받지 않고 바로 다음 장으로 넘어갑니다.">
+둘 다 Claude Code의 AskUserQuestion 도구로 선택지를 보여 주고, 답을 받아야만 진행됩니다.">
       <p class="a kicker">02 · 해결 아이디어</p>
       <h2 class="a">사람이 개입하는 지점 <span class="hi">2곳</span></h2>
       <div class="cards c2">
@@ -1033,140 +1036,109 @@ n8n 워크플로우는 노드를 선으로 이어 만드는 자동화 흐름입�
     <div class="slide hx dependency-flow" data-notes="[11장 · 섹션 3 어떻게 사고하나 시작 · 섹션 3분 / 이 장 60초]
 여기부터는 내부 설계입니다. 공개 스킬인 harness의 설계 기법을 배포 캘린더에 적용한 설계입니다.
 
-(가리키기: 흐름도)
-
 역할부터 늘리면 작은 일에도 큰 팀이 붙거든요. 그래서 저는 일의 순서부터 그립니다. 현재 JSON을 알아야 계획을 세우고, 바꾼 게 있어야 검증을 하죠. 반면 노드 공식 사양 조사와 기존 구현 조사는 서로 기다릴 필요가 없습니다.
 
-[→ 순차] 분석, 계획, 구현, 검증은 순서대로 갑니다.
+[순차] 분석, 계획, 구현, 검증은 순서대로 갑니다.
 
-[→ 병렬] 독립된 조사만 동시에 돌리고요. 결과만 받으면 되니까 서브에이전트로 충분하다고 봤습니다. 서로 협의가 필요했다면 에이전트 팀을 골랐을 겁니다.
+[병렬] 독립된 조사만 동시에 돌리고요. 결과만 받으면 되니까 서브에이전트로 충분하다고 봤습니다. 서로 협의가 필요했다면 에이전트 팀을 골랐을 겁니다.
 
-[→ 역할 분리 · 정리 문장] 그리고 만드는 역할과 판정하는 역할을 나눕니다. 빠르게 하려는 게 아니라, 다른 눈으로 보려는 거죠. 에이전트 수는 이렇게 일의 관계를 그린 다음에 정합니다.
-
-참고: 11~18장은 revfactory/harness 기법을 배포 캘린더에 적용한 설계입니다. harness 원문은 에이전트 팀을 기본으로 두고, 에이전트끼리 통신이 필요 없으면 서브에이전트도 가능하다고 봅니다. 서브에이전트 선택은 이 설계의 판단입니다.">
+[역할 분리 · 정리 문장] 그리고 만드는 역할과 판정하는 역할을 나눕니다. 빠르게 하려는 게 아니라, 다른 눈으로 보려는 거죠. 에이전트 수는 이렇게 일의 관계를 그린 다음에 정합니다.">
       <p class="a kicker">03 · 어떻게 사고하나 · n8n 적용 설계</p>
       <h2 class="a">역할 이름보다 작업의 의존관계를 먼저 그린다</h2>
-      <div class="content"><svg class="hx-graph a" viewBox="0 0 1360 320" role="img" aria-label="분석 후 두 독립 조사를 병렬 수행하고 계획, 빌더, 검증자로 순차 전달하는 작업 그래프">
+      <div class="content a"><svg class="hx-graph" viewBox="0 0 1360 320" role="img" aria-label="분석 후 두 독립 조사를 병렬 수행하고 계획, 빌더, 검증자로 순차 전달하는 작업 그래프">
 <defs><marker id="hx-dependency-arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8" fill="#60a5fa"/></marker></defs>
 <g fill="none" stroke="#60a5fa" stroke-width="2" marker-end="url(#hx-dependency-arrow)"><path d="M225 150 H265 V65 H300"/><path d="M265 150 V240 H300"/><path d="M535 65 H570 V150 H620"/><path d="M535 240 H570 V150"/><path d="M835 150 H875"/><path d="M1090 150 H1130"/></g>
 <g class="dependency-stream" aria-hidden="true"><path d="M225 150 H265 V65 H300" pathLength="100" style="--travel-delay:1.1s"/><path d="M265 150 V240 H300" pathLength="100" style="--travel-delay:1.1s"/><path d="M535 65 H570 V150 H620" pathLength="100" style="--travel-delay:2.15s"/><path d="M535 240 H570 V150" pathLength="100" style="--travel-delay:2.15s"/><path d="M835 150 H875" pathLength="100" style="--travel-delay:3.2s"/><path d="M1090 150 H1130" pathLength="100" style="--travel-delay:3.85s"/></g>
 <g class="hx-box"><rect x="10" y="100" width="215" height="100"/><rect x="300" y="15" width="235" height="100"/><rect x="300" y="190" width="235" height="100"/><rect x="620" y="100" width="215" height="100"/><rect x="875" y="100" width="215" height="100"/><rect x="1130" y="100" width="215" height="100"/></g>
-<g text-anchor="middle"><text x="117" y="137">대상 분석</text><text class="hx-sub" x="117" y="171">분석가 · 현재 JSON</text><text x="417" y="52">노드 공식 사양</text><text class="hx-sub" x="417" y="86">리서처 · 조사 A</text><text x="417" y="227">기존 구현 관례</text><text class="hx-sub" x="417" y="261">리서처 · 조사 B</text><text x="727" y="137">계획 · 사람 확인</text><text class="hx-sub" x="727" y="171">오케스트레이터</text><text x="982" y="137">변경 구성</text><text class="hx-sub" x="982" y="171">빌더 · 변경 도구</text><text x="1237" y="137">기대 결과와 비교</text><text class="hx-sub" x="1237" y="171">검증자 · 검사 도구</text></g></svg><div class="cards c3"><div class="card reveal"><div class="card-num">순차</div><h3>앞의 결과가 있어야 한다</h3><p>분석 → 계획 → 구현 → 검증</p></div><div class="card reveal"><div class="card-num">병렬</div><h3>서로 기다릴 필요가 없다</h3><p>독립 자료 조사만 동시에 수행</p></div><div class="card reveal"><div class="card-num">역할 분리</div><h3>서로 다른 관점이 필요하다</h3><p>만드는 역할과 판정하는 역할 분리</p></div></div><p class="lead hx-takeaway">에이전트 수는 <span class="hi">작업의 관계를 그린 뒤</span> 결정합니다.</p></div>
-      <p class="a foot hx-source">11~18장은 배포 캘린더에 적용한 설계이며, 화면의 파일명·역할 정의는 예시입니다</p>
+<g text-anchor="middle"><text x="117" y="137">대상 분석</text><text class="hx-sub" x="117" y="171">분석가 · 현재 JSON</text><text x="417" y="52">노드 공식 사양</text><text class="hx-sub" x="417" y="86">리서처 · 조사 A</text><text x="417" y="227">기존 구현 관례</text><text class="hx-sub" x="417" y="261">리서처 · 조사 B</text><text x="727" y="137">계획 · 사람 확인</text><text class="hx-sub" x="727" y="171">오케스트레이터</text><text x="982" y="137">변경 구성</text><text class="hx-sub" x="982" y="171">빌더 · 변경 도구</text><text x="1237" y="137">기대 결과와 비교</text><text class="hx-sub" x="1237" y="171">검증자 · 검사 도구</text></g></svg><div class="cards c3"><div class="card"><div class="card-num">순차</div><h3>앞의 결과가 있어야 한다</h3><p>분석 → 계획 → 구현 → 검증</p></div><div class="card"><div class="card-num">병렬</div><h3>서로 기다릴 필요가 없다</h3><p>독립 자료 조사만 동시에 수행</p></div><div class="card"><div class="card-num">역할 분리</div><h3>서로 다른 관점이 필요하다</h3><p>만드는 역할과 판정하는 역할 분리</p></div></div><p class="lead hx-takeaway">에이전트 수는 <span class="hi">작업의 관계를 그린 뒤</span> 결정합니다.</p></div>
+      <p class="a foot hx-source">11~17장은 배포 캘린더에 적용한 설계이며, 화면의 파일명·역할 정의는 예시입니다</p>
     </div>
 
-    <!-- 12 [재구성] Six morph scenes: context and intent -->
+    <!-- 12 [재구성] Request and context tree, revealed branch by branch -->
     <div class="slide hx context-morph" data-context-morph data-context-step="1" data-notes="[12장 · 섹션 3 어떻게 사고하나 · 이 장 60초]
-그럼 각 역할에 무엇을 넘길까요? 전부 주면 나눈 의미가 줄어듭니다.
+[진입 · 1/6 오케스트레이터]
+앞에서는 작업 순서를 봤고, 여기서는 전달할 정보를 나눕니다. 맨 위 오케스트레이터가 요청 의도와 현재 단계를 보고 경로를 정합니다.
 
-(1/6 오케스트레이터) 오케스트레이터는 요청 유형과 분기 규칙, 현재 단계와 사람 확인 여부로 다음 일을 정합니다.
+[→ 한 번 · 2/6 왼쪽: 설명 요청]
+“IF 노드가 뭐야?”는 왼쪽입니다. 설명으로 끝납니다.
 
-[→ 2/6 빌더] 빌더는 대상 JSON, 승인된 계획, 이번에 쓸 노드 사양만 받습니다.
+[→ 한 번 · 3/6 오른쪽: 변경 요청]
+“IF 분기를 추가해줘”는 오른쪽입니다. 분석과 계획, 사람 확인을 거쳐 변경합니다.
 
-[→ 3/6 검증자] 검증자는 기대 결과, 실제 산출물, 샘플 입출력을 받습니다. 빌더의 “잘 됐다”는 요약만 보고 판정하면 안 되니까요.
+[→ 한 번 · 4/6 아래 왼쪽: 빌더]
+빌더는 대상 JSON, 승인된 계획, 필요한 노드 사양을 받아 구현합니다.
 
-[→ 4/6 필요한 만큼 읽기] 필요한 만큼만 읽습니다. description으로 스킬을 고르고, SKILL.md로 절차를 보고, 필요한 references만 엽니다.
+[→ 한 번 · 5/6 아래 가운데: 검증자]
+검증자는 기대 결과와 실제 산출물, 샘플 입출력을 받습니다. 이 자료로 구현 결과를 확인합니다.
 
-[→ 5/6 설명 요청] “n8n의 IF 노드가 뭐야?”는 설명만 하고, 변경 절차는 시작하지 않습니다.
+[→ 한 번 · 6/6 아래 오른쪽: 필요한 문서]
+문서도 필요한 만큼 읽습니다. description으로 스킬을 고르고, SKILL.md에서 절차를 확인한 뒤 필요한 상세 문서를 엽니다.
 
-[→ 6/6 변경 요청] “이 흐름에 IF 분기를 추가해줘”는 실제 변경이라 분석, 계획, 검증을 거칩니다. 키워드가 같아도 의도가 달라서, 이런 비슷한 요청도 트리거 테스트에 넣습니다.
-
-참고: 장면당 약 10초입니다. 뒤로 들어오면 6장면부터 보입니다. 근거는 harness 스킬 작성·테스트 가이드(Progressive Disclosure, 비슷하지만 트리거하면 안 되는 요청 테스트)입니다.">
+[완성된 트리 · 다음 장으로 연결]
+이렇게 역할마다 필요한 정보를 전달합니다. 다음은 그 결과를 기록해서 후속 요청에 이어 쓰는 방법입니다.">
       <p class="a kicker">03 · 어떻게 사고하나 · n8n 적용 설계</p>
       <h2 class="a">각 에이전트가 알아야 할 것만 전달한다</h2>
       <div class="context-player">
-        <div class="context-stage"><div class="context-card">
-          <span class="context-count" data-context-count>01 / 06</span>
-          <section class="context-frame active" aria-hidden="false" aria-label="1장면 오케스트레이터"><h3>오케스트레이터</h3><div class="context-main">요청 유형 · 분기 규칙<br>현재 단계 · 사람 확인 상태</div><p class="context-sub">다음에 어떤 작업을 할지 판단합니다.</p></section>
-          <section class="context-frame" aria-hidden="true" aria-label="2장면 빌더"><h3>빌더</h3><div class="context-main">대상 JSON · 승인된 변경 계획<br>이번에 쓸 노드의 사양</div><p class="context-sub">승인된 범위 안에서 구현합니다.</p></section>
-          <section class="context-frame" aria-hidden="true" aria-label="3장면 검증자"><h3>검증자</h3><div class="context-main">기대 결과 · 변경 산출물<br>샘플 입력 · 실제 출력</div><p class="context-sub">완료됐다는 설명 대신, <strong>결과를 직접 비교</strong>합니다.</p></section>
-          <section class="context-frame" aria-hidden="true" aria-label="4장면 필요한 만큼만 읽습니다"><h3>필요한 만큼만 읽습니다</h3><div class="context-main"><span class="context-path"><span>description</span><i>→</i><span>SKILL.md</span><i>→</i><span>필요한 references</span></span></div><p class="context-sub">스킬 선택 → 작업 절차 → 이번 작업에 필요한 문서</p></section>
-          <section class="context-frame" aria-hidden="true" aria-label="5장면 “n8n의 IF 노드가 뭐야?”"><h3>“n8n의 IF 노드가 뭐야?”</h3><div class="context-main"><strong>설명</strong> 요청 → 답변</div><p class="context-sub">워크플로우를 변경하는 절차는 시작하지 않습니다.</p></section>
-          <section class="context-frame" aria-hidden="true" aria-label="6장면 “이 흐름에 IF 분기를 추가해줘”"><h3>“이 흐름에 IF 분기를 추가해줘”</h3><div class="context-main"><strong>변경</strong> 요청 → 분석 · 계획 · 검증</div><p class="context-sub">같은 키워드여도 <strong>요청 의도</strong>에 따라 경로가 달라집니다.</p></section>
-        </div></div>
-        <div class="context-controls"><span data-context-hint>→ 다음 장면</span><button type="button" data-context-prev aria-label="이전 장면">← 이전</button><button type="button" data-context-next aria-label="다음 장면">다음 →</button><button type="button" data-context-restart>↻ 처음부터</button></div>
+        <div class="context-stage"><svg class="context-tree" viewBox="0 0 1424 540" role="group" aria-label="요청 의도와 필요한 정보를 나누는 트리">
+<g class="context-frame active current" aria-hidden="false" aria-label="1단계 오케스트레이터"><g class="context-node"><rect x="490" y="8" width="444" height="110" rx="16"/><text class="tree-title" x="712.0" y="43">오케스트레이터</text><text x="712.0" y="73">요청 유형 · 분기 규칙</text><text x="712.0" y="100">현재 단계 · 사람 확인 상태</text></g></g>
+<g class="context-frame" aria-hidden="true" aria-label="2단계 설명 요청은 답변으로 종료"><path class="context-edge" pathLength="1" d="M712 118 V150 H235 V185"/><g class="context-node"><rect x="60" y="185" width="350" height="126" rx="16"/><text class="tree-title" x="235.0" y="220">설명 요청</text><text x="235.0" y="250">“IF 노드가 뭐야?”</text><text class="tree-tag" x="235.0" y="297">답변으로 종료 · 변경 없음</text></g></g>
+<g class="context-frame" aria-hidden="true" aria-label="3단계 변경 요청은 필요한 정보만 배분"><path class="context-edge" pathLength="1" d="M712 118 V150 H1022 V185"/><g class="context-node"><rect x="800" y="185" width="444" height="126" rx="16"/><text class="tree-title" x="1022.0" y="220">변경 요청</text><text x="1022.0" y="250">“IF 분기를 추가해줘”</text><text class="tree-tag" x="1022.0" y="297">분석 → 계획 → 사람 확인</text></g></g>
+<g class="context-frame" aria-hidden="true" aria-label="4단계 빌더에 전달할 정보"><path class="context-edge" pathLength="1" d="M1022 311 V350 H600 V389"/><g class="context-node"><rect x="460" y="389" width="280" height="143" rx="16"/><text class="tree-title" x="600.0" y="424">빌더</text><text x="600.0" y="454">대상 JSON · 승인된 계획</text><text x="600.0" y="481">이번에 쓸 노드 사양</text><text class="tree-tag" x="600.0" y="518">승인된 범위 구현</text></g></g>
+<g class="context-frame" aria-hidden="true" aria-label="5단계 검증자에 전달할 정보"><path class="context-edge" pathLength="1" d="M1022 311 V350 H920 V389"/><g class="context-node"><rect x="780" y="389" width="280" height="143" rx="16"/><text class="tree-title" x="920.0" y="424">검증자</text><text x="920.0" y="454">기대 결과 · 실제 산출물</text><text x="920.0" y="481">샘플 입력 · 실제 출력</text><text class="tree-tag" x="920.0" y="518">결과를 직접 비교</text></g></g>
+<g class="context-frame" aria-hidden="true" aria-label="6단계 필요한 문서만 단계적으로 읽기"><path class="context-edge" pathLength="1" d="M1022 311 V350 H1240 V389"/><g class="context-node"><rect x="1100" y="389" width="280" height="143" rx="16"/><text class="tree-title" x="1240.0" y="424">필요한 문서</text><text x="1240.0" y="454">description → SKILL.md</text><text x="1240.0" y="481">→ 필요한 references</text><text class="tree-tag" x="1240.0" y="518">선택 → 절차 → 상세 근거</text></g></g>
+        </svg></div>
+        <div class="context-controls"><span class="context-count" data-context-count>01 / 06</span><span data-context-hint>→ 다음 가지</span><button type="button" data-context-prev aria-label="이전 가지">← 이전</button><button type="button" data-context-next aria-label="다음 가지">다음 →</button><button type="button" data-context-restart>↻ 처음부터</button></div>
       </div>
-      <div class="context-print"><ol>
-        <li><b>오케스트레이터</b> · 요청 유형, 분기 규칙, 현재 단계, 사람 확인 상태</li>
-        <li><b>빌더</b> · 대상 JSON, 승인된 변경 계획, 필요한 노드 사양</li>
-        <li><b>검증자</b> · 기대 결과, 변경 산출물, 샘플 입력, 실제 출력</li>
-        <li><b>필요한 만큼 읽기</b> · description → SKILL.md → 필요한 references</li>
-        <li><b>“IF 노드가 뭐야?”</b> · 일반 설명, 변경 파이프라인 호출 안 함</li>
-        <li><b>“IF 분기를 추가해줘”</b> · 실제 변경, 분석·계획·검증 진행</li>
-      </ol></div>
       <p class="chat-sr" data-context-announcement role="status" aria-live="polite"></p>
     </div>
 
-    <!-- 13 [재구성] Follow-up request resumes from saved artifacts -->
-    <div class="slide chat-flow" data-chat-flow data-chat-phase="request" data-chat-typing="후속 요청을 적어 주세요" data-chat-ready="요청 입력 완료 · 다음으로 처리 과정을 봅니다" data-notes="[13장 · 섹션 3 어떻게 사고하나 · 이 장 60초]
-(진입하면 후속 요청이 자동으로 입력됩니다)
+    <!-- 13 [재구성] Follow-up request tree: change scope, verify, and retain artifacts -->
+    <div class="slide hx context-morph" data-context-morph data-context-step="1" data-notes="[13장 · 섹션 3 어떻게 사고하나 · 이 장 60초]
+[진입 · 1/6 후속 요청]
+이번에는 “알림 문구만 짧게 바꿔줘”라는 후속 요청입니다. 왼쪽 요청에서 시작해 지난 기록을 이어 씁니다.
 
-역할마다 결과를 파일로 남기면, 다음 요청이 그 기록을 이어 씁니다. 며칠 뒤 “알림 문구만 짧게 바꿔줘”라는 요청이 왔다고 해 볼게요.
+[→ 한 번 · 2/6 지난 기록 읽기]
+이전 요청과 계획, 변경안, 검증 근거를 읽습니다. 현재 설정과 함께 왜 이렇게 만들었는지까지 확인합니다.
 
-(1 지난 요청의 맥락 읽기 · 자동 재생)
+[→ 한 번 · 3/6 위쪽: 수정할 부분]
+위쪽 가지가 이번에 고칠 부분입니다. 알림 메시지 구성 노드의 문구만 수정합니다.
 
-알림 노드 하나 고치는 건 순정 Claude도 하죠. 그런데 n8n에는 현재 상태만 남지, 만든 이유와 검증 내용은 안 남거든요. 그래서 지난 기록부터 읽습니다. (가리키기: 요청 → 계획 → 변경안 → 검증)
+[→ 한 번 · 4/6 아래쪽: 유지할 부분]
+아래쪽 조회·변환·업로드 설정은 유지합니다. 실패를 성공으로 알리지 않는다는 기존 완료 조건도 지킵니다.
 
-[→ 2 변경 범위 정하기] 고칠 곳은 알림 메시지 노드뿐, 조회·변환·업로드는 그대로 둡니다. 실패를 성공으로 알리지 않는다는 지난 완료 조건도 지키고요.
+[→ 한 번 · 5/6 오른쪽 위: 재검증]
+수정한 가지를 따라가서 메시지가 쓰는 데이터와 성공·실패 분기를 다시 확인합니다.
 
-[→ 3 영향받는 곳 재검증] 문구만 바꿔도 메시지가 쓰는 데이터와 성공·실패 분기는 다시 봅니다. 작은 수정일수록 건너뛰기 쉬워서 절차로 넣었습니다.
+[→ 한 번 · 6/6 오른쪽 아래: 기록 이어 쓰기]
+새 계획과 변경안, 검증 근거를 작업 폴더에 남깁니다. 다음 요청은 이 기록에서 다시 시작합니다.
 
-[→ 4 기록 이어 쓰기] 결과는 다시 기록에 더합니다. 순정은 지금 상태만 보고 고치고, 이 킷은 왜 만들었고 무엇을 검증했는지까지 읽고 고칩니다.
-
-참고: 화면의 파일명은 적용 예시입니다. 근거는 harness 오케스트레이터 템플릿의 Phase 0(작업 폴더가 있으면 이전 산출물을 읽고 필요한 부분만 다시 실행)입니다.">
-      <p class="kicker">03 · 어떻게 사고하나 · n8n 적용 설계</p>
-      <h2>다음 요청에서 <span class="hi">이어 쓸 산출물</span>까지 설계한다</h2>
-      <div class="chat-stage">
-        <div class="chat-window">
-          <div class="chat-window-head"><span class="chat-mark" aria-hidden="true">✳</span><b>Claude Code</b><span>· n8n-automation</span><span class="chat-example">후속 요청 예시</span></div>
-          <div class="chat-message" role="group" aria-label="후속 요청 예시">
-            <p class="chat-sr">알림 문구만 짧게 바꿔줘.</p>
-            <div class="chat-request" aria-hidden="true"><span data-chat-request>알림 문구만 짧게 바꿔줘.</span><span class="chat-caret" data-request-caret></span></div>
-          </div>
-          <div class="chat-window-foot"><span data-chat-status>이전 산출물에서 이어 갑니다</span><span class="chat-send" aria-hidden="true">↑</span></div>
-        </div>
-<div class="chat-work" aria-hidden="true">
-<ol class="work-progress" aria-label="4단계 진행"><li aria-label="1단계 지난 요청의 맥락 읽기"></li><li aria-label="2단계 변경 범위 정하기"></li><li aria-label="3단계 영향받는 곳 재검증"></li><li aria-label="4단계 기록 이어 쓰기"></li></ol>
-<section class="work-scene" data-scene="0" aria-hidden="true" aria-label="1단계 지난 요청의 맥락 읽기">
-<div class="work-heading"><span class="work-number">01 / 04</span><h3>지난 요청의 맥락 읽기</h3></div>
-<div class="work-body"><div class="simple-moment" data-at="0" data-until="3000"><p class="simple-main">n8n에는 <span class="simple-answer">현재 상태</span>만 남습니다</p><p class="simple-sub">왜 이렇게 만들었는지 · 무엇을 검증했는지는 남지 않습니다</p></div><div class="simple-moment" data-at="3000"><div class="simple-scan" aria-hidden="true"><i></i><i></i><i></i></div><p class="simple-main">완료 조건과 검증 근거까지 읽습니다</p><div class="simple-rail"><span>요청</span><i>→</i><span>계획</span><i>→</i><span>변경안</span><i>→</i><span>검증</span></div><p class="simple-sub">01-request.md · 02-plan.md · 03-workflow.json · 04-review.json <span class="simple-muted">(적용 예시)</span></p></div></div>
-</section>
-<section class="work-scene" data-scene="1" aria-hidden="true" aria-label="2단계 변경 범위 정하기">
-<div class="work-heading"><span class="work-number">02 / 04</span><h3>변경 범위 정하기</h3></div>
-<div class="work-body"><div class="simple-moment" data-at="0"><p class="simple-main">수정 · <span class="simple-answer">알림 메시지 구성 노드</span></p><p class="simple-main" data-at="1600">보존 · 조회 · 변환 · 업로드 설정</p><p class="simple-sub" data-at="3200">지킬 약속 · <span class="simple-answer">실패를 성공으로 알리지 않는다</span> <span class="simple-muted">(지난 완료 조건)</span></p></div></div>
-</section>
-<section class="work-scene" data-scene="2" aria-hidden="true" aria-label="3단계 영향받는 곳 재검증">
-<div class="work-heading"><span class="work-number">03 / 04</span><h3>영향받는 곳 재검증</h3></div>
-<div class="work-body"><div class="simple-moment" data-at="0"><p class="simple-main" data-at="0"><span class="simple-success">✓</span> 메시지가 쓰는 데이터</p><p class="simple-main" data-at="1600"><span class="simple-success">✓</span> 성공 · 실패 분기</p><p class="simple-sub" data-at="3200">지난 검증 기준으로 다시 확인 · 문구만 바꿔도 건너뛰지 않습니다</p></div></div>
-</section>
-<section class="work-scene" data-scene="3" aria-hidden="true" aria-label="4단계 기록 이어 쓰기">
-<div class="work-heading"><span class="work-number">04 / 04</span><h3>기록 이어 쓰기</h3></div>
-<div class="work-body"><div class="simple-moment" data-at="0" data-until="3000"><p class="simple-main"><span class="simple-answer">_workspace_n8n/</span>에 이어서 기록합니다</p><p class="simple-sub">새 계획 · 변경안 · 검증 근거 → 다음 요청이 다시 읽습니다</p></div><div class="simple-moment" data-at="3000"><p class="simple-main simple-muted"><span class="simple-label">순정</span>지금 상태만 보고 고칩니다</p><p class="simple-main" data-at="1200"><span class="simple-label">킷</span><span class="simple-answer">왜 만들었고 무엇을 검증했는지</span>까지 읽고 고칩니다</p></div></div>
-</section>
-<span class="work-tag">적용 예시 · 과정 시뮬레이션</span>
-</div>
+[완성된 트리 · 다음 장으로 연결]
+이렇게 변경 범위를 좁히고, 확인한 결과까지 이어 갑니다. 다음은 그 완료 여부를 누가 판정하는지 보겠습니다.">
+      <p class="a kicker">03 · 어떻게 사고하나 · n8n 적용 설계</p>
+      <h2 class="a">다음 요청에서 <span class="hi">이어 쓸 산출물</span>까지 설계한다</h2>
+      <div class="context-player">
+        <div class="context-stage"><svg class="context-tree" viewBox="0 0 1424 540" role="group" aria-label="후속 요청에서 지난 기록을 읽고 수정과 유지 범위를 나누는 트리">
+<g class="context-frame active current" aria-hidden="false" aria-label="1단계 후속 요청"><g class="context-node"><rect x="0" y="201" width="285" height="128" rx="16"/><text class="tree-title" x="142.5" y="235">후속 요청</text><text x="142.5" y="267">“알림 문구만</text><text x="142.5" y="294">짧게 바꿔줘”</text></g></g>
+<g class="context-frame" aria-hidden="true" aria-label="2단계 지난 기록 읽기"><path class="context-edge" pathLength="1" d="M285 265 H350"/><g class="context-node"><rect x="350" y="201" width="320" height="128" rx="16"/><text class="tree-title" x="510.0" y="235">지난 기록 읽기</text><text x="510.0" y="267">요청 · 계획 · 변경안</text><text x="510.0" y="294">검증 근거 · 완료 조건</text></g></g>
+<g class="context-frame" aria-hidden="true" aria-label="3단계 수정할 부분"><path class="context-edge" pathLength="1" d="M670 265 H710 V129 H750"/><g class="context-node"><rect x="750" y="65" width="280" height="128" rx="16"/><text class="tree-title" x="890.0" y="99">수정할 부분</text><text x="890.0" y="131">알림 메시지 구성 노드</text><text class="tree-tag" x="890.0" y="178">문구만 수정</text></g></g>
+<g class="context-frame" aria-hidden="true" aria-label="4단계 유지할 부분"><path class="context-edge" pathLength="1" d="M670 265 H710 V426 H750"/><g class="context-node"><rect x="750" y="355" width="280" height="143" rx="16"/><text class="tree-title" x="890.0" y="389">유지할 부분</text><text x="890.0" y="421">조회 · 변환 · 업로드</text><text x="890.0" y="448">기존 완료 조건</text><text class="tree-tag" x="890.0" y="483">실패를 성공으로 알리지 않기</text></g></g>
+<g class="context-frame" aria-hidden="true" aria-label="5단계 영향받는 곳 재검증"><path class="context-edge" pathLength="1" d="M1030 129 H1100"/><g class="context-node"><rect x="1100" y="65" width="310" height="128" rx="16"/><text class="tree-title" x="1255.0" y="99">재검증</text><text x="1255.0" y="131">메시지가 쓰는 데이터</text><text x="1255.0" y="158">성공 · 실패 분기</text></g></g>
+<g class="context-frame" aria-hidden="true" aria-label="6단계 기록 이어 쓰기"><path class="context-edge" pathLength="1" d="M1255 193 V355"/><g class="context-node"><rect x="1100" y="355" width="310" height="143" rx="16"/><text class="tree-title" x="1255.0" y="389">기록 이어 쓰기</text><text x="1255.0" y="421">새 계획 · 변경안 · 검증 근거</text><text x="1255.0" y="448">_workspace_n8n/</text><text class="tree-tag" x="1255.0" y="483">다음 요청이 다시 읽습니다</text></g></g>
+        </svg></div>
+        <div class="context-controls"><span class="context-count" data-context-count>01 / 06</span><span data-context-hint>→ 다음 가지</span><button type="button" data-context-prev aria-label="이전 가지">← 이전</button><button type="button" data-context-next aria-label="다음 가지">다음 →</button><button type="button" data-context-restart>↻ 처음부터</button></div>
       </div>
-      <div class="chat-meta">
-        <p class="foot">파일명은 적용 예시</p>
-        <div class="chat-controls"><span data-chat-hint>→ 현재 장면 완성</span><button type="button" data-chat-prev aria-label="이전 단계">← 이전</button><button type="button" data-chat-next aria-label="현재 장면 완성 또는 다음 단계">다음 →</button><button class="chat-replay" type="button">↻ 처음부터</button></div>
-      </div>
-<div class="work-print"><p>과정 시뮬레이션 · 후속 요청<br>“알림 문구만 짧게 바꿔줘.”</p><div class="work-print-grid"><div class="work-print-card"><b>1. 지난 요청의 맥락 읽기</b><p>n8n에는 현재 상태만 남음 → 요청·계획·변경안·검증 근거 파일을 먼저 읽음 (파일명은 적용 예시)</p></div><div class="work-print-card"><b>2. 변경 범위 정하기</b><p>수정: 알림 메시지 구성 노드 · 보존: 조회·변환·업로드 설정 · 지난 완료 조건 유지</p></div><div class="work-print-card"><b>3. 영향받는 곳 재검증</b><p>메시지가 쓰는 데이터 + 성공·실패 분기를 지난 검증 기준으로 확인</p></div><div class="work-print-card"><b>4. 기록 이어 쓰기</b><p>순정: 지금 상태만 보고 고침 · 킷: 왜 만들었고 무엇을 검증했는지까지 읽고 고침</p></div></div></div>
-      <p class="chat-sr" data-chat-announcement role="status" aria-live="polite"></p>
+      <p class="chat-sr" data-context-announcement role="status" aria-live="polite"></p>
     </div>
 
     <!-- 14 [재구성] Plan mode vs builder/reviewer split -->
-    <div class="slide hx" data-notes="[14장 · 섹션 4 어떻게 검증하나 시작 · 섹션 6분 15초 / 이 장 80초]
-이제 검증입니다. Plan 모드와 비교해 볼게요. (가리키기: Plan 모드 행)
-
-Plan 모드도 파일은 건드리지 않고 조사해서 계획을 세운 뒤, 사용자 승인을 받습니다. 여기까지는 이 킷과 같죠. 차이는 그다음입니다. 승인하면 같은 Claude가 구현하고, 끝났는지도 스스로 판단해 “완료했습니다”라고 하죠.
+    <div class="slide hx" data-notes="[14장 · 섹션 4 어떻게 검증하나 시작 · 섹션 5분 5초 / 이 장 80초]
+이제 검증입니다. Plan 모드와 비교해 볼게요. Plan 모드도 파일은 건드리지 않고 조사해서 계획을 세운 뒤, 사용자 승인을 받습니다. 여기까지는 이 킷과 같죠. 차이는 그다음입니다. 승인하면 같은 Claude가 구현하고, 끝났는지도 스스로 판단해 “완료했습니다”라고 하죠.
 
 [→ 이 설계 행] 이 설계는 승인 뒤를 나눕니다. 빌더는 변경 도구로 만들고, 검증자는 읽기와 검사 도구로 완료 조건과 실제 산출물을 비교합니다. 결과는 통과·실패·미검증을 근거와 함께 돌려주고요. 실패하면 오류 보고서를 받은 빌더가 고치고 다시 검증하는데, 끝없이 돌지 않게 최대 두 번까지만 합니다.
 
 단, 검증자가 고치지 못하게 하려면 도구 설정으로 막아야 합니다. 지시문에 “수정 금지”라고 쓰는 것만으로는 안 막히거든요.
 
-[→ 완료 판정 강조] 그러니까 차이는 계획이 아니라, 승인 뒤에 누가 무엇으로 완료를 판정하느냐입니다. 참고로 지금 킷은 빌더가 validate로 직접 검사하고, 검증자 분리는 적용 설계입니다.
-
-참고: 공식 문서상 Plan 모드는 계획을 승인하면 plan 모드를 빠져나와 같은 세션이 편집을 시작합니다. “최대 2회”는 harness 생성-검증 패턴의 재시도 상한 권고(2~3회) 안에서 정한 값입니다.">
+[→ 완료 판정 강조] 그러니까 차이는 계획이 아니라, 승인 뒤에 누가 무엇으로 완료를 판정하느냐입니다. 지금 킷은 빌더가 validate로 직접 검사하고, 검증자 분리는 적용 설계입니다.">
       <p class="a kicker">04 · 어떻게 검증하나 · n8n 적용 설계</p>
       <h2 class="a">계획 승인 뒤에도, <span class="hi">완료 판정</span>은 만든 쪽에 맡기지 않는다</h2>
       <div class="content a"><div class="plan-compare">
@@ -1180,93 +1152,70 @@ Plan 모드도 파일은 건드리지 않고 조사해서 계획을 세운 뒤, 
 
     <!-- 15 [재구성] Harness design -->
     <div class="slide hx" data-notes="[15장 · 섹션 4 어떻게 검증하나 · 이 장 90초]
-여기서부터 네 장은 같은 조건으로 비교합니다. 순정 Plan 모드도 n8n-mcp를 붙이면 validate, autofix, test 도구를 똑같이 쓸 수 있거든요. 그러니까 차이는 도구가 아니라 절차입니다.
+여기서부터 세 장은 같은 조건으로 비교합니다. 순정 Plan 모드도 n8n-mcp를 붙이면 validate, autofix, test 도구를 똑같이 쓸 수 있거든요. 그러니까 차이는 도구가 아니라 절차입니다.
 
-(가리키기: Plan 모드 + n8n-mcp 줄) Plan 모드에는 무엇을 검사할지 정해 둔 규칙이 없어서, validate만 통과하면 끝났다고 보기 쉽습니다.
+Plan 모드에는 무엇을 검사할지 정해 둔 규칙이 없어서, validate만 통과하면 끝났다고 보기 쉽습니다.
 
 [→ 이 설계 줄] 이 설계는 샘플 입력을 넣어서, 앞 노드가 내보낸 값과 뒤 노드가 기대하는 값을 같이 봅니다.
 
-[→ 본문] 오른쪽은 실제 pipeline.json의 결과 정규화 코드이고, 왼쪽은 필드를 일부러 뺀 테스트 입력입니다. 실제 장애 로그는 아니고요.
+[→ 본문] 쉬운 예로 볼게요. 매일 아침 서버 점검 결과를 알림으로 보내는 워크플로우입니다. 왼쪽은 오류 건수, errorCount를 일부러 뺀 테스트 입력이에요. 점검 실행 자체는 success로 왔습니다.
 
-(가리키기: 왼쪽 입력) 앞 노드는 status success, 종료 코드 0을 줬습니다.
+뒤 노드가 이 빈칸을 0건으로 채우면 “오류 0건, 정상” 알림이 나갑니다. 구조는 멀쩡하니까 validate로는 못 잡죠.
 
-[청중] 종료 코드가 0이면 성공일까요?
+오른쪽 코드는 빈칸을 0건으로 채우지 않고 모르는 값으로 둡니다. 그리고 “오류 건수 확인 못 함”으로 실패를 알리죠. 실제 배포 캘린더 파이프라인도 빠진 점검 건수를 이렇게 실패로 처리합니다.
 
-[PAUSE]
-
-그런데 승인일 미기재 건수, approvalDateMissingCount가 없습니다. (가리키기: 오른쪽 코드) 뒤 노드는 이 값을 0으로 채우지 않고 null로 둡니다. 필수 건수가 없으니 정상이라는 주장을 받아들이지 않고, calendarStatus를 failed로 돌려주죠.
-
-실제 성공 메시지도 모르는 건수는 0건이 아니라 “확인 불가”로 표시합니다. 구조 검사만으로는 이런 문제를 못 잡아요. “문제 없음”과 “확인 못 함”은 다르니까요.
-
-그럼 이 검사는 전체 검증에서 어디쯤 있을까요?
-
-참고: 코드 근거는 pipeline.json의 ‘01 XML 결과 정규화’(countOrNull, 필수 건수 누락 시 failed)와 ‘성공 메시지 준비’(모르는 건수는 ‘확인 불가’)입니다. 왼쪽 JSON은 설명용 테스트 입력입니다.">
+“오류 없음”과 “확인 못 함”은 다르니까요. 이렇게 찾은 문제는 고칠 수 있도록 보고서로 정리합니다.">
       <p class="a kicker">04 · 어떻게 검증하나 · n8n 적용 설계</p>
       <h2 class="a">노드가 있는지보다, <br>연결 양쪽의 데이터가 맞는지 본다</h2>
       <div class="pm-contrast a"><div class="pm-row pm-plan"><span class="pm-label">Plan 모드 + n8n-mcp</span><span>validate 통과 → 구조가 맞으면 완료로 보기 쉬움</span></div><div class="pm-row pm-design reveal"><span class="pm-label">이 설계</span><span>샘플 입력으로 앞 노드 출력과 뒤 노드 기대를 비교</span></div></div>
-      <div class="content reveal"><div class="row r2 hx-top"><div><div class="code-container"><div class="code-header"><span class="code-dot red"></span><span class="code-dot yellow"></span><span class="code-dot green"></span><span class="code-filename">앞 노드 출력 · 필드 누락을 넣은 테스트 입력</span></div><pre><code>{
+      <div class="content reveal">
+        <div class="row r2 hx-top">
+          <div><div class="code-container"><div class="code-header"><span class="code-dot red"></span><span class="code-dot yellow"></span><span class="code-dot green"></span><span class="code-filename">앞 노드 출력 · 오류 건수를 뺀 테스트 입력</span></div><pre><code>{
   &quot;status&quot;: &quot;success&quot;,
-  &quot;exitCode&quot;: 0,
-  &quot;details&quot;: {
-    &quot;deploymentCompletionUnconfirmedCount&quot;: 0
-  }
-}</code></pre></div></div><div><div class="code-container"><div class="code-header"><span class="code-dot red"></span><span class="code-dot yellow"></span><span class="code-dot green"></span><span class="code-filename">뒤 노드 · 실제 정규화 코드의 검사 조건</span></div><pre><code>const countOrNull = (value) =&gt;
-  Number.isInteger(value) &amp;&amp; value &gt;= 0
-    ? value : null;
+  &quot;server&quot;: &quot;api-01&quot;
+  // errorCount 없음
+}</code></pre></div></div>
+          <div><div class="code-container"><div class="code-header"><span class="code-dot red"></span><span class="code-dot yellow"></span><span class="code-dot green"></span><span class="code-filename">뒤 노드 · 알림 만들기 전 검사</span></div><pre><code>// 빈칸을 0건으로 채우지 않는다
+const errorCount = $json.errorCount ?? null;
 
-const approvalDateMissingCount =
-  countOrNull(details.approvalDateMissingCount);</code></pre></div></div></div><div class="hx-band hx-danger"><b>필수 필드 누락</b> → <code>null</code> → 정상 주장 거부 → <code>calendarStatus: failed</code></div><p class="lead hx-takeaway">모르는 값을 <span class="hi">0건으로 채우지 않습니다.</span> “문제 없음”과 “확인 못 함”은 다릅니다.</p></div>
-      <p class="a foot hx-source">실제 코드: pipeline.json / 01 XML 결과 정규화 · 비교는 같은 n8n-mcp 도구(validate · autofix · test) 기준</p>
+const status = errorCount === null ? 'failed' : 'success';
+const message = errorCount === null
+  ? '오류 건수 확인 못 함' : `오류 ${errorCount}건`;</code></pre></div></div>
+        </div>
+        <div class="hx-band hx-danger"><b>오류 건수 빈칸</b> → 0건으로 채우면 “오류 0건, 정상” 오판 → 그래서 <code>null</code>로 두고 “오류 건수 확인 못 함”으로 <code>failed</code></div>
+        <p class="lead hx-takeaway">모르는 값을 <span class="hi">0건으로 채우지 않습니다.</span> “오류 없음”과 “확인 못 함”은 다릅니다.</p>
+      </div>
+      <p class="a foot hx-source">쉬운 설명용 가상 예시 · 실제 배포 캘린더 파이프라인도 빠진 점검 건수는 0건이 아닌 실패로 처리 · 비교는 같은 n8n-mcp 도구(validate · autofix · test) 기준</p>
     </div>
 
-    <!-- 16 [재구성] Harness design -->
-    <div class="slide hx" data-notes="[16장 · 섹션 4 어떻게 검증하나 · 이 장 70초]
-(가리키기: Plan 모드 + n8n-mcp 줄) Plan 모드에서는 무엇을 어디까지 검사할지 매번 Claude가 판단합니다. test 도구가 있어도, 언제 어떤 입력으로 돌릴지는 정해져 있지 않죠.
+    <!-- 16 [재구성] A simple expected-vs-actual notification example -->
+    <div class="slide hx error-example" data-notes="[16장 · 섹션 4 어떻게 검증하나 · 이 장 65초]
+오류를 찾은 뒤에는 문제가 난 위치와 기대한 결과, 실제 결과를 함께 보냅니다.
 
-[→ 이 설계 줄] 이 설계는 세 층을 순서대로 거칩니다.
+예를 들어 업로드가 실패하는 상황을 테스트했는데 성공 알림이 왔다고 해 보겠습니다. 문제가 드러난 곳은 알림 보내기 단계입니다.
 
-[→ 본문] 1층은 구조와 설정입니다. 노드 설정, 표현식, 연결 참조처럼 validate가 잘하는 영역이죠.
+이 내용을 바탕으로 수정 요청은 이렇게 씁니다. “성공·실패 알림 분기를 확인하고, 두 경우를 다시 테스트하세요.”
 
-2층은 연결 구간입니다. 샘플 데이터가 다음 노드의 기대를 채우는지 봅니다. 방금 본 필수 건수 누락이 여기서 잡힙니다.
+원인이 어느 조건이나 연결에 있는지는 빌더가 확인합니다. 알림 문구만 바꿔서 끝내는 게 아니라, 실제 성공했을 때와 실패했을 때 각각 맞는 알림이 나오는지 확인하는 겁니다.
 
-3층은 전체 흐름입니다. 중간에 실패했는데 성공 알림 경로를 타지 않는지 끝까지 확인합니다. 외부 전송은 테스트용 채널과 저장소로 확인하고요.
-
-(가리키기: 조회·변환 → 검사 통과 → 업로드·알림) 구간마다 확인하고, 마지막에 전체 결과를 다시 확인하는 거죠.
-
-autofix는 표현식 형식이나 typeVersion 같은 설정 오류를 고치는 도구입니다. 빠진 데이터의 의미까지 고쳐 주진 않아요. 그건 빌더가 원인을 찾아서 고칩니다.
-
-참고: autofix 수정 유형은 n8n-mcp 문서 기준(표현식 = 접두사, typeVersion, 오류 출력 설정, 노드 타입, webhook 경로 등)입니다. 구간마다 바로 검증하는 방식은 harness QA 가이드의 권장 패턴입니다.">
+이렇게 관찰한 결과를 구체적으로 전달하면, 고칠 범위와 다시 검사할 기준이 분명해집니다.">
       <p class="a kicker">04 · 어떻게 검증하나 · n8n 적용 설계</p>
-      <h2 class="a">한 번의 검증으로 끝내지 않는다</h2>
-      <div class="pm-contrast a"><div class="pm-row pm-plan"><span class="pm-label">Plan 모드 + n8n-mcp</span><span>무엇을 어디까지 검사할지 매번 Claude가 판단</span></div><div class="pm-row pm-design reveal"><span class="pm-label">이 설계</span><span>구조 → 연결 구간 → 전체 흐름, 3층을 순서대로</span></div></div>
-      <div class="content reveal"><table><thead><tr><th>검증 층</th><th>무엇을 확인하나</th><th>실패를 찾는 예</th></tr></thead><tbody><tr><td>1 · 구조·설정</td><td>노드 설정 · 표현식 · 연결 참조</td><td>잘못된 파라미터 · 존재하지 않는 참조</td></tr><tr><td>2 · 연결 구간</td><td>샘플 입력 → 변환 → 뒤 노드 기대</td><td>종료 코드 0 + 필수 점검 건수 누락</td></tr><tr><td>3 · 전체 흐름</td><td>정상·실패 경로와 최종 메시지</td><td>실패했는데 성공 알림 경로가 선택됨</td></tr></tbody></table><div class="hx-flow"><div class="hx-node"><b>조회·변환</b><span>샘플로 데이터 계약 확인</span></div><span class="hx-arrow">→</span><div class="hx-node"><b>검사 통과</b><span>다음 구간 연결</span></div><span class="hx-arrow">→</span><div class="hx-node"><b>업로드·알림</b><span>테스트용 채널·저장소에서 확인</span></div></div><p class="lead hx-takeaway">구간마다 확인하고, 마지막에는 <span class="hi">전체 결과를 다시 확인</span>합니다.</p><p class="foot">설정 자동수정 도구가 모든 업무 오류를 고치지는 않습니다. 데이터 의미·데이터 계약 오류는 빌더가 수정합니다.</p></div>
+      <h2 class="a">“다시 고쳐” 대신 <span class="hi">어디가 틀렸는지</span> 알려준다</h2>
+      <div class="pm-contrast a"><div class="pm-row pm-plan"><span class="pm-label">막연한 요청</span><span>“알림이 이상해. 다시 고쳐.”</span></div><div class="pm-row pm-design"><span class="pm-label">이 설계</span><span>어디서 · 기대한 결과 · 실제 결과를 함께 전달</span></div></div>
+      <div class="content">
+        <p class="error-location">예시 · <b>알림 보내기 단계</b></p>
+        <div class="cards c3 error-cards">
+          <div class="card"><p class="error-label">테스트 상황</p><h3>업로드 실패</h3><p>실패 상황을 넣어 확인</p></div>
+          <div class="card"><p class="error-label">기대한 알림</p><h3>“업로드 실패”</h3><p>실패했다는 사실을 알려야 함</p></div>
+          <div class="card error-actual"><p class="error-label">실제 알림</p><h3>“업로드 성공”</h3><p>기대한 결과와 다름</p></div>
+        </div>
+        <div class="error-request"><span>수정 요청</span><p>성공·실패 알림 분기를 확인하고,<br><strong>두 경우를 다시 테스트하세요.</strong></p></div>
+      </div>
     </div>
 
     <!-- 17 [재구성] Harness design -->
-    <div class="slide hx" data-notes="[17장 · 섹션 4 어떻게 검증하나 · 이 장 65초]
-실패를 찾으면 돌려줘야죠. (가리키기: Plan 모드 + n8n-mcp 줄) Plan 모드에서는 에러 문구나 “다시 고쳐” 한마디를 보고, Claude가 원인을 추측해서 고칩니다.
-
-[→ 이 설계 줄] 이 설계는 오류 보고서 형식을 고정합니다. 위치, 기대값, 실제값, 근거, 수정 대상. 다섯 칸입니다.
-
-[→ 본문] 방금 사례로 채워 보면, 위치는 XML 결과 정규화 노드. 기대값은 음수가 아닌 정수. 실제값은 필드가 없어서 null. 근거는 누락 샘플의 데이터 계약 불충족. 수정 대상은 앞 노드 결과나 필드 매핑입니다.
-
-(가리키기: 오른쪽 수정 지시) 여기서 중요한 건, null을 0으로 바꿔서 통과시키면 안 된다는 겁니다. 검증자는 원인을 단정하지 않고 확인할 곳을 짚어 주고, 빌더는 그 범위만 고친 뒤 정상 샘플과 누락 샘플을 둘 다 다시 돌립니다.
-
-화면은 형식 예시입니다. 위치와 기대값, 실제값, 근거가 있어야 고칠 범위가 좁아지죠.">
-      <p class="a kicker">04 · 어떻게 검증하나 · n8n 적용 설계</p>
-      <h2 class="a">“다시 고쳐” 대신 수정 가능한 오류를 돌려준다</h2>
-      <div class="pm-contrast a"><div class="pm-row pm-plan"><span class="pm-label">Plan 모드 + n8n-mcp</span><span>에러 문구나 “다시 고쳐” → 원인을 추측해 수정</span></div><div class="pm-row pm-design reveal"><span class="pm-label">이 설계</span><span>위치 · 기대값 · 실제값 · 근거 · 수정 대상을 고정 형식으로</span></div></div>
-      <div class="content reveal"><div class="row r2 hx-top"><div><table><thead><tr><th>보고서 필드</th><th>필수 점검 건수 누락 사례</th></tr></thead><tbody><tr><td>위치</td><td>XML 결과 → 정규화 노드</td></tr><tr><td>기대값</td><td><code>approvalDateMissingCount</code><br>음수가 아닌 정수</td></tr><tr><td>실제값</td><td>필드 없음 → <code>null</code></td></tr><tr><td>근거</td><td>누락 입력 샘플에서 데이터 계약 불충족</td></tr><tr><td>수정 대상</td><td>앞 노드 결과 또는 결과 필드 매핑</td></tr></tbody></table></div><div><div class="code-container"><div class="code-header"><span class="code-dot red"></span><span class="code-dot yellow"></span><span class="code-dot green"></span><span class="code-filename">빌더에 돌려주는 수정 지시 · 예시</span></div><pre><code>필수 점검 건수의 누락 원인을 확인한다.
-앞 노드 결과와 필드 매핑을 수정한다.
-
-누락 값을 임의로 0으로 채우지 않는다.
-정상 / 누락 샘플을 모두 재검증한다.
-수정한 부분과 검사 근거를 제출한다.</code></pre></div></div></div><p class="lead hx-takeaway">오류 위치와 <span class="hi">기대값·실제값·근거</span>가 있어야 수정 범위가 좁아집니다.</p></div>
-    </div>
-
-    <!-- 18 [재구성] Harness design -->
-    <div class="slide hx" data-notes="[18장 · 섹션 4 어떻게 검증하나 · 이 장 70초]
-마지막은 개선입니다. (가리키기: Plan 모드 + n8n-mcp 줄) 순정에서도 CLAUDE.md나, 기본으로 켜진 자동 메모리로 교훈이 다음 세션에 넘어갈 수 있습니다. 그런데 자동 메모리는 무엇을 남길지 Claude가 판단하고, 이 PC에만 저장됩니다. 팀에 반영하려면 CLAUDE.md 정리를 따로 챙겨야 하죠.
+    <div class="slide hx" data-notes="[17장 · 섹션 4 어떻게 검증하나 · 이 장 70초]
+마지막은 개선입니다. 순정에서도 CLAUDE.md나, 기본으로 켜진 자동 메모리로 교훈이 다음 세션에 넘어갈 수 있습니다. 그런데 자동 메모리는 무엇을 남길지 Claude가 판단하고, 이 PC에만 저장됩니다. 팀에 반영하려면 CLAUDE.md 정리를 따로 챙겨야 하죠.
 
 [→ 이 설계 줄] 이 설계는 루프를 둘로 나눕니다.
 
@@ -1274,29 +1223,25 @@ autofix는 표현식 형식이나 typeVersion 같은 설정 오류를 고치는 
 
 오른쪽은 다음 요청을 위한 루프예요. 반복된 실패는 지시문을 늘리는 대신, 빠진 판단 기준을 넣거나 검사를 스크립트로 묶어서 고칩니다.
 
-(가리키기: 아래 표) 좋아졌는지는 같은 요청과 같은 입력으로 비교합니다. 오류를 잡았는지, 정상 결과를 막지는 않았는지, 재작업이 줄었는지를 봅니다. 표의 대시는 아직 측정 전이라는 뜻입니다.
-
-참고: 자동 메모리 사실은 Claude Code memory 문서 기준입니다. 비교 기준은 harness 스킬 테스트 가이드(새 스킬은 스킬 없이, 개선한 스킬은 수정 전 버전과 비교)를 따릅니다.">
+좋아졌는지는 같은 요청과 같은 입력으로 비교합니다. 오류를 잡았는지, 정상 결과를 막지는 않았는지, 재작업이 줄었는지를 봅니다.">
       <p class="a kicker">04 · 어떻게 검증하나 · n8n 적용 설계</p>
       <h2 class="a">결과물과 킷을 <br>서로 다른 루프로 개선한다</h2>
       <div class="pm-contrast a"><div class="pm-row pm-plan"><span class="pm-label">Plan 모드 + n8n-mcp</span><span>자동 메모리는 Claude가 골라 이 PC에만 저장 · 팀에 반영하려면 CLAUDE.md 정리를 따로 챙겨야 함</span></div><div class="pm-row pm-design reveal"><span class="pm-label">이 설계</span><span>실패 패턴 → 스킬 · 검사 개선 → 같은 입력으로 전후 비교</span></div></div>
-      <div class="content reveal"><div class="row r2 hx-top"><div><div class="panel"><h3>이번 요청의 결과물을 수정</h3><p class="lead">생성 → 검증 → 부분 수정</p><p>대상: 워크플로우와 연결 데이터<br>종료: 완료 조건 충족 또는 수정 상한</p></div></div><div><div class="panel after"><h3>다음 요청의 수행 방법을 개선</h3><p class="lead">실패 패턴 → 규칙·검사 개선 → 비교</p><p>대상: 스킬 · 역할 정의 · 검증 스크립트<br>반복 작성한 검사는 실행 가능한 코드로 묶기</p></div></div></div><table><thead><tr><th>같은 요청·입력으로 비교</th><th>기존 버전</th><th>개선 버전</th><th>측정할 것</th></tr></thead><tbody><tr><td>정상 점검 데이터</td><td>—</td><td>—</td><td>기대 결과 일치</td></tr><tr><td>필수 건수 누락</td><td>—</td><td>—</td><td>실패 감지 · 성공 오판 방지</td></tr><tr><td>IF 설명 / IF 분기 추가</td><td>—</td><td>—</td><td>일반 응답 / 변경 경로 구분</td></tr></tbody></table><p class="lead hx-takeaway">더 길어진 지시문보다 <span class="hi">더 잘 구별하는 검사와 줄어든 재작업</span>을 확인합니다.</p></div>
-      <p class="a foot hx-source">비교 설계 예시 · —는 미측정 · 새 스킬은 스킬 없이, 개선 스킬은 수정 전 버전과 비교</p>
+      <div class="content reveal"><div class="row r2 hx-top"><div><div class="panel"><h3>이번 요청의 결과물을 수정</h3><p class="lead">생성 → 검증 → 부분 수정</p><p>대상: 워크플로우와 연결 데이터<br>종료: 완료 조건 충족 또는 수정 상한</p></div></div><div><div class="panel after"><h3>다음 요청의 수행 방법을 개선</h3><p class="lead">실패 패턴 → 규칙·검사 개선 → 비교</p><p>대상: 스킬 · 역할 정의 · 검증 스크립트<br>반복 작성한 검사는 실행 가능한 코드로 묶기</p></div></div></div><p class="lead hx-takeaway">더 길어진 지시문보다 <span class="hi">더 잘 구별하는 검사와 줄어든 재작업</span>을 확인합니다.</p></div>
+      <p class="a foot hx-source">비교 설계 예시 · 새 스킬은 스킬 없이, 개선 스킬은 수정 전 버전과 비교</p>
     </div>
 
     <!-- ===== 5. 설치·업데이트와 데모 ===== -->
 
-    <!-- 19 [원안 #35 → 이동·변경] Team plugin install + marketplace auto-update -->
-    <div class="slide install-build" data-notes="[19장 · 섹션 5 설치·업데이트와 데모 시작 · 섹션 4분 45초 / 이 장 45초]
+    <!-- 18 [원안 #35 → 이동·변경] Team plugin install + marketplace auto-update -->
+    <div class="slide install-build" data-notes="[18장 · 섹션 5 설치·업데이트와 데모 시작 · 섹션 4분 45초 / 이 장 45초]
 이제 팀원은 이걸 어떻게 받아 쓸까요? 혹시 이런 생각 드시죠. “새 버전 나올 때마다 zip 다시 풀어야 하는 거 아니야?”
 
 [→ 설치 명령] 그래서 n8n-automation 플러그인으로 묶어 팀 GitLab에 올렸습니다. 등록, 설치, 그리고 자동 업데이트를 한 번 켜면 끝입니다.
 
-[→ GitLab에 새 버전 게시] 제가 새 버전을 올리면, [→ Claude Code 시작 후 확인] Claude Code가 시작된 뒤 백그라운드에서 확인해서, [→ 최신 버전으로 갱신] 최신으로 갱신합니다. zip은 필요 없죠.
+[→ 업데이트 흐름] 제가 새 버전을 올리면, Claude Code가 시작된 뒤 백그라운드에서 확인해서, 최신으로 갱신합니다. zip은 필요 없죠.
 
-[→ 팀원은 사용만] 새 버전은 /reload-plugins나 다음 실행부터 적용되고요. 팀 GitLab 같은 서드파티 마켓플레이스는 자동 업데이트가 기본으로 꺼져 있어서, 세 번째는 꼭 켜 주세요.
-
-참고: 화면 명령은 ① /plugin marketplace add 팀 GitLab 주소(.git 포함) ② /plugin install n8n-automation@n8n-automation ③ /plugin → Marketplaces → n8n-automation → Enable auto-update입니다. 업데이트 확인은 세션 시작 후 최대 10분 임의 지연 뒤 백그라운드에서 일어납니다. 관리자는 managed settings의 extraKnownMarketplaces에 &quot;autoUpdate&quot;: true로 일괄 설정할 수 있습니다.">
+새 버전은 /reload-plugins나 다음 실행부터 적용되고요. 팀 GitLab 같은 서드파티 마켓플레이스는 자동 업데이트가 기본으로 꺼져 있어서, 세 번째는 꼭 켜 주세요.">
       <p class="a kicker">05 · 설치와 업데이트 · 팀이 함께 쓰는 진입점</p>
       <h2 class="a">한 번 설치하면,<br><span class="hi">업데이트는 알아서 따라옵니다</span></h2>
       <p class="a lead">「설치해도 새 버전 나올 때마다 zip 파일 풀어서 다시 넣어야 하는 거 아니야?」</p>
@@ -1309,18 +1254,18 @@ autofix는 표현식 형식이나 typeVersion 같은 설정 오류를 고치는 
 <span class="dim">③ 자동 업데이트 켜기 — 한 번만</span>
 /plugin → Marketplaces → n8n-automation 선택 → <span class="hi">Enable auto-update</span></code></pre>
       </div>
-      <div class="hx-flow install-steps">
-        <div class="hx-node reveal"><b>GitLab에 새 버전 게시</b><span>중앙에서 한 곳만 관리</span></div><span class="hx-arrow">→</span>
-        <div class="hx-node reveal"><b>Claude Code 시작 후 확인</b><span>백그라운드에서 자동</span></div><span class="hx-arrow">→</span>
-        <div class="hx-node reveal"><b>최신 버전으로 갱신</b><span>zip 받기 · 압축 풀기 없음</span></div><span class="hx-arrow">→</span>
-        <div class="hx-node reveal"><b>팀원은 사용만</b><span>라이브러리처럼</span></div>
+      <div class="hx-flow install-steps reveal">
+        <div class="hx-node"><b>GitLab에 새 버전 게시</b><span>중앙에서 한 곳만 관리</span></div><span class="hx-arrow">→</span>
+        <div class="hx-node"><b>Claude Code 시작 후 확인</b><span>백그라운드에서 자동</span></div><span class="hx-arrow">→</span>
+        <div class="hx-node"><b>최신 버전으로 갱신</b><span>zip 받기 · 압축 풀기 없음</span></div><span class="hx-arrow">→</span>
+        <div class="hx-node"><b>팀원은 사용만</b><span>라이브러리처럼</span></div>
       </div>
       <p class="foot install-note">팀 GitLab 같은 서드파티 마켓플레이스는 자동 업데이트가 기본 꺼짐 → ③을 한 번 켜기 · 갱신본은 <code>/reload-plugins</code> 또는 다음 실행부터 적용</p>
       <p class="a foot hx-source"><a href="https://code.claude.com/docs/en/discover-plugins#configure-auto-updates" target="_blank" rel="noopener noreferrer" style="color:var(--text-secondary);">Claude Code 공식 문서 · 마켓플레이스 등록·설치와 자동 업데이트</a></p>
     </div>
 
-    <!-- 20 [원안 #26] Demo A — simulation (engine: SIM_DEFS.envA) -->
-    <div class="slide" data-notes="[20장 · 섹션 5 설치·업데이트와 데모 · 이 장 90초 · 컷 9개]
+    <!-- 19 [원안 #26] Demo A — simulation (engine: SIM_DEFS.envA) -->
+    <div class="slide" data-notes="[19장 · 섹션 5 설치·업데이트와 데모 · 이 장 90초 · 컷 9개]
 (컷 00 · 마켓플레이스 등록) 지금부터 두 데모는 킷 동작을 재현한 시뮬레이션입니다. 먼저 팀 GitLab 주소로 마켓플레이스를 등록합니다. 아직 설치된 건 아니고요.
 
 [→ 컷 01 · 플러그인 설치] 다음은 plugin install로 설치합니다. 이름은 둘 다 n8n-automation입니다. 외부 서비스 연결 설정은 따로 마쳐 둡니다.
@@ -1337,17 +1282,15 @@ autofix는 표현식 형식이나 typeVersion 같은 설정 오류를 고치는 
 
 [→ 컷 07 · Playwright MCP] claude mcp list에서 Playwright가 Connected로 나오고, 화면 스냅샷으로 버튼과 탭을 읽을 준비까지 확인합니다.
 
-[→ 컷 08 · 완료] 한 마디에 환경이 올라왔습니다. 6장의 다섯 번째 문제, 셋업 삽질이 여기서 없어집니다. 다음은 워크플로우를 만듭니다.
-
-참고: ←는 이전 컷, P는 자동 재생입니다. 출력 문구는 킷 문서와 공식 문서를 기준으로 재현한 것입니다. /healthz 200은 인스턴스에 도달할 수 있다는 뜻이고 DB 상태를 뜻하지는 않습니다.">
+[→ 컷 08 · 완료] 한 마디에 환경이 올라왔습니다. 6장의 다섯 번째 문제, 셋업 삽질이 여기서 없어집니다. 다음은 워크플로우를 만듭니다.">
       <p class="a kicker">05 · 데모 A · 플러그인 설치부터 환경 기동까지 (시뮬레이션)</p>
       <div class="cmd a"><span>팀원 ›</span> 마켓플레이스 등록 → 플러그인 설치 → “n8n 켜줘” &nbsp;<span>→ 환경 기동·연결 확인</span></div>
-      <div class="sim a" data-sim="envA" role="region" aria-label="데모 A 시뮬레이션 — 마켓플레이스 등록부터 n8n 기동까지"></div>
+      <div class="sim sim-nocap a" data-sim="envA" role="region" aria-label="데모 A 시뮬레이션 — 마켓플레이스 등록부터 n8n 기동까지"></div>
       <p class="a foot">→ / Space 다음 컷 · ← 이전 컷 · P 자동 재생 — 마지막 컷 다음에 다음 슬라이드로 넘어간다.</p>
     </div>
 
-    <!-- 21 [원안 #27 → 변경] Demo B — build pipeline.json through the kit (engine: SIM_DEFS.buildB) -->
-    <div class="slide" data-notes="[21장 · 섹션 5 설치·업데이트와 데모 · 이 장 150초 · 컷 11개]
+    <!-- 20 [원안 #27 → 변경] Demo B — build pipeline.json through the kit (engine: SIM_DEFS.buildB) -->
+    <div class="slide" data-notes="[20장 · 섹션 5 설치·업데이트와 데모 · 이 장 150초 · 컷 11개]
 (컷 00 · 요청) 두 번째는 실제로 쓰는 파이프라인을 만드는 과정입니다. 요청은 한 줄, 트리거도 실패 처리도 알림도 말하지 않았죠.
 
 [→ 컷 01 · 1 분석] 분석가가 스킬 파일과 스크립트를 직접 읽습니다. 단계가 세 개고, 단계마다 종료 코드와 결과 마커를 남긴다는 걸 읽어서 확인합니다.
@@ -1370,30 +1313,26 @@ autofix는 표현식 형식이나 typeVersion 같은 설정 오류를 고치는 
 
 [→ 컷 09 · autofix · 멈춤] autofix를 먼저 미리보기로 돌려서 무엇을 고칠지 보고, 그다음에 적용합니다. 다시 validate로 통과를 확인한 뒤에 게시하죠. 고쳐 놓고 깨진 채로 넘어오지 않는 겁니다.
 
-[→ 컷 10 · 7 보고 · 멈춤] 마지막으로 _workspace_n8n에 분석부터 보고까지 파일 여덟 개가 남습니다. 공용 PC에서 확인할 것 두 건까지요. 6장에서 본 무기록 문제가 여기서 풀립니다. 이제 어디에 쓰는지 보겠습니다.
-
-참고: 주황 테두리와 “멈춤” 표시가 붙은 컷(03·04·06·09·10)은 멈춰서 설명합니다. L 등급은 작업 크기 S/M/L 중 가장 큰 단계입니다. 리서치 사실은 docs.n8n.io 기준(Execute Command는 2.0부터 기본 비활성, 파일 접근 기본 폴더 ~/.n8n-files)입니다. 컷 08의 등호 누락은 autofix 흐름을 보여 주려고 넣은 시뮬레이션 설정입니다. 웹훅 URL·회사 경로·워크플로우 ID는 가렸습니다.">
+[→ 컷 10 · 7 보고 · 멈춤] 마지막으로 _workspace_n8n에 분석부터 보고까지 파일 여덟 개가 남습니다. 공용 PC에서 확인할 것 두 건까지요. 6장에서 본 무기록 문제가 여기서 풀립니다. 이제 어디에 쓰는지 보겠습니다.">
       <p class="a kicker">05 · 데모 B · 스킬 → 파이프라인 (시뮬레이션)</p>
       <div class="cmd a"><span>사용자 ›</span> 배포 캘린더 스킬을 공용 PC n8n 파이프라인으로 만들어줘 &nbsp;<span>→ n8n-workflow-manager · L 등급 (작업 크기 S/M/L 중 가장 큼 · 신규 워크플로우 · 외부 시스템 쓰기)</span></div>
-      <div class="sim a" data-sim="buildB" role="region" aria-label="데모 B 시뮬레이션 — 배포 캘린더 스킬을 n8n 파이프라인으로"></div>
+      <div class="sim sim-nocap a" data-sim="buildB" role="region" aria-label="데모 B 시뮬레이션 — 배포 캘린더 스킬을 n8n 파이프라인으로"></div>
       <p class="a foot">실제 운영 중인 <code>pipeline.json</code>의 노드 18개 구성을 재현한 시뮬레이션</p>
     </div>
 
     <!-- ===== 6. 실전 활용 · 차별점 ===== -->
 
-    <!-- 22 [신규] Use case: where to use it -->
-    <div class="slide" data-notes="[22장 · 섹션 6 실전 활용·차별점 시작 · 섹션 2분 / 이 장 40초]
+    <!-- 21 [신규] Use case: where to use it -->
+    <div class="slide" data-notes="[21장 · 섹션 6 실전 활용·차별점 시작 · 섹션 1분 20초 / 이 장 40초]
 데모를 보여드리면 꼭 이 질문이 나옵니다. “그래서 이걸 어디다 써?”
 
 [PAUSE]
 
 저희 팀 기준은 하나예요. 꼭 해야 하는데, 불필요하게 반복되는 일.
 
-[청중] 매일 손으로 하는 반복 작업, 하나만 떠올려 보세요.
+예전엔 팀원마다 자기 Claude 스킬로 직접 돌렸습니다. 사람이 켜야 돌았죠.
 
-(가리키기: Before) 예전엔 팀원마다 자기 Claude 스킬로 직접 돌렸습니다. 사람이 켜야 돌았죠.
-
-(가리키기: After) 지금은 공용 PC에 n8n을 올리고, 그 스킬을 스크립트로 바꿔 n8n 파이프라인으로 돌립니다. 아무도 켜지 않아도 24시간 돌고, 결과는 메시지로 받죠.">
+지금은 공용 PC에 n8n을 올리고, 그 스킬을 스크립트로 바꿔 n8n 파이프라인으로 돌립니다. 아무도 켜지 않아도 24시간 돌고, 결과는 메시지로 받죠.">
       <p class="a kicker">06 · 실전 활용</p>
       <h1 class="a">「그러면 이걸 <span class="hi">어디다가</span> 써?」</h1>
       <p class="a lead">기준은 하나 — <b>꼭 해야 하지만, 불필요하게 반복되는 작업.</b></p>
@@ -1415,49 +1354,16 @@ autofix는 표현식 형식이나 typeVersion 같은 설정 오류를 고치는 
           </ul>
         </div>
       </div>
-      <p class="a foot">차량제어서비스개발팀의 실제 적용 — 다음은 다른 방식과 무엇이 다른지 봅니다.</p>
+      <p class="a foot">차량제어서비스개발팀의 실제 적용 — 다음은 토큰을 어디서 아끼고 어디서 더 쓰는지 봅니다.</p>
     </div>
 
-    <!-- 23 [원안 #29] Comparison of approaches -->
-    <div class="slide" data-notes="[23장 · 섹션 6 실전 활용·차별점 · 이 장 40초]
-순정 Claude Code에 n8n-mcp만 붙인 방식과 비교하면, 우열보다는 챙기는 범위가 다릅니다.
+    <!-- 22 [원안 #30] Token view -->
+    <div class="slide" data-notes="[22장 · 섹션 6 실전 활용·차별점 · 이 장 40초]
+토큰 얘기도 해야겠죠. 작은 작업엔 질문을 덜 붙이고, 읽은 문서는 서브에이전트에 두고 요약만 받고, 재작업을 줄이고, 기존 워크플로우는 구조만 읽어서 아낍니다.
 
-(가리키기: 절차 강제) 절차는 작업 크기와 상관없이 7단계이고, 요건 확인과 계획 승인은 건너뛸 수 없습니다.
+대신 요건 확인, 계획 승인, 리서치, 검증에 더 쓰니까 첫 요청 한 번은 순정보다 많이 씁니다. 그래서 비교는 검증 통과까지의 총 토큰으로 해야 하고, 아직 실측 전입니다.
 
-(가리키기: 최신 스펙 확인) 최신 스펙은 매번 context7, 웹 검색, 로컬 스킬 세 곳을 교차 확인하고,
-
-(가리키기: 변경 안전성) 변경 뒤 validate와 autofix가 빌더에 들어 있습니다.
-
-(가리키기: 새로 만들기 전 기존 확인) 그리고 M, L 작업은 새로 만들기 전에 기존 워크플로우부터 확인하고, L은 말하지 않은 요건까지 묻습니다. 나머지는 화면으로 봐 주세요.
-
-참고: 타 도구 벤치마크 수치는 말하지 않습니다. 20분 버전에서는 생략합니다.">
-      <p class="a kicker">06 · 차별점</p>
-      <h2 class="a">다른 방식과 무엇이 다른가 <span class="dim" style="font-size:0.95rem;font-weight:400;">· 우열이 아니라 커버 범위의 차이</span></h2>
-      <div class="content a">
-        <table class="compact">
-          <thead><tr><th style="width:16%;">항목</th><th style="width:36%;">순정 Claude Code + n8n-mcp</th><th class="hl">이 킷</th></tr></thead>
-          <tbody>
-            <tr><td>절차 강제</td><td>없음. 프롬프트대로 바로 변경</td><td class="hl">7단계 고정(S / M / L 공통). 요건 재확인 · 계획 승인은 필수 게이트</td></tr>
-            <tr><td>n8n 도메인 지식</td><td>n8n-mcp 노드 문서 조회에 의존</td><td class="hl">지식 스킬 7종 내장 — 에러 카탈로그 · 오탐 목록 · 흔한 실수 · 패턴 5종</td></tr>
-            <tr><td>최신 스펙 확인</td><td>사용자가 시킬 때만</td><td class="hl">매 작업 context7 · WebSearch · 로컬 스킬 3곳을 교차 확인</td></tr>
-            <tr><td>변경 안전성</td><td>validate를 따로 불러야 함</td><td class="hl">validate → autofix → 보고가 빌더에 내장. 변경은 MCP 도구로만</td></tr>
-            <tr><td>작업 크기별 처리</td><td>구분 없음</td><td class="hl">S / M / L 분류 · S는 기본 7단계만</td></tr>
-            <tr><td>새로 만들기 전 기존 확인</td><td>없음</td><td class="hl">M·L: 기존 워크플로우 현황 감사 → 재사용 제안 · L: 딥 인터뷰(말하지 않은 요건까지 질문)</td></tr>
-            <tr><td>감사 추적 · 로컬 환경</td><td>대화 기록뿐 · 직접 설치·기동</td><td class="hl"><code>_workspace_n8n/</code> 파일 기록 · Mac / Windows 감지 → n8n + Playwright MCP 기동</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- 24 [원안 #30] Token view -->
-    <div class="slide" data-notes="[24장 · 섹션 6 실전 활용·차별점 · 이 장 40초]
-토큰 얘기도 해야겠죠. (가리키기: 아끼는 곳 ①~④) 작은 작업엔 질문을 덜 붙이고, 읽은 문서는 서브에이전트에 두고 요약만 받고, 재작업을 줄이고, 기존 워크플로우는 구조만 읽어서 아낍니다.
-
-(가리키기: 더 쓰는 곳) 대신 요건 확인, 계획 승인, 리서치, 검증에 더 쓰니까 첫 요청 한 번은 순정보다 많이 씁니다. 그래서 비교는 검증 통과까지의 총 토큰으로 해야 하고, 아직 실측 전입니다.
-
-(가리키기: 아래 측정) 참고로 스킬 설명 37개를 재 보니 1,500토큰 정도였습니다. 스킬이 많을 때 문제는 토큰보다, 엉뚱한 스킬을 부르는 쪽이죠.
-
-참고: “몇 % 절감”은 말하지 않습니다. 측정값은 발표자 로컬에 설치된 범용 오케스트레이션 플러그인의 description 합계 5,876자를 4로 나눈 추정치이며, 제품명은 말하지 않습니다. 20분 버전에서는 생략합니다.">
+스킬 설명 37개를 재 보니 1,500토큰 정도였습니다. 스킬이 많을 때 문제는 토큰보다, 엉뚱한 스킬을 부르는 쪽이죠.">
       <p class="a kicker">06 · 토큰 관점</p>
       <h2 class="a">어디서 아끼고, 어디서 더 쓰는가 <span class="dim" style="font-size:0.95rem;font-weight:400;">· 절감률이 아니라 구조로</span></h2>
       <div class="row r-3-2">
@@ -1497,15 +1403,17 @@ autofix는 표현식 형식이나 typeVersion 같은 설정 오류를 고치는 
 
     <!-- ===== 7. 마무리 ===== -->
 
-    <!-- 25 [원안 #36] Closing -->
-    <div class="slide" data-notes="[25장 · 섹션 7 마무리 시작 · 섹션 25초 + Q&amp;A 4분 30초 / 이 장 25초]
+    <!-- 23 [원안 #36] Closing -->
+    <div class="slide" data-notes="[23장 · 섹션 7 마무리 시작 · 섹션 25초 + Q&amp;A 4분 30초 / 이 장 25초]
 마지막으로 한 문장만 남기겠습니다.
 
 “명령어 하나를 입력하고, 하고 싶은 일을 적어 주세요. 요구사항에 맞는 자동화는 함께 구체화합니다.”
 
 [PAUSE]
 
-오늘 떠올리신 반복 작업이 첫 요청이 될 수 있습니다. 시작 명령은 화면 아래에 있고, 저장소는 팀 GitLab 링크에 있습니다. 감사합니다. 질문 받겠습니다.">
+반복 작업 하나부터 자동화 요청으로 시작할 수 있습니다. 시작 명령은 화면 아래에 있고, 저장소는 팀 GitLab 링크에 있습니다. 감사합니다. 질문 받겠습니다.
+
+[→ 요약 표를 띄워 두고 질문 받기]">
       <p class="a kicker">07 · 마무리</p>
       <p class="a quote"><span class="hi">명령어 하나</span>를 입력하고,<br>하고 싶은 일을 적어 주세요.<br>요구사항에 맞는 자동화는 <span class="hi">함께 구체화합니다.</span></p>
       <h2 class="a" style="font-size:1.6rem;">감사합니다 · Q&amp;A</h2>
@@ -1513,6 +1421,49 @@ autofix는 표현식 형식이나 typeVersion 같은 설정 오류를 고치는 
         <a href="https://gitlab.hmc.co.kr/infoccs/service/dkc/automation/n8n-automation" target="_blank" rel="noopener noreferrer">팀 GitLab · n8n-automation</a>
       </div>
       <p class="a foot"><code>/n8n-automation:n8n-workflow-manager</code><br>플러그인 설치 및 환경·연결 설정 후 시작 · 요건 확인 · 계획 승인</p>
+    </div>
+
+    <!-- 24 [원안 #29 → 이동·변경] Summary: comparison of approaches, left on screen during Q&A -->
+    <div class="slide" data-notes="[24장 · 요약 · Q&amp;A 동안 띄워 두기]
+[질문을 받는 동안 띄워 두는 요약 표입니다. 다른 방식과의 차이를 물으면 아래처럼 답합니다.]
+
+순정 Claude Code에 n8n-mcp만 붙인 방식과 비교하면, 우열보다는 챙기는 범위가 다릅니다.
+
+절차는 작업 크기와 상관없이 7단계이고, 요건 확인과 계획 승인은 건너뛸 수 없습니다.
+
+최신 스펙은 매번 context7, 웹 검색, 로컬 스킬 세 곳을 교차 확인하고,
+
+변경 뒤 validate와 autofix가 빌더에 들어 있습니다.
+
+그리고 M, L 작업은 새로 만들기 전에 기존 워크플로우부터 확인하고, L은 말하지 않은 요건까지 묻습니다. 나머지는 화면으로 봐 주세요.
+
+[토큰을 물으면] Sonnet 5 기준으로 작업 한 건에 작은 수정은 100만에서 250만 토큰, 새 파이프라인은 250만에서 600만 토큰 정도로 봅니다. 숫자는 커 보이지만 그중 92에서 96퍼센트는 호출할 때마다 앞 대화를 다시 읽는 캐시 읽기라서, 입력 단가의 10분의 1로 계산됩니다. API 요금으로 치면 1달러 안팎에서 4달러 정도입니다. 구조로 계산한 추정이고, 실측은 아직입니다.">
+      <p class="a kicker">요약</p>
+      <h2 class="a">다른 방식과 무엇이 다른가 <span class="dim" style="font-size:0.95rem;font-weight:400;">· 우열이 아니라 커버 범위의 차이</span></h2>
+      <div class="content a">
+        <table class="compact">
+          <thead><tr><th style="width:16%;">항목</th><th style="width:36%;">순정 Claude Code + n8n-mcp</th><th class="hl">이 킷</th></tr></thead>
+          <tbody>
+            <tr><td>절차 강제</td><td>없음. 프롬프트대로 바로 변경</td><td class="hl">7단계 고정(S / M / L 공통). 요건 재확인 · 계획 승인은 필수 게이트</td></tr>
+            <tr><td>n8n 도메인 지식</td><td>n8n-mcp 노드 문서 조회에 의존</td><td class="hl">지식 스킬 7종 내장 — 에러 카탈로그 · 오탐 목록 · 흔한 실수 · 패턴 5종</td></tr>
+            <tr><td>최신 스펙 확인</td><td>사용자가 시킬 때만</td><td class="hl">매 작업 context7 · WebSearch · 로컬 스킬 3곳을 교차 확인</td></tr>
+            <tr><td>변경 안전성</td><td>validate를 따로 불러야 함</td><td class="hl">validate → autofix → 보고가 빌더에 내장. 변경은 MCP 도구로만</td></tr>
+            <tr><td>작업 크기별 처리</td><td>구분 없음</td><td class="hl">S / M / L 분류 · S는 기본 7단계만</td></tr>
+            <tr><td>새로 만들기 전 기존 확인</td><td>없음</td><td class="hl">M·L: 기존 워크플로우 현황 감사 → 재사용 제안 · L: 딥 인터뷰(말하지 않은 요건까지 질문)</td></tr>
+            <tr><td>감사 추적 · 로컬 환경</td><td>대화 기록뿐 · 직접 설치·기동</td><td class="hl"><code>_workspace_n8n/</code> 파일 기록 · Mac / Windows 감지 → n8n + Playwright MCP 기동</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="token-est a">
+        <p class="token-est-title">토큰 사용량 · 작업 1건 대략 환산 <span class="dim">Sonnet 5 기준 · 구조로 계산한 추정, 실측 전</span></p>
+        <div class="cards c4">
+          <div class="card"><div class="card-num">S · 기존 워크플로우에 노드 1개 추가</div><div class="token-est-num">100만~250만 토큰</div><p>새로 생성하는 출력 2만~4만 · API 요금 약 $0.4~1.6</p></div>
+          <div class="card"><div class="card-num">M · 조건 분기 추가</div><div class="token-est-num">200만~400만 토큰</div><p>새로 생성하는 출력 4만~6만 · API 요금 약 $0.7~2.5</p></div>
+          <div class="card"><div class="card-num">L · 신규 파이프라인 (데모 B, 노드 18개)</div><div class="token-est-num">250만~600만 토큰</div><p>새로 생성하는 출력 6만~10만 · API 요금 약 $1~4</p></div>
+          <div class="card focus"><div class="card-num">그중 캐시 읽기</div><div class="token-est-num">92~96%</div><div class="token-mix" aria-hidden="true"><i class="read"></i><i class="write"></i><i class="out"></i></div><p>호출마다 앞 대화를 다시 읽는 몫 · <b>입력 단가의 1/10</b> · 새로 생성하는 출력은 1~2%</p></div>
+        </div>
+        <p class="foot">요금은 Sonnet 5 API 단가(100만 토큰당 입력 $2 · 캐시 읽기 $0.2 · 출력 $10)로 환산 · 구독 요금제의 한도 차감 기준은 비공개</p>
+      </div>
     </div>
 
   </div>
@@ -2162,9 +2113,9 @@ autofix는 표현식 형식이나 typeVersion 같은 설정 오류를 고치는 
       function show(next, instant = false) {
         root.classList.toggle('context-instant', instant);
         index = next; root.dataset.contextStep = String(index + 1);
-        frames.forEach((frame, i) => { frame.classList.toggle('active', i === index); frame.setAttribute('aria-hidden', String(i !== index)); });
-        count.textContent = `${String(index + 1).padStart(2, '0')} / 06`;
-        hint.textContent = index === frames.length - 1 ? '→ 다음 슬라이드' : '→ 다음 장면';
+        frames.forEach((frame, i) => { frame.classList.toggle('active', i <= index); frame.classList.toggle('current', i === index); frame.setAttribute('aria-hidden', String(i > index)); });
+        count.textContent = `${String(index + 1).padStart(2, '0')} / ${String(frames.length).padStart(2, '0')}`;
+        hint.textContent = index === frames.length - 1 ? '→ 다음 슬라이드' : '→ 다음 가지';
         announcement.textContent = frames[index].getAttribute('aria-label');
       }
       root.querySelector('[data-context-prev]').addEventListener('click', () => advance(-1));
